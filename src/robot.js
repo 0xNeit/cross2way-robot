@@ -173,55 +173,57 @@ const robotSchedules = function() {
 
 // helper functions
 setTimeout(async () => {
-  if (process.env.USE_KEYSTORE === 'true') {
-    // set admin
-    const wanAdminAddress = await oracleWan.admin()
-    const ethAdminAddress = await oracleEth.admin()
-    const bscAdminAddress = await oracleBsc.admin()
-    const avaxAdminAddress = await oracleAvax.admin()
-    const devAdminAddress = await oracleDev.admin()
+  // if (process.env.USE_KEYSTORE === 'true') {
+  //   // set admin
+  //   const wanAdminAddress = await oracleWan.admin()
+  //   const ethAdminAddress = await oracleEth.admin()
+  //   const bscAdminAddress = await oracleBsc.admin()
+  //   const avaxAdminAddress = await oracleAvax.admin()
+  //   const devAdminAddress = await oracleDev.admin()
 
-    for (let i = 0; i < web3Oracles.length; i++) {
-      const oracle = web3Oracles[i]
-      const adminAddress = await oracle.admin()
+  //   for (let i = 0; i < web3Oracles.length; i++) {
+  //     const oracle = web3Oracles[i]
+  //     const adminAddress = await oracle.admin()
       
-      let address = adminAddress.toLowerCase() 
-      let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码：`)
-      oracle.setAdminSk(sk)
-    }
+  //     let address = adminAddress.toLowerCase() 
+  //     let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码：`)
+  //     oracle.setAdminSk(sk)
+  //   }
 
-    let address = wanAdminAddress.toLowerCase() 
-    let sk = getSk(address, `请输入wanchain上oracle合约的admin(${address})的  密码：`)
-    oracleWan.setAdminSk(sk)
+  //   let address = wanAdminAddress.toLowerCase() 
+  //   let sk = getSk(address, `请输入wanchain上oracle合约的admin(${address})的  密码：`)
+  //   oracleWan.setAdminSk(sk)
 
-    address = ethAdminAddress.toLowerCase()
-    sk = null
-    sk = getSk(address, `请输入ethereum上oracle合约的admin(${address})的  密码：`)
-    oracleEth.setAdminSk(sk)
+  //   address = ethAdminAddress.toLowerCase()
+  //   sk = null
+  //   sk = getSk(address, `请输入ethereum上oracle合约的admin(${address})的  密码：`)
+  //   oracleEth.setAdminSk(sk)
 
-    address = bscAdminAddress.toLowerCase()
-    sk = null
-    sk = getSk(address, `请输入bsc上oracle合约的admin(${address})的  密码：`)
-    oracleBsc.setAdminSk(sk)
+  //   address = bscAdminAddress.toLowerCase()
+  //   sk = null
+  //   sk = getSk(address, `请输入bsc上oracle合约的admin(${address})的  密码：`)
+  //   oracleBsc.setAdminSk(sk)
 
-    address = avaxAdminAddress.toLowerCase()
-    sk = null
-    sk = getSk(address, `请输入avax上oracle合约的admin(${address})的  密码：`)
-    oracleAvax.setAdminSk(sk)
+  //   address = avaxAdminAddress.toLowerCase()
+  //   sk = null
+  //   sk = getSk(address, `请输入avax上oracle合约的admin(${address})的  密码：`)
+  //   oracleAvax.setAdminSk(sk)
 
-    address = devAdminAddress.toLowerCase()
-    sk = null
-    sk = getSk(address, `请输入moonbeam上oracle合约的admin(${address})的  密码：`)
-    oracleDev.setAdminSk(sk)
-  }
-  if (process.env.ORACLE_ADMIN_WANCHAIN){
-    oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
-  }
+  //   address = devAdminAddress.toLowerCase()
+  //   sk = null
+  //   sk = getSk(address, `请输入moonbeam上oracle合约的admin(${address})的  密码：`)
+  //   oracleDev.setAdminSk(sk)
+  // }
+  // if (process.env.ORACLE_ADMIN_WANCHAIN){
+  //   oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
+  // }
 
-  setTimeout(updatePriceToWAN, 0);
-  setTimeout(scanNewStoreMan, 0);
+  // setTimeout(updatePriceToWAN, 0);
+  // setTimeout(scanNewStoreMan, 0);
 
-  robotSchedules();
+  // robotSchedules();
+
+  setTimeout(updateStoreManToChainsPart, 0)
 }, 0)
 
 
