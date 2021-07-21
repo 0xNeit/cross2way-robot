@@ -171,9 +171,6 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       
       for(let j = 0; j<oracles.length; j++) {
         const oracle = oracles[j];
-        if (sg.groupId.includes("6465765f303237") && j === 4) {
-          console.log("haha")
-        }
         // TODO: is need set
         if (isCurrentConfig) {
           if (curConfigs[j][0] !== groupIdUint && curConfigs[j][1] !== groupIdUint) {
