@@ -103,7 +103,7 @@ async function getPrices(symbolsStr, idsStr) {
   const symbolIds = getIDsMap(symbolsStr, idsStr)
   delete symbolIds['wasp']
   delete symbolIds['zoo']
-  const symbols = symbolsStr.toLowerCase().replace(/\s+/g,"").replace(/,wasp($|,)/g,"").replace(/,zoo($|,)/g,"").split(',')
+  const symbols = symbolsStr.toLowerCase().replace(/\s+/g,"").replace(/,wasp/g,"").replace(/,zoo/g,"").split(',')
   const idsArr = []
   symbols.forEach(it => {
     idsArr.push(symbolIds[it])
