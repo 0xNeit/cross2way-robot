@@ -101,17 +101,9 @@ const getIDsMap = (symbolsStr, IdsStr) => {
 async function getPrices(symbolsStr, idsStr) {
   // const symbolIds = await getIDs("https://api.coingecko.com/api/v3/coins/list", symbolsStr)
   const symbolIds = getIDsMap(symbolsStr, idsStr)
-  let hasWasp = false
-  if (symbolIds['wasp'] !== undefined) {
-    hasWasp = true
-    delete symbolIds['wasp']
-  }
-  let hasZoo = false
-  if (symbolIds['zoo'] !== undefined) {
-    hasZoo = true
-    delete symbolIds['zoo']
-  }
-  const symbols = symbolsStr.toLowerCase().replace(/\s+/g,"").replace(/,wasp/g,"").split(',')
+  delete symbolIds['wasp']
+  delete symbolIds['zoo']
+  const symbols = symbolsStr.toLowerCase().replace(/\s+/g,"").replace(/,wasp($|,)/g,"").replace(/,zoo($|,)/g,"").split(',')
   const idsArr = []
   symbols.forEach(it => {
     idsArr.push(symbolIds[it])
@@ -124,30 +116,28 @@ async function getPrices(symbolsStr, idsStr) {
   symbols.forEach(it => {
     priceMap[it.toUpperCase()] = fractionToDecimalString(priceIdMap[symbolIds[it]].usd, process.env.PRICE_DECIMAL);
   });
-  if (hasWasp) {
-    const waspPrice = await getWaspPriceFromContract(priceMap['WAN'])
-    priceMap['WASP'] = waspPrice
-  }
-  if (hasZoo) {
-    const zooPrice = await getWaspPriceFromContract(priceMap['WASP'])
-    priceMap['ZOO'] = zooPrice
-  }
+
+  const waspPrice = await getWaspPriceFromContract(priceMap['WAN'])
+  priceMap['WASP'] = waspPrice
+  const zooPrice = await getZooPriceFromContract(priceMap['WASP'])
+  priceMap['ZOO'] = zooPrice
+
   priceMap['FNX'] = '0x01'
   return priceMap
 }
 
-setTimeout(async () => {
-  const symbolsStr = "ETH,USDC,TUSD,GUSD,LINK,MKR,ZXC,EURS,USDT,WAN,FNX,BTC,EOS,UNI,SUSHI,WASP,XRP,ZCN,VIBE,LTC,AVAX,DOT,MATIC"
-  await printIDs("https://api.coingecko.com/api/v3/coins/list", symbolsStr)
-}, 0);
+// setTimeout(async () => {
+//   const symbolsStr = "ETH,USDC,TUSD,GUSD,LINK,MKR,ZXC,EURS,USDT,WAN,FNX,BTC,EOS,UNI,SUSHI,WASP,XRP,ZCN,VIBE,LTC,AVAX,DOT,MATIC"
+//   await printIDs("https://api.coingecko.com/api/v3/coins/list", symbolsStr)
+// }, 0);
 
 // https://api.coingecko.com/api/v3/coins/list
 // https://api.coingecko.com/api/v3/simple/price?ids=<coin>&vs_currencies=usd
 // https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=3
-// setTimeout(async () => {
-//   // const data = await getIDs("https://api.coingecko.com/api/v3/coins/list", process.env.SYMBOLS);
-//   const data = await getPrices(process.env.SYMBOLS)
-//   console.log(JSON.stringify(data, null, 2))
-// }, 0)
+setTimeout(async () => {
+  // const data = await getIDs("https://api.coingecko.com/api/v3/coins/list", process.env.SYMBOLS);
+  const data = await getPrices(process.env.SYMBOLS, process.env.SYMBOLIDS)
+  console.log(JSON.stringify(data, null, 2))
+}, 0)
 
 module.exports = getPrices
