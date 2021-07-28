@@ -7,6 +7,16 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "test mem leak",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/mem-leak.js",
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "dev lib ltc",
       "skipFiles": [
         "<node_internals>/**"

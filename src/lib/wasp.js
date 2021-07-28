@@ -1,5 +1,5 @@
 // get price from graphql
-const { fractionRatioToDecimalString } = require('./utils');
+// const { fractionRatioToDecimalString } = require('./utils');
 const Web3 = require('web3');
 const BigNumber = require('bignumber.js');
 
@@ -80,8 +80,24 @@ async function getFnxPriceFromContract(wanPrice) {
   return '0x' + p.toString(16)
 }
 
+async function getZooPriceFromContract(waspPrice) {
+  const zooWaspPairAddress = '0xa0cf1f16994ecd6d4613024b3ebb61b9f9c06f06'
+  const sc = new web3.eth.Contract(abi, zooWaspPairAddress);
+  let ret = await sc.methods.getReserves().call();
+  console.log('ret', ret);
+  const wp = new BigNumber(waspPrice)
+  const zoo = new BigNumber(ret._reserve1)
+  const wasp = new BigNumber(ret._reserve0)
+  let p = zoo.div(wasp).multipliedBy(wp).integerValue();
+
+  console.log("p", p.toString());
+
+  return '0x' + p.toString(16)
+}
+
 module.exports = {
   // getWaspPriceFromGraphql,
   getWaspPriceFromContract,
-  getFnxPriceFromContract
+  getFnxPriceFromContract,
+  getZooPriceFromContract,
 }

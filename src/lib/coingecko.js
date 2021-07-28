@@ -2,7 +2,7 @@ const axios = require('axios');
 const { fractionToDecimalString } = require('./utils');
 const log = require('./log')
 
-const { getWaspPriceFromContract } = require('./wasp')
+const { getWaspPriceFromContract, getZooPriceFromContract } = require('./wasp')
 
 const getData = async url => {
   try {
@@ -106,6 +106,11 @@ async function getPrices(symbolsStr, idsStr) {
     hasWasp = true
     delete symbolIds['wasp']
   }
+  let hasZoo = false
+  if (symbolIds['zoo'] !== undefined) {
+    hasZoo = true
+    delete symbolIds['zoo']
+  }
   const symbols = symbolsStr.toLowerCase().replace(/\s+/g,"").replace(/,wasp/g,"").split(',')
   const idsArr = []
   symbols.forEach(it => {
@@ -122,6 +127,10 @@ async function getPrices(symbolsStr, idsStr) {
   if (hasWasp) {
     const waspPrice = await getWaspPriceFromContract(priceMap['WAN'])
     priceMap['WASP'] = waspPrice
+  }
+  if (hasZoo) {
+    const zooPrice = await getWaspPriceFromContract(priceMap['WASP'])
+    priceMap['ZOO'] = zooPrice
   }
   priceMap['FNX'] = '0x01'
   return priceMap
