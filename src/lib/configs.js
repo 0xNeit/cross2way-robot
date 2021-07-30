@@ -3,7 +3,7 @@ module.exports = {
   'polygon': {
     'testnet': {
       chainType: 'MATIC',
-      rpc: 'https://rpc-mumbai.maticvigil.com/',
+      rpc: 'https://rpc-mumbai.maticvigil.com',
       gasPrice: 0xba43b74000,
       gasLimit: 0x7a1200,
       chainId: 80001,
