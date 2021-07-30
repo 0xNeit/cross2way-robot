@@ -135,7 +135,7 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       const configs = await oracles[j].getCurrentGroupIds()
       curConfigs.push(configs)
     } catch(e) {
-      log.Error(`chain ${oracles[j].chain.core.chainType} failed`)
+      log.error(`chain ${oracles[j].chain.core.chainType} failed`)
       throw e
     }
   }
