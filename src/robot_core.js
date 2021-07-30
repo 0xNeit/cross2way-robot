@@ -131,8 +131,13 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
   // const currentGroupIdKey2 = web3.utils.keccak256('MULTICOINSTAKE_RESERVED_KEY____2')
   const curConfigs = []
   for (let j = 0; j < oracles.length; j++) {
-    const configs = await oracles[j].getCurrentGroupIds()
-    curConfigs.push(configs)
+    try {
+      const configs = await oracles[j].getCurrentGroupIds()
+      curConfigs.push(configs)
+    } catch(e) {
+      log.Error(`chain ${oracles[j].chain.core.chainType} failed`)
+      throw e
+    }
   }
   const curTimestamp = Math.floor(Date.now() / 1000)
   // TODO: end
