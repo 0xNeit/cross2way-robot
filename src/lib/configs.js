@@ -22,7 +22,7 @@ module.exports = {
     'testnet': {
       chainType: 'ARB',
       rpc: 'https://rinkeby.arbitrum.io/rpc/',
-      gasPrice: 0x3b9aca00,
+      gasPrice: 0x2faf0800,
       gasLimit: 0x7a1200,
       chainId: 421611,
       curveType: '1',
