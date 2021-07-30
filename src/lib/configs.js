@@ -18,4 +18,24 @@ module.exports = {
       chainName: 'polygon'
     }
   },
+  'arbitrum': {
+    'testnet': {
+      chainType: 'ARB',
+      rpc: 'https://rinkeby.arbitrum.io/rpc/',
+      gasPrice: 0x3b9aca00,
+      gasLimit: 0x7a1200,
+      chainId: 421611,
+      curveType: '1',
+      deployedFile: 'arbTestnet.json',
+      bip44: 0x40000002,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
+
+      symbol: 'ETH',
+      decimals: 18,
+      chainName: 'arbitrum',
+
+      explorer: 'https://rinkeby-explorer.arbitrum.io/#/',
+    }
+  },
 }
