@@ -160,6 +160,14 @@ function getMapTm(toChainId) {
     return tm;
   }
 }
+
+function itemFieldToHex(tokenPairs) {
+  tokenPairs.forEach(tokenPair => { 
+    tokenPair.chainId = web3.utils.toHex(tokenPair.chainId) 
+    tokenPair.fromChainID = web3.utils.toHex(tokenPair.fromChainID) 
+    tokenPair.toChainID = web3.utils.toHex(tokenPair.toChainID) 
+  })
+}
 async function getTokenPairs(tm, _total) {
   const tokenPairs = {}
   const total = parseInt(_total)
@@ -196,26 +204,11 @@ async function refreshTMS() {
   const tokenPairs_avax = await getTokenPairs(tmAvax, totalTokenPairs_avax)
   const tokenPairs_dev = await getTokenPairs(tmDev, totalTokenPairs_dev)
 
-  tokenPairs.chainId = web3.utils.toHex(tokenPairs.chainId)
-  tokenPairs.fromChainID = web3.utils.toHex(tokenPairs.fromChainID)
-  tokenPairs.toChainID = web3.utils.toHex(tokenPairs.toChainID)
-
-  tokenPairs_eth.chainId = web3.utils.toHex(tokenPairs_eth.chainId)
-  tokenPairs_eth.fromChainID = web3.utils.toHex(tokenPairs_eth.fromChainID)
-  tokenPairs_eth.toChainID = web3.utils.toHex(tokenPairs_eth.toChainID)
-
-  tokenPairs_bsc.chainId = web3.utils.toHex(tokenPairs_bsc.chainId)
-  tokenPairs_bsc.fromChainID = web3.utils.toHex(tokenPairs_bsc.fromChainID)
-  tokenPairs_bsc.toChainID = web3.utils.toHex(tokenPairs_bsc.toChainID)
-
-  totalTokenPairs_avax.chainId = web3.utils.toHex(totalTokenPairs_avax.chainId)
-  totalTokenPairs_avax.fromChainID = web3.utils.toHex(totalTokenPairs_avax.fromChainID)
-  totalTokenPairs_avax.toChainID = web3.utils.toHex(totalTokenPairs_avax.toChainID)
-
-  tokenPairs_dev.chainId = web3.utils.toHex(tokenPairs_dev.chainId)
-  tokenPairs_dev.fromChainID = web3.utils.toHex(tokenPairs_dev.fromChainID)
-  tokenPairs_dev.toChainID = web3.utils.toHex(tokenPairs_dev.toChainID)
-  
+  itemFieldToHex(tokenPairs)
+  itemFieldToHex(tokenPairs_eth)
+  itemFieldToHex(tokenPairs_bsc)
+  itemFieldToHex(tokenPairs_avax)
+  itemFieldToHex(tokenPairs_dev)
 
   const result = {
     'WanChain' : {
@@ -240,9 +233,7 @@ async function refreshTMS() {
     const total = await tm.totalTokenPairs()
     const tokenPairsWeb3 = await getTokenPairs(tm, total)
 
-    tokenPairsWeb3.chainId = web3.utils.toHex(tokenPairsWeb3.chainId)
-    tokenPairsWeb3.fromChainID = web3.utils.toHex(tokenPairsWeb3.fromChainID)
-    tokenPairsWeb3.toChainID = web3.utils.toHex(tokenPairsWeb3.toChainID)
+    itemFieldToHex(tokenPairsWeb3)
 
     result[tm.chain.chainName] = {
       tokenPairs : tokenPairsWeb3
