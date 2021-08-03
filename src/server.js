@@ -162,11 +162,12 @@ function getMapTm(toChainId) {
 }
 
 function itemFieldToHex(tokenPairs) {
-  tokenPairs.forEach(tokenPair => { 
+  for (let i in tokenPairs) {
+    const tokenPair = tokenPairs[i]
     tokenPair.chainId = web3.utils.toHex(tokenPair.chainId) 
     tokenPair.fromChainID = web3.utils.toHex(tokenPair.fromChainID) 
     tokenPair.toChainID = web3.utils.toHex(tokenPair.toChainID) 
-  })
+  }
 }
 async function getTokenPairs(tm, _total) {
   const tokenPairs = {}
