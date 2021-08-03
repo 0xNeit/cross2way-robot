@@ -256,6 +256,9 @@ async function refreshTMS() {
     tmColumns.push(...chainNames);
     const ids = Object.keys(result.WanChain.tokenPairs);
     ids.forEach(id => {
+      if(!result.WanChain.tokenPairs[id]) {
+        log.error(`wan chain, token pair id = ${id}, not exist`)
+      }
       const fields = Object.keys(result.WanChain.tokenPairs[id]);
       const data = fields.map(field => {
         const obj = {name: field}
