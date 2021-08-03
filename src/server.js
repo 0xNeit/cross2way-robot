@@ -196,6 +196,27 @@ async function refreshTMS() {
   const tokenPairs_avax = await getTokenPairs(tmAvax, totalTokenPairs_avax)
   const tokenPairs_dev = await getTokenPairs(tmDev, totalTokenPairs_dev)
 
+  tokenPairs.chainId = web3.utils.toHex(tokenPairs.chainId)
+  tokenPairs.fromChainID = web3.utils.toHex(tokenPairs.fromChainID)
+  tokenPairs.toChainID = web3.utils.toHex(tokenPairs.toChainID)
+
+  tokenPairs_eth.chainId = web3.utils.toHex(tokenPairs_eth.chainId)
+  tokenPairs_eth.fromChainID = web3.utils.toHex(tokenPairs_eth.fromChainID)
+  tokenPairs_eth.toChainID = web3.utils.toHex(tokenPairs_eth.toChainID)
+
+  tokenPairs_bsc.chainId = web3.utils.toHex(tokenPairs_bsc.chainId)
+  tokenPairs_bsc.fromChainID = web3.utils.toHex(tokenPairs_bsc.fromChainID)
+  tokenPairs_bsc.toChainID = web3.utils.toHex(tokenPairs_bsc.toChainID)
+
+  totalTokenPairs_avax.chainId = web3.utils.toHex(totalTokenPairs_avax.chainId)
+  totalTokenPairs_avax.fromChainID = web3.utils.toHex(totalTokenPairs_avax.fromChainID)
+  totalTokenPairs_avax.toChainID = web3.utils.toHex(totalTokenPairs_avax.toChainID)
+
+  tokenPairs_dev.chainId = web3.utils.toHex(tokenPairs_dev.chainId)
+  tokenPairs_dev.fromChainID = web3.utils.toHex(tokenPairs_dev.fromChainID)
+  tokenPairs_dev.toChainID = web3.utils.toHex(tokenPairs_dev.toChainID)
+  
+
   const result = {
     'WanChain' : {
       tokenPairs: tokenPairs,
@@ -218,6 +239,11 @@ async function refreshTMS() {
     const tm = web3Tms[i]
     const total = await tm.totalTokenPairs()
     const tokenPairsWeb3 = await getTokenPairs(tm, total)
+
+    tokenPairsWeb3.chainId = web3.utils.toHex(tokenPairsWeb3.chainId)
+    tokenPairsWeb3.fromChainID = web3.utils.toHex(tokenPairsWeb3.fromChainID)
+    tokenPairsWeb3.toChainID = web3.utils.toHex(tokenPairsWeb3.toChainID)
+
     result[tm.chain.chainName] = {
       tokenPairs : tokenPairsWeb3
     }
@@ -323,6 +349,17 @@ async function refreshOracles() {
       configAvax.groupId = web3.utils.hexToString(groupId)
       configDev.groupId = web3.utils.hexToString(groupId)
 
+      config.chain1 = web3.utils.toHex(config.chain1)
+      config.chain2 = web3.utils.toHex(config.chain2)
+      configEth.chain1 = web3.utils.toHex(configEth.chain1)
+      configEth.chain2 = web3.utils.toHex(configEth.chain2)
+      configBsc.chain1 = web3.utils.toHex(configBsc.chain1)
+      configBsc.chain2 = web3.utils.toHex(configBsc.chain2)
+      configAvax.chain1 = web3.utils.toHex(configAvax.chain1)
+      configAvax.chain2 = web3.utils.toHex(configAvax.chain2)
+      configDev.chain1 = web3.utils.toHex(configDev.chain1)
+      configDev.chain2 = web3.utils.toHex(configDev.chain2)
+
       configDev.isDebtClean = (await oracleDev.isDebtClean(groupId)).toString()
       configAvax.isDebtClean = (await oracleAvax.isDebtClean(groupId)).toString()
       configBsc.isDebtClean = (await oracleBsc.isDebtClean(groupId)).toString()
@@ -372,6 +409,8 @@ async function refreshOracles() {
         delete config[str];
       }
       config.groupId = web3.utils.hexToString(groupId)
+      config.chain1 = web3.utils.toHex(config.chain1)
+      config.chain2 = web3.utils.toHex(config.chain2)
       config.isDebtClean = (await oracle.isDebtClean(groupId)).toString()
       web3Sgs[groupId] = config
     }
@@ -485,8 +524,8 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsWan[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsWan[1])),
-      chainId: await chainWan.core.getChainId(),
-      crossChainId: await crossWan.getChainId(),
+      chainId: web3.utils.toHex(await chainWan.core.getChainId()),
+      crossChainId: web3.utils.toHex(await crossWan.getChainId()),
     },
     'Ethereum' : {
       blockNumber: await chainEth.core.getBlockNumber(),
@@ -506,8 +545,8 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsEth[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsEth[1])),
-      chainId: await chainEth.core.getChainId(),
-      crossChainId: await chainEth.getChainId(),
+      chainId: web3.utils.toHex(await chainEth.core.getChainId()),
+      crossChainId: web3.utils.toHex(await crossEth.getChainId()),
     },
     'Bsc' : {
       blockNumber: await chainBsc.core.getBlockNumber(),
@@ -527,8 +566,8 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsBsc[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsBsc[1])),
-      chainId: await chainBsc.core.getChainId(),
-      crossChainId: await chainBsc.getChainId(),
+      chainId: web3.utils.toHex(await chainBsc.core.getChainId()),
+      crossChainId: web3.utils.toHex(await crossBsc.getChainId()),
     },
     'Avax' : {
       blockNumber: await chainAvax.core.getBlockNumber(),
@@ -548,8 +587,8 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsAvax[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsAvax[1])),
-      chainId: await chainAvax.core.getChainId(),
-      crossChainId: await chainAvax.getChainId(),
+      chainId: web3.utils.toHex(await chainAvax.core.getChainId()),
+      crossChainId: web3.utils.toHex(await crossAvax.getChainId()),
     },
     'MoonBeam' : {
       blockNumber: await chainDev.core.getBlockNumber(),
@@ -569,8 +608,8 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsDev[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsDev[1])),
-      chainId: await chainDev.core.getChainId(),
-      crossChainId: await chainDev.getChainId(),
+      chainId: web3.utils.toHex(await chainDev.core.getChainId()),
+      // crossChainId: web3.utils.toHex(await crossDev.getChainId()),
     },
 
   }
@@ -596,8 +635,8 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIds[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIds[1])), 
-      chainId: await chain.core.getChainId(),
-      crossChainId: await web3Cross[i].getChainId(),
+      chainId: web3.utils.toHex(await chain.core.getChainId()),
+      crossChainId: web3.utils.toHex(await web3Cross[i].getChainId()),
     }
   }
   // chainsResult = result;
