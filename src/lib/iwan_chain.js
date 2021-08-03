@@ -96,6 +96,10 @@ class IWan {
     return await this.apiClient.getBlockNumber(this.chainType);
   };
 
+  async getChainId() {
+    return await this.apiClient.getChainId(this.chainType);
+  }
+
   async getTransactionReceipt(txHash) {
     try {
       return await this.apiClient.getTransactionReceipt(this.chainType, txHash);

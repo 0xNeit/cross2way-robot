@@ -57,6 +57,10 @@ class Web3Chain {
     return await this.web3.eth.getBlockNumber();
   };
 
+  async getChainId() {
+    return await this.web3.eth.getChainId();
+  }
+
   async getTransactionReceipt(txHash) {
     return await this.web3.eth.getTransactionReceipt(txHash);
   }

@@ -59,10 +59,18 @@ const tmBsc = loadContract(chainBsc, 'TokenManagerDelegate')
 const tmAvax = loadContract(chainAvax, 'TokenManagerDelegate')
 const tmDev = loadContract(chainDev, 'TokenManagerDelegate')
 
+const crossWan = loadContract(chainWan, 'CrossDelegate')
+const crossEth = loadContract(chainEth, 'CrossDelegate')
+const crossBsc = loadContract(chainBsc, 'CrossDelegate')
+const crossAvax = loadContract(chainAvax, 'CrossDelegate')
+const crossDev = loadContract(chainDev, 'CrossDelegate')
+
 const web3Oracles = []
 const web3OracleProxies = []
 const web3Tms = []
 const web3TmProxies = []
+
+const web3Cross = []
 
 web3Chains.forEach(web3Chain => {
   if (!!web3Chain.deployedFile) {
@@ -89,6 +97,12 @@ web3Chains.forEach(web3Chain => {
       log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
     }
     web3Tms.push(tm)
+
+    const cross = web3Chain.loadContract('CrossDelegate')
+    if (!cross) {
+      log.error(`${web3Chain.chainType} has not deployed CrossDelegate`)
+    }
+    web3Cross.push(cross)
   }
 })
 
@@ -469,8 +483,10 @@ async function refreshChains() {
       storeManProxy: sgaWan.address,
       storeManProxyOwner: await sgaWan.getOwner(),
 
-      currentStoreman0: web3.utils.toHex(curIdsWan[0]),
-      currentStoreman1: web3.utils.toHex(curIdsWan[1]),
+      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsWan[0])),
+      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsWan[1])),
+      chainId: await chainWan.core.getChainId(),
+      crossChainId: await crossWan.getChainId(),
     },
     'Ethereum' : {
       blockNumber: await chainEth.core.getBlockNumber(),
@@ -488,8 +504,10 @@ async function refreshChains() {
       storeManProxy: "no contract",
       storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
 
-      currentStoreman0: web3.utils.toHex(curIdsEth[0]),
-      currentStoreman1: web3.utils.toHex(curIdsEth[1]),
+      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsEth[0])),
+      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsEth[1])),
+      chainId: await chainEth.core.getChainId(),
+      crossChainId: await chainEth.getChainId(),
     },
     'Bsc' : {
       blockNumber: await chainBsc.core.getBlockNumber(),
@@ -507,8 +525,10 @@ async function refreshChains() {
       storeManProxy: "no contract",
       storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
 
-      currentStoreman0: web3.utils.toHex(curIdsBsc[0]),
-      currentStoreman1: web3.utils.toHex(curIdsBsc[1]),
+      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsBsc[0])),
+      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsBsc[1])),
+      chainId: await chainBsc.core.getChainId(),
+      crossChainId: await chainBsc.getChainId(),
     },
     'Avax' : {
       blockNumber: await chainAvax.core.getBlockNumber(),
@@ -526,8 +546,10 @@ async function refreshChains() {
       storeManProxy: "no contract",
       storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
 
-      currentStoreman0: web3.utils.toHex(curIdsAvax[0]),
-      currentStoreman1: web3.utils.toHex(curIdsAvax[1]),
+      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsAvax[0])),
+      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsAvax[1])),
+      chainId: await chainAvax.core.getChainId(),
+      crossChainId: await chainAvax.getChainId(),
     },
     'MoonBeam' : {
       blockNumber: await chainDev.core.getBlockNumber(),
@@ -545,8 +567,10 @@ async function refreshChains() {
       storeManProxy: "no contract",
       storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
 
-      currentStoreman0: web3.utils.toHex(curIdsDev[0]),
-      currentStoreman1: web3.utils.toHex(curIdsDev[1]),
+      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsDev[0])),
+      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsDev[1])),
+      chainId: await chainDev.core.getChainId(),
+      crossChainId: await chainDev.getChainId(),
     },
 
   }
@@ -570,8 +594,10 @@ async function refreshChains() {
       storeManProxy: "no contract",
       storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
 
-      currentStoreman0: web3.utils.toHex(curIds[0]),
-      currentStoreman1: web3.utils.toHex(curIds[1]), 
+      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIds[0])),
+      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIds[1])), 
+      chainId: await chain.core.getChainId(),
+      crossChainId: await web3Cross[i].getChainId(),
     }
   }
   // chainsResult = result;
@@ -630,11 +656,11 @@ setTimeout(async function() {
   try {
     if (gTip) return
     gTip = true
-    await refreshTMS();
-    await refreshOracles();
+    // await refreshTMS();
+    // await refreshOracles();
     await refreshChains();
-    await refreshQuota();
-    await refreshCross();
+    // await refreshQuota();
+    // await refreshCross();
     gTip = false
   } catch(e) {
     console.log(e);
@@ -643,21 +669,21 @@ setTimeout(async function() {
 }, 0);
 
 
-setInterval(async function() {
-  try {
-    if (gTip) return
-    gTip = true
-    await refreshTMS();
-    await refreshOracles();
-    await refreshChains();
-    await refreshQuota();
-    await refreshCross();
-    gTip = false
-  } catch(e) {
-    console.log(e);
-    gTip = false
-  }
-}, 60000);
+// setInterval(async function() {
+//   try {
+//     if (gTip) return
+//     gTip = true
+//     await refreshTMS();
+//     await refreshOracles();
+//     await refreshChains();
+//     await refreshQuota();
+//     await refreshCross();
+//     gTip = false
+//   } catch(e) {
+//     console.log(e);
+//     gTip = false
+//   }
+// }, 60000);
 
 app.get('/tms', (req, res) => {
   res.send(tmsResult);
