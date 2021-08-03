@@ -708,21 +708,21 @@ setTimeout(async function() {
 }, 0);
 
 
-// setInterval(async function() {
-//   try {
-//     if (gTip) return
-//     gTip = true
-//     await refreshTMS();
-//     await refreshOracles();
-//     await refreshChains();
-//     await refreshQuota();
-//     await refreshCross();
-//     gTip = false
-//   } catch(e) {
-//     console.log(e);
-//     gTip = false
-//   }
-// }, 60000);
+setInterval(async function() {
+  try {
+    if (gTip) return
+    gTip = true
+    await refreshTMS();
+    await refreshOracles();
+    await refreshChains();
+    await refreshQuota();
+    await refreshCross();
+    gTip = false
+  } catch(e) {
+    console.log(e);
+    gTip = false
+  }
+}, 60000);
 
 app.get('/tms', (req, res) => {
   res.send(tmsResult);
