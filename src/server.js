@@ -519,7 +519,7 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsWan[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsWan[1])),
-      chainId: web3.utils.toHex(await chainWan.core.getChainId()),
+      chainId: await chainWan.core.getChainId(),
       crossChainId: web3.utils.toHex(await crossWan.getChainId()),
     },
     'Ethereum' : {
@@ -540,7 +540,7 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsEth[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsEth[1])),
-      chainId: web3.utils.toHex(await chainEth.core.getChainId()),
+      chainId: await chainEth.core.getChainId(),
       crossChainId: web3.utils.toHex(await crossEth.getChainId()),
     },
     'Bsc' : {
@@ -561,7 +561,7 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsBsc[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsBsc[1])),
-      chainId: web3.utils.toHex(await chainBsc.core.getChainId()),
+      chainId: await chainBsc.core.getChainId(),
       crossChainId: web3.utils.toHex(await crossBsc.getChainId()),
     },
     'Avax' : {
@@ -582,7 +582,7 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsAvax[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsAvax[1])),
-      chainId: web3.utils.toHex(await chainAvax.core.getChainId()),
+      chainId: await chainAvax.core.getChainId(),
       crossChainId: web3.utils.toHex(await crossAvax.getChainId()),
     },
     'MoonBeam' : {
@@ -603,7 +603,7 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsDev[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsDev[1])),
-      chainId: web3.utils.toHex(await chainDev.core.getChainId()),
+      chainId: await chainDev.core.getChainId(),
       crossChainId: ''// web3.utils.toHex(await crossDev.getChainId()),
     },
 
@@ -630,7 +630,7 @@ async function refreshChains() {
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIds[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIds[1])), 
-      chainId: web3.utils.toHex(await chain.core.getChainId()),
+      chainId: await chain.core.getChainId(),
       crossChainId: web3.utils.toHex(await web3Cross[i].getChainId()),
     }
   }
