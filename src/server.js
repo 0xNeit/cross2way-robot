@@ -604,7 +604,7 @@ async function refreshChains() {
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsDev[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsDev[1])),
       chainId: await chainDev.core.getChainId(),
-      crossChainId: ''// web3.utils.toHex(await crossDev.getChainId()),
+      crossChainId: web3.utils.toHex(await crossDev.getChainId()),
     },
 
   }
