@@ -51,6 +51,7 @@ const BigNumber = require('bignumber.js');
 const web3 = new Web3(new Web3.providers.HttpProvider('https://gwan-ssl.wandevs.org:56891'));
 const abi = [{"constant":true,"inputs":[],"name":"getReserves","outputs":[{"internalType":"uint112","name":"_reserve0","type":"uint112"},{"internalType":"uint112","name":"_reserve1","type":"uint112"},{"internalType":"uint32","name":"_blockTimestampLast","type":"uint32"}],"payable":false,"stateMutability":"view","type":"function"}];
 async function getWaspPriceFromContract(wanPrice) {
+  // wasp/wwan
   const address = "0x29239a9b93a78decec6e0dd58ddbb854b7ffb0af";
   const sc = new web3.eth.Contract(abi, address);
   let ret = await sc.methods.getReserves().call();
@@ -66,6 +67,7 @@ async function getWaspPriceFromContract(wanPrice) {
 }
 
 async function getFnxPriceFromContract(wanPrice) {
+  // fnx/wwan
   const fnxWanPairAddress = '0x4bbbaaa14725d157bf9dde1e13f73c3f96343f3d'
   const sc = new web3.eth.Contract(abi, fnxWanPairAddress);
   let ret = await sc.methods.getReserves().call();
@@ -80,24 +82,43 @@ async function getFnxPriceFromContract(wanPrice) {
   return '0x' + p.toString(16)
 }
 
-async function getZooPriceFromContract(waspPrice) {
-  const zooWaspPairAddress = '0xa0cf1f16994ecd6d4613024b3ebb61b9f9c06f06'
-  const sc = new web3.eth.Contract(abi, zooWaspPairAddress);
+async function getPhxPriceFromContract(waspPrice) {
+  // wasp/phx
+  const phxWaspPairAddress = '0x7f84994114c41191386b7cb5e9296896e44a41ed'
+  const sc = new web3.eth.Contract(abi, phxWaspPairAddress);
   let ret = await sc.methods.getReserves().call();
   console.log('ret', ret);
   const wp = new BigNumber(waspPrice)
-  const zoo = new BigNumber(ret._reserve1)
   const wasp = new BigNumber(ret._reserve0)
-  let p = zoo.div(wasp).multipliedBy(wp).integerValue();
+  const phx = new BigNumber(ret._reserve1)
+  let p = wasp.div(phx).multipliedBy(wp).integerValue();
 
   console.log("p", p.toString());
 
   return '0x' + p.toString(16)
 }
 
+async function getZooPriceFromContract(waspPrice) {
+  // zoo/wasp
+  const zooWaspPairAddress = '0xa0cf1f16994ecd6d4613024b3ebb61b9f9c06f06'
+  const sc = new web3.eth.Contract(abi, zooWaspPairAddress);
+  let ret = await sc.methods.getReserves().call();
+  console.log('ret', ret);
+  const wp = new BigNumber(waspPrice)
+  const wasp = new BigNumber(ret._reserve1)
+  const zoo = new BigNumber(ret._reserve0)
+  let p = wasp.div(zoo).multipliedBy(wp).integerValue();
+
+  console.log("p", p.toString());
+
+  return '0x' + p.toString(16)
+}
+
+
 module.exports = {
   // getWaspPriceFromGraphql,
   getWaspPriceFromContract,
   getFnxPriceFromContract,
   getZooPriceFromContract,
+  getPhxPriceFromContract,
 }
