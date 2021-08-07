@@ -122,7 +122,7 @@ async function getPrices(symbolsStr, idsStr) {
   priceMap['WASP'] = waspPrice
   const zooPrice = await getZooPriceFromContract(priceMap['WASP'])
   priceMap['ZOO'] = zooPrice
-  const phxPrice = await getZooPriceFromContract(priceMap['WASP'])
+  const phxPrice = await getPhxPriceFromContract(priceMap['WASP'])
   priceMap['PHX'] = phxPrice
 
   priceMap['FNX'] = '0x01'
@@ -137,10 +137,10 @@ async function getPrices(symbolsStr, idsStr) {
 // https://api.coingecko.com/api/v3/coins/list
 // https://api.coingecko.com/api/v3/simple/price?ids=<coin>&vs_currencies=usd
 // https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=3
-setTimeout(async () => {
-  // const data = await getIDs("https://api.coingecko.com/api/v3/coins/list", process.env.SYMBOLS);
-  const data = await getPrices(process.env.SYMBOLS, process.env.SYMBOLIDS)
-  console.log(JSON.stringify(data, null, 2))
-}, 0)
+// setTimeout(async () => {
+//   // const data = await getIDs("https://api.coingecko.com/api/v3/coins/list", process.env.SYMBOLS);
+//   const data = await getPrices(process.env.SYMBOLS, process.env.SYMBOLIDS)
+//   console.log(JSON.stringify(data, null, 2))
+// }, 0)
 
 module.exports = getPrices
