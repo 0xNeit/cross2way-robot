@@ -343,7 +343,7 @@ const syncIsDebtCleanToWan = async function(oracleWan, quotaWan, quotaEth, quota
       if (isDebtClean) {
         totalClean ++
       }
-      logStr = `${quota.chain.chainName} ${isDebtClean}`
+      logStr += ` ${quota.chain.chainName} ${isDebtClean}`
     }
 
     let isDebtClean_wan = false

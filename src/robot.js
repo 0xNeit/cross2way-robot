@@ -223,7 +223,7 @@ setTimeout(async () => {
 
   robotSchedules();
 
-  // setTimeout(updateStoreManToChainsPart, 0)
+  // setTimeout(updateDebtCleanToWan, 0)
 }, 0)
 
 
