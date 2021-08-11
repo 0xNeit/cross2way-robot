@@ -105,6 +105,7 @@ web3Chains.forEach(web3Chain => {
 
 //
 const chainWan = getChain('wanchain', process.env.NETWORK_TYPE)
+const oracleWan =  chainWan.loadContract('OracleDelegate')
 const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
 
 const schedule = require('node-schedule');
@@ -248,6 +249,7 @@ function mapStr2str(symbolsMapStr) {
 async function refreshOracles() {
   const mapStr = mapStr2str(process.env.SYMBOLS_MAP);
   const WAN_SYMBOLS = process.env.SYMBOLS + (mapStr.length > 0 ? ',' : "") + mapStr;
+
   const prePricesArray = await oracleWan.getValues(WAN_SYMBOLS);
   const symbolsStringArray = WAN_SYMBOLS.replace(/\s+/g,"").split(',');
   const prePricesMap = {}
