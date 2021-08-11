@@ -13,55 +13,10 @@ app.all('*', (req, res, next) => {
 
 const log = require('./lib/log');
 const { web3, sleep } = require('./lib/utils');
-const Oracle = require('./contract/oracle');
-const TokenManager = require('./contract/token_manager');
-const OracleProxy = require('./contract/oracle_proxy');
-const TokenManagerProxy = require('./contract/token_manager_proxy');
-const SGA = require('./contract/storeman_group_admin');
-const Quota = require('./contract/quota');
-const Cross = require('./contract/cross');
 const db = require('./lib/sqlite_db');
 const { getChains, getChain } = require('./lib/web3_chains')
 
-// const chainWan = require(`./chain/${process.env.WAN_CHAIN_ENGINE}`);
-// const chainEth = require(`./chain/${process.env.ETH_CHAIN_ENGINE}`);
-// const chainBsc = require(`./chain/${process.env.CHAIN_ENGINE_BSC}`);
-// const chainAvax = require(`./chain/${process.env.AVAX_CHAIN_ENGINE}`);
-// const chainDev = require(`./chain/${process.env.CHAIN_ENGINE_DEV}`);
-
 const web3Chains = getChains(process.env.NETWORK_TYPE)
-
-const { loadContract } = require('./lib/abi_address');
-
-// const oracleWanProxy = loadContract(chainWan, 'OracleProxy')
-// const oracleEthProxy = loadContract(chainEth, 'OracleProxy')
-// const oracleBscProxy = loadContract(chainBsc, 'OracleProxy')
-// const oracleAvaxProxy = loadContract(chainAvax, 'OracleProxy')
-// const oracleDevProxy = loadContract(chainDev, 'OracleProxy')
-
-// const tmWanProxy = loadContract(chainWan, 'TokenManagerProxy')
-// const tmEthProxy = loadContract(chainEth, 'TokenManagerProxy')
-// const tmBscProxy = loadContract(chainBsc, 'TokenManagerProxy')
-// const tmAvaxProxy = loadContract(chainAvax, 'TokenManagerProxy')
-// const tmDevProxy = loadContract(chainDev, 'TokenManagerProxy')
-
-// const oracleWan = loadContract(chainWan, 'OracleDelegate')
-// const oracleEth = loadContract(chainEth, 'OracleDelegate')
-// const oracleBsc = loadContract(chainBsc, 'OracleDelegate')
-// const oracleAvax = loadContract(chainAvax, 'OracleDelegate')
-// const oracleDev = loadContract(chainDev, 'OracleDelegate')
-
-// const tmWan = loadContract(chainWan, 'TokenManagerDelegate')
-// const tmEth = loadContract(chainEth, 'TokenManagerDelegate')
-// const tmBsc = loadContract(chainBsc, 'TokenManagerDelegate')
-// const tmAvax = loadContract(chainAvax, 'TokenManagerDelegate')
-// const tmDev = loadContract(chainDev, 'TokenManagerDelegate')
-
-// const crossWan = loadContract(chainWan, 'CrossDelegate')
-// const crossEth = loadContract(chainEth, 'CrossDelegate')
-// const crossBsc = loadContract(chainBsc, 'CrossDelegate')
-// const crossAvax = loadContract(chainAvax, 'CrossDelegate')
-// const crossDev = loadContract(chainDev, 'CrossDelegate')
 
 const web3Oracles = []
 const web3OracleProxies = []
@@ -177,8 +132,6 @@ async function getTokenPairs(tm, _total) {
 let tmsResult = {};
 let oracleResult = null;
 let chainsResult = null;
-let quotaResult = {};
-let crossResult = {};
 
 async function refreshTMS() {
   const result = {}
@@ -263,12 +216,13 @@ async function refreshOracles() {
 
   for (let i = 0; i < web3Oracles.length; i++) {
     const oracle = web3Oracles[i]
+    const oracleStoreman = oracle.chain.chainName === 'wan' ? sgaWan : oracle
     const web3Sgs = {}
     const sgAll = db.getAllSga();
     for (let i = 0; i<sgAll.length; i++) {
       const sg = sgAll[i];
       const groupId = sg.groupId;
-      const config = await oracle.getStoremanGroupConfig(groupId);
+      const config = await oracleStoreman.getStoremanGroupConfig(groupId);
       const ks = Object.keys(config);
       for (let j = 0; j < ks.length/2; j++) {
         const str = j.toString();
@@ -378,40 +332,6 @@ async function refreshChains() {
   };
 }
 
-async function refreshQuota() {
-  // const result = {
-  //   'WanChain' : {
-  //     'getPartners': {
-  //       'tokenManager': 
-  //     }
-  //   },
-  //   'Ethereum' : {
-
-  //   }
-  // }
-
-  // quotaResult = {
-  //   columns: col,
-  //   data: data
-  // }
-}
-
-async function refreshCross() {
-  // const result = {
-  //   'WanChain' : {
-
-  //   },
-  //   'Ethereum' : {
-      
-  //   }
-  // }
-
-  // quotaResult = {
-  //   columns: col,
-  //   data: data
-  // }
-}
-
 let gTip = false
 setTimeout(async function() {
   try {
@@ -420,8 +340,6 @@ setTimeout(async function() {
     await refreshTMS();
     await refreshOracles();
     await refreshChains();
-    await refreshQuota();
-    await refreshCross();
     gTip = false
   } catch(e) {
     console.log(e);
@@ -437,8 +355,6 @@ setInterval(async function() {
     await refreshTMS();
     await refreshOracles();
     await refreshChains();
-    await refreshQuota();
-    await refreshCross();
     gTip = false
   } catch(e) {
     console.log(e);
