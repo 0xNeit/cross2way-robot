@@ -264,6 +264,7 @@ async function refreshOracles() {
   for (let i = 0; i < web3Oracles.length; i++) {
     const oracle = web3Oracles[i]
     const web3Sgs = {}
+    const sgAll = db.getAllSga();
     for (let i = 0; i<sgAll.length; i++) {
       const sg = sgAll[i];
       const groupId = sg.groupId;
