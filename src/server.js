@@ -199,12 +199,12 @@ async function refreshTMS() {
   let tmsTmp = [];
   if (chainNames.length > 0) {
     tmColumns.push(...chainNames);
-    const ids = Object.keys(result.WanChain.tokenPairs);
+    const ids = Object.keys(result.wan.tokenPairs);
     ids.forEach(id => {
-      if(!result.WanChain.tokenPairs[id]) {
+      if(!result.wan.tokenPairs[id]) {
         log.error(`wan chain, token pair id = ${id}, not exist`)
       }
-      const fields = Object.keys(result.WanChain.tokenPairs[id]);
+      const fields = Object.keys(result.wan.tokenPairs[id]);
       const data = fields.map(field => {
         const obj = {name: field}
         chainNames.forEach(i => {
@@ -288,7 +288,7 @@ async function refreshOracles() {
   const chainNames = Object.keys(result);
   let priceData = [];
   priceColumns.push(...chainNames);
-  priceData = Object.keys(result.WanChain.prices).map(field => {
+  priceData = Object.keys(result.wan.prices).map(field => {
     const obj = {name: field}
     chainNames.forEach(i => (obj[i] = result[i].prices[field]))
     return obj;
@@ -298,9 +298,9 @@ async function refreshOracles() {
   const sgsTmp = [];
   if (chainNames.length > 0) {
     sgColumns.push(...chainNames);
-    const groupIds = Object.keys(result.WanChain.sgs);
+    const groupIds = Object.keys(result.wan.sgs);
     groupIds.forEach(id => {
-      const fields = Object.keys(result.WanChain.sgs[id]);
+      const fields = Object.keys(result.wan.sgs[id]);
       const data = fields.map(field => {
         const obj = {name: field}
         chainNames.forEach(i => {
@@ -361,7 +361,7 @@ async function refreshChains() {
   const chainInfoColumns = ['name'];
   const chainsNames = Object.keys(result);
   chainInfoColumns.push(...chainsNames);
-  const chainInfoData = Object.keys(result.WanChain).map(field => {
+  const chainInfoData = Object.keys(result.wan).map(field => {
     const obj = {name: field}
     chainsNames.forEach(i => (obj[i] = result[i][field]))
     return obj;
