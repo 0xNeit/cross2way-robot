@@ -297,10 +297,10 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
       continue
     }
 
-    const groupName = web3.utils.hexToString(groupId)
-    if (groupName !== 'dev_030') {
-      continue
-    }
+    // const groupName = web3.utils.hexToString(groupId)
+    // if (groupName !== 'dev_030') {
+    //   continue
+    // }
 
     const isDebtCleans = []
     let totalClean = 0
