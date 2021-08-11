@@ -335,6 +335,8 @@ async function refreshOracles() {
 }
 
 async function refreshChains() {
+  const result = {
+  }
   for (let i = 0; i < web3Chains.length; i++) {
     const chain = web3Chains[i]
     const curIds = await web3Oracles[i].getCurrentGroupIds()
