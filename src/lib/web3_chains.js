@@ -129,11 +129,6 @@ function getChain(name, network) {
 
     const chain = new Chain(configs[name][network])
     chains[name][network] = chain
-    // chains[name][network] = {
-    //   core: chain,
-    //   web3: chain.web3,
-    //   signTx: chain.signTx,
-    // }
   }
 
   return chains[name][network]

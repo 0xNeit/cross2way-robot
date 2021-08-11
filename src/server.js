@@ -21,55 +21,52 @@ const SGA = require('./contract/storeman_group_admin');
 const Quota = require('./contract/quota');
 const Cross = require('./contract/cross');
 const db = require('./lib/sqlite_db');
-const { getChains } = require('./lib/web3_chains')
+const { getChains, getChain } = require('./lib/web3_chains')
 
-const chainWan = require(`./chain/${process.env.WAN_CHAIN_ENGINE}`);
-const chainEth = require(`./chain/${process.env.ETH_CHAIN_ENGINE}`);
-const chainBsc = require(`./chain/${process.env.CHAIN_ENGINE_BSC}`);
-const chainAvax = require(`./chain/${process.env.AVAX_CHAIN_ENGINE}`);
-const chainDev = require(`./chain/${process.env.CHAIN_ENGINE_DEV}`);
-// const chainWan = require(`./chain/${process.env.IWAN_WAN_CHAIN_ENGINE}`);
-// const chainEth = require(`./chain/${process.env.IWAN_ETH_CHAIN_ENGINE}`);
+// const chainWan = require(`./chain/${process.env.WAN_CHAIN_ENGINE}`);
+// const chainEth = require(`./chain/${process.env.ETH_CHAIN_ENGINE}`);
+// const chainBsc = require(`./chain/${process.env.CHAIN_ENGINE_BSC}`);
+// const chainAvax = require(`./chain/${process.env.AVAX_CHAIN_ENGINE}`);
+// const chainDev = require(`./chain/${process.env.CHAIN_ENGINE_DEV}`);
 
 const web3Chains = getChains(process.env.NETWORK_TYPE)
 
 const { loadContract } = require('./lib/abi_address');
 
-const oracleWanProxy = loadContract(chainWan, 'OracleProxy')
-const oracleEthProxy = loadContract(chainEth, 'OracleProxy')
-const oracleBscProxy = loadContract(chainBsc, 'OracleProxy')
-const oracleAvaxProxy = loadContract(chainAvax, 'OracleProxy')
-const oracleDevProxy = loadContract(chainDev, 'OracleProxy')
+// const oracleWanProxy = loadContract(chainWan, 'OracleProxy')
+// const oracleEthProxy = loadContract(chainEth, 'OracleProxy')
+// const oracleBscProxy = loadContract(chainBsc, 'OracleProxy')
+// const oracleAvaxProxy = loadContract(chainAvax, 'OracleProxy')
+// const oracleDevProxy = loadContract(chainDev, 'OracleProxy')
 
-const tmWanProxy = loadContract(chainWan, 'TokenManagerProxy')
-const tmEthProxy = loadContract(chainEth, 'TokenManagerProxy')
-const tmBscProxy = loadContract(chainBsc, 'TokenManagerProxy')
-const tmAvaxProxy = loadContract(chainAvax, 'TokenManagerProxy')
-const tmDevProxy = loadContract(chainDev, 'TokenManagerProxy')
+// const tmWanProxy = loadContract(chainWan, 'TokenManagerProxy')
+// const tmEthProxy = loadContract(chainEth, 'TokenManagerProxy')
+// const tmBscProxy = loadContract(chainBsc, 'TokenManagerProxy')
+// const tmAvaxProxy = loadContract(chainAvax, 'TokenManagerProxy')
+// const tmDevProxy = loadContract(chainDev, 'TokenManagerProxy')
 
-const oracleWan = loadContract(chainWan, 'OracleDelegate')
-const oracleEth = loadContract(chainEth, 'OracleDelegate')
-const oracleBsc = loadContract(chainBsc, 'OracleDelegate')
-const oracleAvax = loadContract(chainAvax, 'OracleDelegate')
-const oracleDev = loadContract(chainDev, 'OracleDelegate')
+// const oracleWan = loadContract(chainWan, 'OracleDelegate')
+// const oracleEth = loadContract(chainEth, 'OracleDelegate')
+// const oracleBsc = loadContract(chainBsc, 'OracleDelegate')
+// const oracleAvax = loadContract(chainAvax, 'OracleDelegate')
+// const oracleDev = loadContract(chainDev, 'OracleDelegate')
 
-const tmWan = loadContract(chainWan, 'TokenManagerDelegate')
-const tmEth = loadContract(chainEth, 'TokenManagerDelegate')
-const tmBsc = loadContract(chainBsc, 'TokenManagerDelegate')
-const tmAvax = loadContract(chainAvax, 'TokenManagerDelegate')
-const tmDev = loadContract(chainDev, 'TokenManagerDelegate')
+// const tmWan = loadContract(chainWan, 'TokenManagerDelegate')
+// const tmEth = loadContract(chainEth, 'TokenManagerDelegate')
+// const tmBsc = loadContract(chainBsc, 'TokenManagerDelegate')
+// const tmAvax = loadContract(chainAvax, 'TokenManagerDelegate')
+// const tmDev = loadContract(chainDev, 'TokenManagerDelegate')
 
-const crossWan = loadContract(chainWan, 'CrossDelegate')
-const crossEth = loadContract(chainEth, 'CrossDelegate')
-const crossBsc = loadContract(chainBsc, 'CrossDelegate')
-const crossAvax = loadContract(chainAvax, 'CrossDelegate')
-const crossDev = loadContract(chainDev, 'CrossDelegate')
+// const crossWan = loadContract(chainWan, 'CrossDelegate')
+// const crossEth = loadContract(chainEth, 'CrossDelegate')
+// const crossBsc = loadContract(chainBsc, 'CrossDelegate')
+// const crossAvax = loadContract(chainAvax, 'CrossDelegate')
+// const crossDev = loadContract(chainDev, 'CrossDelegate')
 
 const web3Oracles = []
 const web3OracleProxies = []
 const web3Tms = []
 const web3TmProxies = []
-
 const web3Cross = []
 
 web3Chains.forEach(web3Chain => {
@@ -106,7 +103,9 @@ web3Chains.forEach(web3Chain => {
   }
 })
 
-const sgaWan = loadContract(chainWan, 'StoremanGroupDelegate')
+//
+const chainWan = getChain('wanchain', process.env.NETWORK_TYPE)
+const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
 
 const schedule = require('node-schedule');
 const { createScanEvent} = require('./robot_core');
@@ -140,25 +139,13 @@ function removeIndexField(obj) {
 }
 
 function getMapTm(toChainId) {
-  if (tmWan.core.chainId === toChainId) {
-    return tmWan
-  } else if (tmEth.core.chainId === toChainId) {
-    return tmEth
-  } else if (tmBsc.core.chainId === toChainId) {
-    return tmBsc
-  } else if (tmAvax.core.chainId === toChainId) {
-    return tmAvax
-  } else if (tmDev.core.chainId === toChainId) {
-    return tmDev
-  } else {
-    const tm = web3Tms.find(tm => {
-      return tm.core.bip44 === toChainId
-    })
-    if (!tm) {
-      return null
-    }
-    return tm;
+  const tm = web3Tms.find(tm => {
+    return tm.core.bip44 === toChainId
+  })
+  if (!tm) {
+    return null
   }
+  return tm;
 }
 
 function itemFieldToHex(tokenPairs) {
@@ -193,41 +180,7 @@ let quotaResult = {};
 let crossResult = {};
 
 async function refreshTMS() {
-  const totalTokenPairs = await tmWan.totalTokenPairs();
-  const totalTokenPairs_eth = await tmEth.totalTokenPairs();
-  const totalTokenPairs_bsc = await tmBsc.totalTokenPairs();
-  const totalTokenPairs_avax = await tmAvax.totalTokenPairs();
-  const totalTokenPairs_dev = await tmDev.totalTokenPairs();
-
-  const tokenPairs = await getTokenPairs(tmWan, totalTokenPairs)
-  const tokenPairs_eth = await getTokenPairs(tmEth, totalTokenPairs_eth)
-  const tokenPairs_bsc = await getTokenPairs(tmBsc, totalTokenPairs_bsc)
-  const tokenPairs_avax = await getTokenPairs(tmAvax, totalTokenPairs_avax)
-  const tokenPairs_dev = await getTokenPairs(tmDev, totalTokenPairs_dev)
-
-  itemFieldToHex(tokenPairs)
-  itemFieldToHex(tokenPairs_eth)
-  itemFieldToHex(tokenPairs_bsc)
-  itemFieldToHex(tokenPairs_avax)
-  itemFieldToHex(tokenPairs_dev)
-
-  const result = {
-    'WanChain' : {
-      tokenPairs: tokenPairs,
-    },
-    'Ethereum' : {
-      tokenPairs: tokenPairs_eth,
-    },
-    'Bsc' : {
-      tokenPairs: tokenPairs_bsc,
-    },
-    'Avax' : {
-      tokenPairs: tokenPairs_avax,
-    },
-    'MoonBeam' : {
-      tokenPairs: tokenPairs_dev,
-    }
-  }
+  const result = {}
 
   for (let i = 0; i < web3Tms.length; i++) {
     const tm = web3Tms[i]
@@ -240,7 +193,7 @@ async function refreshTMS() {
       tokenPairs : tokenPairsWeb3
     }
   }
-  // tmsResult = result;
+
   const chainNames = Object.keys(result);
   const tmColumns = ['name'];
   let tmsTmp = [];
@@ -303,92 +256,7 @@ async function refreshOracles() {
     prePricesMap[v] = padPrice.substr(0, padPrice.length - 18)+ '.'+ padPrice.substr(padPrice.length - 18, 18);
   })
 
-  const mapStrEth = mapStr2str(process.env.SYMBOLS_MAP_ETH)
-  const ETH_SYMBOLS = process.env.SYMBOLS_ETH + (mapStrEth.length > 0 ? "," : "") + mapStrEth
-  const prePricesMap_Eth = {}
-  const prePricesArray_Eth = await oracleEth.getValues(ETH_SYMBOLS);
-  const symbolsStringArray_Eth = ETH_SYMBOLS.replace(/\s+/g,"").split(',');
-  symbolsStringArray_Eth.forEach((v,i) => {
-    const padPrice = web3.utils.padLeft(prePricesArray_Eth[i], 19, '0');
-    prePricesMap_Eth[v] = padPrice.substr(0, padPrice.length - 18)+ '.'+ padPrice.substr(padPrice.length - 18, 18);
-  })
-
-  const sgs = {}
-  const sgs_eth = {}
-  const sgs_bsc = {}
-  const sgs_avax = {}
-  const sgs_dev = {}
-  const sgAll = db.getAllSga();
-  for (let i = 0; i<sgAll.length; i++) {
-    const sg = sgAll[i];
-    const groupId = sg.groupId;
-    const config = await sgaWan.getStoremanGroupConfig(groupId);
-    const configEth = await oracleEth.getStoremanGroupConfig(groupId);
-    const configBsc = await oracleBsc.getStoremanGroupConfig(groupId);
-    const configAvax = await oracleAvax.getStoremanGroupConfig(groupId);
-    const configDev = await oracleDev.getStoremanGroupConfig(groupId);
-    const ks = Object.keys(config);
-
-    // if (config.gpk1 !== null || configEth.gpk1 !== null) {
-      for (let j = 0; j < ks.length/2; j++) {
-        const str = j.toString();
-        delete config[str];
-        delete configEth[str];
-        delete configBsc[str];
-        delete configAvax[str];
-        delete configDev[str];
-      }
-      config.groupId = web3.utils.hexToString(groupId)
-      configEth.groupId = web3.utils.hexToString(groupId)
-      configBsc.groupId = web3.utils.hexToString(groupId)
-      configAvax.groupId = web3.utils.hexToString(groupId)
-      configDev.groupId = web3.utils.hexToString(groupId)
-
-      config.chain1 = web3.utils.toHex(config.chain1)
-      config.chain2 = web3.utils.toHex(config.chain2)
-      configEth.chain1 = web3.utils.toHex(configEth.chain1)
-      configEth.chain2 = web3.utils.toHex(configEth.chain2)
-      configBsc.chain1 = web3.utils.toHex(configBsc.chain1)
-      configBsc.chain2 = web3.utils.toHex(configBsc.chain2)
-      configAvax.chain1 = web3.utils.toHex(configAvax.chain1)
-      configAvax.chain2 = web3.utils.toHex(configAvax.chain2)
-      configDev.chain1 = web3.utils.toHex(configDev.chain1)
-      configDev.chain2 = web3.utils.toHex(configDev.chain2)
-
-      configDev.isDebtClean = (await oracleDev.isDebtClean(groupId)).toString()
-      configAvax.isDebtClean = (await oracleAvax.isDebtClean(groupId)).toString()
-      configBsc.isDebtClean = (await oracleBsc.isDebtClean(groupId)).toString()
-      configEth.isDebtClean = (await oracleEth.isDebtClean(groupId)).toString()
-      config.isDebtClean = (await oracleWan.isDebtClean(groupId)).toString()
-      sgs_dev[groupId] = configDev;
-      sgs_avax[groupId] = configAvax;
-      sgs_bsc[groupId] = configBsc;
-      sgs_eth[groupId] = configEth;
-      sgs[groupId] = config;
-    // }
-  }
-
   const result = {
-    'WanChain' : {
-      prices: prePricesMap,
-      sgs: sgs,
-    },
-    'Ethereum' : {
-      prices: prePricesMap_Eth,
-      sgs: sgs_eth,
-    },
-    'Bsc' : {
-      prices: {},
-      sgs: sgs_bsc,
-    },
-    'Avax' : {
-      prices: {},
-      sgs: sgs_avax,
-    },
-    'MoonBeam' : {
-      prices: {},
-      sgs: sgs_dev,
-    }
   }
 
   for (let i = 0; i < web3Oracles.length; i++) {
@@ -410,7 +278,7 @@ async function refreshOracles() {
       web3Sgs[groupId] = config
     }
     result[oracle.chain.chainName] = {
-      prices: {},
+      prices: oracle.chain.chainName !== 'wan' ? {} : prePricesMap,
       sgs: web3Sgs
     }
   }
@@ -464,151 +332,6 @@ async function refreshOracles() {
 }
 
 async function refreshChains() {
-  const odAddr = await oracleWanProxy.implementation();
-  const odAddr_eth = await oracleEthProxy.implementation();
-  const odAddr_bsc = await oracleBscProxy.implementation();
-  const odAddr_avax = await oracleAvaxProxy.implementation();
-  const odAddr_dev = await oracleDevProxy.implementation();
-  const od = new Oracle(chainWan, odAddr);
-  const od_eth = new Oracle(chainEth, odAddr_eth);
-  const od_bsc = new Oracle(chainBsc, odAddr_bsc);
-  const od_avax = new Oracle(chainAvax, odAddr_avax);
-  const od_dev = new Oracle(chainDev, odAddr_dev);
-
-  const oracleWan = loadContract(chainWan, 'OracleDelegate')
-  const oracleEth = loadContract(chainEth, 'OracleDelegate')
-  const oracleBsc = loadContract(chainBsc, 'OracleDelegate')
-  const oracleAvax = loadContract(chainAvax, 'OracleDelegate')
-  const oracleDev = loadContract(chainDev, 'OracleDelegate')
-
-  const curIdsWan = await oracleWan.getCurrentGroupIds()
-  const curIdsEth = await oracleEth.getCurrentGroupIds()
-  const curIdsBsc = await oracleBsc.getCurrentGroupIds()
-  const curIdsAvax = await oracleAvax.getCurrentGroupIds()
-  const curIdsDev = await oracleDev.getCurrentGroupIds()
-
-  const tmAddr = await tmWanProxy.implementation();
-  const tmAddr_eth = await tmEthProxy.implementation();
-  const tmAddr_bsc = await tmBscProxy.implementation();
-  const tmAddr_avax = await tmAvaxProxy.implementation();
-  const tmAddr_dev = await tmDevProxy.implementation();
-  const tm = new TokenManager(chainWan, odAddr);
-  const tm_eth = new TokenManager(chainEth, odAddr_eth);
-  const tm_bsc = new TokenManager(chainBsc, odAddr_bsc);
-  const tm_avax = new TokenManager(chainAvax, odAddr_avax);
-  const tm_dev = new TokenManager(chainDev, odAddr_dev);
-
-  const storeOwner = (await sgaWan.getOwner()).toLowerCase();
-  const storeOwnerConfig = sgaWan.pv_address;
-  const result = {
-    'WanChain' : {
-      blockNumber: await chainWan.core.getBlockNumber(),
-
-      oracleProxy: oracleWanProxy.address,
-      oracleDelegator: odAddr,
-      tokenManagerProxy: tmWanProxy.address,
-      tokenManagerDelegator: tmAddr,
-
-      oracleProxyOwner: await oracleWanProxy.getOwner(),
-      oracleDelegatorOwner: await od.getOwner(),
-      tokenManagerProxyOwner: await tmWanProxy.getOwner(),
-      tokenManagerDelegatorOwner: await tm.getOwner(),
-
-      storeManProxy: sgaWan.address,
-      storeManProxyOwner: await sgaWan.getOwner(),
-
-      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsWan[0])),
-      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsWan[1])),
-      chainId: await chainWan.core.getChainId(),
-      crossChainId: web3.utils.toHex(await crossWan.getChainId()),
-    },
-    'Ethereum' : {
-      blockNumber: await chainEth.core.getBlockNumber(),
-
-      oracleProxy: oracleEthProxy.address,
-      oracleDelegator: odAddr_eth,
-      tokenManagerProxy: tmEthProxy.address,
-      tokenManagerDelegator: tmAddr_eth,
-
-      oracleProxyOwner: await oracleEthProxy.getOwner(),
-      oracleDelegatorOwner: await od_eth.getOwner(),
-      tokenManagerProxyOwner: await tmEthProxy.getOwner(),
-      tokenManagerDelegatorOwner: await tm_eth.getOwner(),
-
-      storeManProxy: "no contract",
-      storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
-
-      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsEth[0])),
-      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsEth[1])),
-      chainId: await chainEth.core.getChainId(),
-      crossChainId: web3.utils.toHex(await crossEth.getChainId()),
-    },
-    'Bsc' : {
-      blockNumber: await chainBsc.core.getBlockNumber(),
-
-      oracleProxy: oracleBscProxy.address,
-      oracleDelegator: odAddr_bsc,
-      tokenManagerProxy: tmBscProxy.address,
-      tokenManagerDelegator: tmAddr_bsc,
-
-      oracleProxyOwner: await oracleBscProxy.getOwner(),
-      oracleDelegatorOwner: await od_bsc.getOwner(),
-      tokenManagerProxyOwner: await tmBscProxy.getOwner(),
-      tokenManagerDelegatorOwner: await tm_bsc.getOwner(),
-
-      storeManProxy: "no contract",
-      storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
-
-      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsBsc[0])),
-      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsBsc[1])),
-      chainId: await chainBsc.core.getChainId(),
-      crossChainId: web3.utils.toHex(await crossBsc.getChainId()),
-    },
-    'Avax' : {
-      blockNumber: await chainAvax.core.getBlockNumber(),
-
-      oracleProxy: oracleAvaxProxy.address,
-      oracleDelegator: odAddr_avax,
-      tokenManagerProxy: tmAvaxProxy.address,
-      tokenManagerDelegator: tmAddr_avax,
-
-      oracleProxyOwner: await oracleAvaxProxy.getOwner(),
-      oracleDelegatorOwner: await od_avax.getOwner(),
-      tokenManagerProxyOwner: await tmAvaxProxy.getOwner(),
-      tokenManagerDelegatorOwner: await tm_avax.getOwner(),
-
-      storeManProxy: "no contract",
-      storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
-
-      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsAvax[0])),
-      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsAvax[1])),
-      chainId: await chainAvax.core.getChainId(),
-      crossChainId: web3.utils.toHex(await crossAvax.getChainId()),
-    },
-    'MoonBeam' : {
-      blockNumber: await chainDev.core.getBlockNumber(),
-
-      oracleProxy: oracleDevProxy.address,
-      oracleDelegator: odAddr_dev,
-      tokenManagerProxy: tmDevProxy.address,
-      tokenManagerDelegator: tmAddr_dev,
-
-      oracleProxyOwner: await oracleDevProxy.getOwner(),
-      oracleDelegatorOwner: await od_dev.getOwner(),
-      tokenManagerProxyOwner: await tmDevProxy.getOwner(),
-      tokenManagerDelegatorOwner: await tm_dev.getOwner(),
-
-      storeManProxy: "no contract",
-      storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
-
-      currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIdsDev[0])),
-      currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIdsDev[1])),
-      chainId: await chainDev.core.getChainId(),
-      crossChainId: web3.utils.toHex(await crossDev.getChainId()),
-    },
-
-  }
-
   for (let i = 0; i < web3Chains.length; i++) {
     const chain = web3Chains[i]
     const curIds = await web3Oracles[i].getCurrentGroupIds()
@@ -626,7 +349,6 @@ async function refreshChains() {
       tokenManagerDelegatorOwner: await web3Tms[i].getOwner(),
 
       storeManProxy: "no contract",
-      storeManProxyOwner: storeOwner ===  storeOwnerConfig? "equal" : storeOwnerConfig,
 
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIds[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIds[1])), 

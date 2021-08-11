@@ -99,12 +99,6 @@ async function updatePrice_WAN(oracle, pricesMap) {
   await updatePrice(oracle, pricesMap, symbols)
 }
 
-async function updatePrice_ETH(oracle, pricesMap) {
-  const symbols = process.env.SYMBOLS_ETH.replace(/\s+/g,"").split(',')
-  mergePrice(pricesMap, symbols, process.env.SYMBOLS_MAP_ETH)
-  await updatePrice(oracle, pricesMap, symbols)
-}
-
 async function updateDeposit(oracle, smgID, amount) {
   log.info(`updateDeposit`);
   const amountHex = "0x" + web3.utils.toBN(amount).toString('hex');
@@ -184,68 +178,37 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
         }
         // TODO: end
         const config_eth = await oracle.getStoremanGroupConfig(groupId);
-        if (config.curve1 === '1' && config.curve2 === '1') {
-          if (!config_eth ||
-            (config.groupId !== config_eth.groupId) ||
-            (config.chain1 !== config_eth.chain2) ||
-            (config.chain2 !== config_eth.chain1) ||
-            (config.curve1 !== config_eth.curve2) ||
-            (config.curve2 !== config_eth.curve1) ||
-            (config.gpk1 !== config_eth.gpk2) ||
-            (config.gpk2 !== config_eth.gpk1) ||
-            (config.startTime !== config_eth.startTime) ||
-            (config.endTime !== config_eth.endTime)
-          ) {
-            // chain1 -> chain2
-            await oracle.setStoremanGroupConfig(
-              groupId,
-              config.status,
-              config.deposit,
-              [config.chain2, config.chain1],
-              [config.curve2, config.curve1],
-              config.gpk2,
-              config.gpk1,
-              config.startTime,
-              config.endTime,
-            );
-            if (!hasWriteDb) writeToDB(config)
-          } else if (config.status !== config_eth.status) {
-            await setStoremanGroupStatus(oracle, groupId, config.status);
-            if (!hasWriteDb) writeToDB(config)
-          }
-        } else {
-          const curve1 = !!oracle.chain.curveType ? oracle.chain.curveType : process.env[oracle.chain.core.chainType + '_CURVETYPE']
-          const curve2 = curve1 === config.curve1 ? config.curve2 : config.curve1
-          const gpk1 = config.curve1 === curve1 ? config.gpk1 : config.gpk2
-          const gpk2 = gpk1 === config.gpk1 ? config.gpk2 : config.gpk1
-          if (!config_eth ||
-            (config.groupId !== config_eth.groupId) ||
-            (config.chain1 !== config_eth.chain2) ||
-            (config.chain2 !== config_eth.chain1) ||
-            (curve1 != config_eth.curve1) ||
-            (curve2 != config_eth.curve2) ||
-            (gpk1 != config_eth.gpk1) ||
-            (gpk2 != config_eth.gpk2) ||
-            (config.startTime !== config_eth.startTime) ||
-            (config.endTime !== config_eth.endTime)
-          ) {
-            // chain1 -> chain2
-            await oracle.setStoremanGroupConfig(
-              groupId,
-              config.status,
-              config.deposit,
-              [config.chain2, config.chain1],
-              [curve1, curve2],
-              gpk1,
-              gpk2,
-              config.startTime,
-              config.endTime,
-            );
-            if (!hasWriteDb) writeToDB(config)
-          } else if (config.status !== config_eth.status) {
-            await setStoremanGroupStatus(oracle, groupId, config.status);
-            if (!hasWriteDb) writeToDB(config)
-          }
+        const curve1 = !!oracle.chain.curveType ? oracle.chain.curveType : process.env[oracle.chain.core.chainType + '_CURVETYPE']
+        const curve2 = curve1 === config.curve1 ? config.curve2 : config.curve1
+        const gpk1 = config.curve1 === curve1 ? config.gpk1 : config.gpk2
+        const gpk2 = gpk1 === config.gpk1 ? config.gpk2 : config.gpk1
+        if (!config_eth ||
+          (config.groupId !== config_eth.groupId) ||
+          (config.chain1 !== config_eth.chain2) ||
+          (config.chain2 !== config_eth.chain1) ||
+          (curve1 != config_eth.curve1) ||
+          (curve2 != config_eth.curve2) ||
+          (gpk1 != config_eth.gpk1) ||
+          (gpk2 != config_eth.gpk2) ||
+          (config.startTime !== config_eth.startTime) ||
+          (config.endTime !== config_eth.endTime)
+        ) {
+          // chain1 -> chain2
+          await oracle.setStoremanGroupConfig(
+            groupId,
+            config.status,
+            config.deposit,
+            [config.chain2, config.chain1],
+            [curve1, curve2],
+            gpk1,
+            gpk2,
+            config.startTime,
+            config.endTime,
+          );
+          if (!hasWriteDb) writeToDB(config)
+        } else if (config.status !== config_eth.status) {
+          await setStoremanGroupStatus(oracle, groupId, config.status);
+          if (!hasWriteDb) writeToDB(config)
         }
       }
     }
@@ -320,52 +283,47 @@ const isDotDebtClean = async function(sg) {
   return true
 }
 
-const syncIsDebtCleanToWan = async function(oracleWan, quotaWan, quotaEth, quotaBsc, quotaAvax, quotaDev, web3Quotas, chainBtc, chainXrp, chainLtc) {
+const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chainBtc, chainXrp, chainLtc) {
   const time = parseInt(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
   const sgs = db.getAllSga();
   for (let i = 0; i<sgs.length; i++) {
     const sg = sgs[i];
     const groupId = sg.groupId;
+    const config = await sgaWan.getStoremanGroupConfig(groupId);
 
     const isDebtClean = await oracleWan.isDebtClean(groupId)
     if (isDebtClean) {
       continue
     }
 
+    const groupName = web3.utils.hexToString(groupId)
+    if (groupName !== 'dev_030') {
+      continue
+    }
+
     const isDebtCleans = []
     let totalClean = 0
     let logStr = ''
-    for (let i = 0; i < web3Quotas.length; i++) {
-      const quota = web3Quotas[i]
-      const isDebtClean = await quota.isDebtClean(groupId)
-      isDebtCleans.push(isDebtClean)
-      if (isDebtClean) {
-        totalClean ++
-      }
-      logStr += ` ${quota.chain.chainName} ${isDebtClean}`
-    }
-
-    let isDebtClean_wan = false
-    let isDebtClean_eth = false
-    let isDebtClean_bsc = false
-    let isDebtClean_avax = false
-    let isDebtClean_dev = false
-    if (sg.status === 6) {
+    if (config.status === '6') {
       log.info('status is 6')
-      isDebtClean_wan = await quotaWan.isDebtClean(groupId)
-      isDebtClean_eth = await quotaEth.isDebtClean(groupId)
-      isDebtClean_bsc = await quotaBsc.isDebtClean(groupId)
-      isDebtClean_avax = await quotaAvax.isDebtClean(groupId)
-      isDebtClean_dev = await quotaDev.isDebtClean(groupId)
+      for (let i = 0; i < web3Quotas.length; i++) {
+        const quota = web3Quotas[i]
+        const isDebtClean = await quota.isDebtClean(groupId)
+        isDebtCleans.push(isDebtClean)
+        if (isDebtClean) {
+          totalClean ++
+        }
+        logStr += ` ${quota.chain.chainName} ${isDebtClean}`
+      }
     }
 
     let isDebtClean_btc = false
     let isDebtClean_xrp = false
     let isDebtClean_ltc = false
     let isDebtClean_dot = false
-    if (sg.status >= 5) {
-      if (time > sg.endTime) {
+    if (config.status >= 5) {
+      if (time > config.endTime) {
         isDebtClean_btc = await isBtcDebtClean(chainBtc, sg)
         isDebtClean_xrp = await isXrpDebtClean(chainXrp, sg)
         isDebtClean_ltc = await isLtcDebtClean(chainLtc, sg)
@@ -374,23 +332,17 @@ const syncIsDebtCleanToWan = async function(oracleWan, quotaWan, quotaEth, quota
     }
   
     // 4. 如果其他链上都debt clean， 则将debt clean状态同步到wanChain的oracle上
-    if (isDebtClean_wan && isDebtClean_eth && isDebtClean_bsc && isDebtClean_btc && isDebtClean_xrp
-      && isDebtClean_ltc && isDebtClean_avax && isDebtClean_dev && isDebtClean_dot && totalClean === web3Quotas.length) {
+    // if (isDebtClean_btc && isDebtClean_xrp && isDebtClean_ltc && isDebtClean_dot && totalClean === web3Quotas.length) {
       await oracleWan.setDebtClean(groupId, true);
-    }
-    log.info("isDebtClean smgId", groupId, "wan", isDebtClean_wan, "eth", isDebtClean_eth, 
-      "bsc", isDebtClean_bsc, "btc", isDebtClean_btc, "xrp", isDebtClean_xrp, 
-      "ltc", isDebtClean_ltc, "avax", isDebtClean_avax, "moonbeam", isDebtClean_dev, "dot", isDebtClean_dot, logStr)
+    // }
+    log.info("isDebtClean smgId", groupId, "btc", isDebtClean_btc, "xrp", isDebtClean_xrp, "ltc", isDebtClean_ltc, "dot", isDebtClean_dot, logStr)
   }
 }
 
 module.exports = {
   createScanEvent,
   doSchedule,
-  // updateWanPrice,
-  // syncPriceToOtherChain,
   syncConfigToOtherChain,
   updatePrice_WAN,
-  updatePrice_ETH,
   syncIsDebtCleanToWan
 }
