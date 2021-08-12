@@ -16,6 +16,8 @@ module.exports = {
       symbol: 'WAN',
       decimals: 18,
       chainName: 'wan',
+
+      multiCall: '0x14095a721Dddb892D6350a777c75396D634A7d97'.toLowerCase(),
     },
     'mainnet': {
       chainType: 'WAN',
@@ -32,6 +34,8 @@ module.exports = {
       symbol: 'WAN',
       decimals: 18,
       chainName: 'wan',
+
+      multiCall: '0xBa5934Ab3056fcA1Fa458D30FBB3810c3eb5145f'.toLowerCase(),
     },
   },
   'ethereum': {
@@ -50,6 +54,8 @@ module.exports = {
       symbol: 'ETH',
       decimals: 18,
       chainName: 'ethereum',
+
+      multiCall: '0x42ad527de7d4e9d9d011ac45b31d8551f8fe9821'.toLowerCase(),
     },
     'mainnet': {
       chainType: 'ETH',
@@ -66,6 +72,8 @@ module.exports = {
       symbol: 'ETH',
       decimals: 18,
       chainName: 'ethereum',
+
+      multiCall: '0xeefba1e63905ef1d7acba5a8513c70307c1ce441'.toLowerCase(),
     },
   },
   'bsc': {
@@ -84,6 +92,8 @@ module.exports = {
       symbol: 'BSC',
       decimals: 18,
       chainName: 'bsc',
+
+      multiCall: '0x54b738619DE4770A17fF3D6bA4c2b591a886A062'.toLowerCase(),
     },
     'mainnet': {
       chainType: 'BSC',
@@ -100,6 +110,8 @@ module.exports = {
       symbol: 'BSC',
       decimals: 18,
       chainName: 'bsc',
+
+      multiCall: '0x023a33445F11C978f8a99E232E1c526ae3C0Ad70'.toLowerCase(),
     },
   },
   'avalanche': {
@@ -118,6 +130,8 @@ module.exports = {
       symbol: 'AVAX',
       decimals: 18,
       chainName: 'avax',
+
+      multiCall: '0x0EA414bAAf9643be59667E92E26a87c4Bae3F33a'.toLowerCase(),
     },
     'mainnet': {
       chainType: 'AVAX',
@@ -134,6 +148,8 @@ module.exports = {
       symbol: 'AVAX',
       decimals: 18,
       chainName: 'avax',
+
+      multiCall: '0xA4726706935901fe7dd0F23Cf5D4fb19867dfc88'.toLowerCase(),
     }
   },
   'moonbeam': {
@@ -151,7 +167,9 @@ module.exports = {
 
       symbol: 'DEV',
       decimals: 18,
-      chainName: 'moonbeam'
+      chainName: 'moonbeam',
+
+      multiCall: '0x136333217C18Cd6E018B85Aaf8Bd563EB72E97Fd'.toLowerCase(),
     },
   },
   'polygon': {
@@ -169,7 +187,9 @@ module.exports = {
 
       symbol: 'MATIC',
       decimals: 8,
-      chainName: 'polygon'
+      chainName: 'polygon',
+
+      multiCall: '0x905B3237B2367B2DdEBdF54D4F5320429710850a'.toLowerCase(),
     }
   },
   'arbitrum': {
@@ -188,6 +208,8 @@ module.exports = {
       symbol: 'ETH',
       decimals: 18,
       chainName: 'arbitrum',
+
+      multiCall: '0x06c6b65A8d5F52FA1E6d90bDB3Bdd4CB85F4587f'.toLowerCase(),
 
       explorer: 'https://rinkeby-explorer.arbitrum.io/#/',
     }

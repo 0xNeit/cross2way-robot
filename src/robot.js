@@ -10,9 +10,6 @@ const { getChain, getChains } = require("./lib/web3_chains")
 
 const { createScanEvent, doSchedule, updatePrice_WAN, syncConfigToOtherChain, syncIsDebtCleanToWan } = require('./robot_core');
 
-const { loadContract } = require('./lib/abi_address');
-
-
 const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
 const web3Chains = getChains(process.env.NETWORK_TYPE)
 

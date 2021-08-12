@@ -156,21 +156,18 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
     }
     // TODO: end
     
-    let hasWriteDb = false
     if (config) {
-      if ((sg.status !== parseInt(config.status)) ||
-        (sg.deposit !== config.deposit)
-      ) {
-        writeToDB(config)
-        hasWriteDb = true
-      }
+      // ignore empty gpk
       if (!config.gpk1 || !config.gpk2) {
+        if (sg.status !== parseInt(config.status)) {
+          writeToDB(config)
+        }
         continue;
       }
       
       for(let j = 0; j<oracles.length; j++) {
         const oracle = oracles[j];
-        // TODO: is need set
+        // TODO: is need set current group
         if (isCurrentConfig) {
           if (curConfigs[j][0] !== groupIdUint && curConfigs[j][1] !== groupIdUint) {
             await oracle.setCurrentGroupIds([groupIdUint, curConfigs[j][0]])
@@ -178,10 +175,13 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
         }
         // TODO: end
         const config_eth = await oracle.getStoremanGroupConfig(groupId);
+        // curve1 -> chain curve type
         const curve1 = !!oracle.chain.curveType ? oracle.chain.curveType : process.env[oracle.chain.core.chainType + '_CURVETYPE']
+        // curve2 -> another curve type
         const curve2 = curve1 === config.curve1 ? config.curve2 : config.curve1
-        const gpk1 = config.curve1 === curve1 ? config.gpk1 : config.gpk2
-        const gpk2 = gpk1 === config.gpk1 ? config.gpk2 : config.gpk1
+        const gpk1   = curve1 === config.curve1 ? config.gpk1 : config.gpk2
+        const gpk2   = curve1 === config.curve1 ? config.gpk2 : config.gpk1
+        
         if (!config_eth ||
           (config.groupId !== config_eth.groupId) ||
           (config.chain1 !== config_eth.chain2) ||
@@ -205,10 +205,10 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
             config.startTime,
             config.endTime,
           );
-          if (!hasWriteDb) writeToDB(config)
+          writeToDB(config)
         } else if (config.status !== config_eth.status) {
           await setStoremanGroupStatus(oracle, groupId, config.status);
-          if (!hasWriteDb) writeToDB(config)
+          writeToDB(config)
         }
       }
     }

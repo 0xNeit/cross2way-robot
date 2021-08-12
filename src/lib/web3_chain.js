@@ -123,6 +123,16 @@ class Web3Chain {
     }
     return await contract.getPastEvents(eventName, options);
   }
+
+  async getPastLogs(opts) {
+    const options = {
+      fromBlock: opts.from, 
+      toBlock: opts.to, 
+      address: opts.address,
+      topics: opts.topics, 
+    }
+    return await this.web3.eth.getPastLogs(options);
+  }
   
   // close
   closeEngine() {
