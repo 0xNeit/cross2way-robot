@@ -534,34 +534,23 @@ async function refreshChains() {
 }
 
 let gTip = false
-setTimeout(async function() {
+
+const doRefresh = async () => {
   try {
     if (gTip) return
     gTip = true
-    // await refreshTMS();
+    await refreshTMS();
     await refreshOracles();
-    // await refreshChains();
+    await refreshChains();
     gTip = false
   } catch(e) {
     console.log(e);
     gTip = false
   }
-}, 0);
+}
 
-
-// setInterval(async function() {
-//   try {
-//     if (gTip) return
-//     gTip = true
-//     await refreshTMS();
-//     await refreshOracles();
-//     await refreshChains();
-//     gTip = false
-//   } catch(e) {
-//     console.log(e);
-//     gTip = false
-//   }
-// }, 60000);
+setTimeout(doRefresh, 0);
+setInterval(doRefresh, 60000);
 
 app.get('/tms', (req, res) => {
   res.send(tmsResult);
