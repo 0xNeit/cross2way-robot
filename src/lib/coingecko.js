@@ -2,7 +2,7 @@ const axios = require('axios');
 const { fractionToDecimalString } = require('./utils');
 const log = require('./log')
 
-const { getWaspPriceFromContract, getZooPriceFromContract, getPhxPriceFromContract } = require('./wasp')
+const { getContractPrices } = require('./wasp')
 
 const getData = async url => {
   try {
@@ -104,7 +104,8 @@ async function getPrices(symbolsStr, idsStr) {
   delete symbolIds['wasp']
   delete symbolIds['zoo']
   delete symbolIds['phx']
-  const symbols = symbolsStr.toLowerCase().replace(/\s+/g,"").replace(/,wasp/g,"").replace(/,zoo/g,"").replace(/,phx/g,"").split(',')
+  delete symbolIds['wand']
+  const symbols = symbolsStr.toLowerCase().replace(/\s+/g,"").replace(/,wasp,zoo,phx,wand/g,"").split(',')
   const idsArr = []
   symbols.forEach(it => {
     idsArr.push(symbolIds[it])
@@ -118,12 +119,11 @@ async function getPrices(symbolsStr, idsStr) {
     priceMap[it.toUpperCase()] = fractionToDecimalString(priceIdMap[symbolIds[it]].usd, process.env.PRICE_DECIMAL);
   });
 
-  const waspPrice = await getWaspPriceFromContract(priceMap['WAN'])
-  priceMap['WASP'] = waspPrice
-  const zooPrice = await getZooPriceFromContract(priceMap['WASP'])
-  priceMap['ZOO'] = zooPrice
-  const phxPrice = await getPhxPriceFromContract(priceMap['WASP'])
-  priceMap['PHX'] = phxPrice
+  const contractPrices = await getContractPrices(priceMap['WAN'])
+  priceMap['WASP'] = contractPrices.waspPrice
+  priceMap['ZOO'] = contractPrices.zooPrice
+  priceMap['PHX'] = contractPrices.phxPrice
+  priceMap['WAND'] = contractPrices.wandPrice
 
   priceMap['FNX'] = '0x01'
   return priceMap
