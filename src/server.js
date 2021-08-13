@@ -172,7 +172,7 @@ async function getTokenPairs(tm, _total) {
       }
     )
 
-    await getAggregate(tm, total, 20,
+    await getAggregate(tm, total, 10,
       (i) => ([{
         target: tm.address,
         call: ['getTokenPairInfo(uint256)(uint256,bytes,uint256,bytes)', ids[i]],
@@ -220,7 +220,7 @@ async function getTokenPairs(tm, _total) {
     for (let index in toIds) {
       const tm = getMapTm(parseInt(toIds[index]))
       const validIds = Object.keys(toChainPairIds[toIds[index]])
-      await getAggregate(tm, validIds.length, 50,
+      await getAggregate(tm, validIds.length, 30,
         (i) => {
           const id = validIds[i]
           return [{
