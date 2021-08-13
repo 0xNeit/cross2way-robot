@@ -260,7 +260,6 @@ async function getTokenPairs(tm, _total) {
         }
       )
     }
-    console.log(tokenPairs)
   } else {
     for(let i=0; i<total; i++) {
       const id = parseInt(await tm.mapTokenPairIndex(i));
