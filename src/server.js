@@ -352,7 +352,7 @@ async function refreshOracles() {
     const oracleStoreman = oracle.chain.chainName === 'wan' ? sgaWan : oracle
     const web3Sgs = {}
     const sgAll = db.getAllSga();
-    if (!oracleStoreman.chain.multiCall) {
+    if (oracleStoreman.chain.multiCall) {
       const isDebtCleans = {}
       await getAggregate(oracle, sgAll.length, 100,
         (i) => {
