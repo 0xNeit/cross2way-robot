@@ -1,4 +1,5 @@
 const express = require('express')
+const { aggregate } = require('@makerdao/multicall');
 const app = express()
 const port = parseInt(process.env.SERVER_PORT)
 
@@ -65,6 +66,7 @@ const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
 
 const schedule = require('node-schedule');
 const { createScanEvent} = require('./robot_core');
+const { default: BigNumber } = require('bignumber.js');
 const scanInst = createScanEvent(
   sgaWan,
   process.env.REGISTER_START_EVENT,
@@ -80,7 +82,7 @@ const scanNewStoreMan = () => {
 
 const robotSchedules = function() {
   // sync sga to sga database, 1 / 5min
-  schedule.scheduleJob('0 */5 * * * *', scanNewStoreMan);
+  schedule.scheduleJob('30 */5 * * * *', scanNewStoreMan);
 };
 scanNewStoreMan()
 robotSchedules()
@@ -112,20 +114,167 @@ function itemFieldToHex(tokenPairs) {
     tokenPair.toChainID = web3.utils.toHex(tokenPair.toChainID) 
   }
 }
+
+//
+async function getAggregate(tm, total, _step, buildCall, work) {
+  const config = {
+    rpcUrl: tm.chain.rpc,
+    multicallAddress: tm.chain.multiCall
+  }
+
+  let step = _step
+  let loopNum = Math.floor((total + step - 1) / step)
+  step = Math.floor((total + loopNum - 1) / loopNum)
+  let j = 0
+  let calls = []
+  let result = {}
+  for (let i = 0; i < total; i++) {
+    calls.push(
+      ...buildCall(i)
+    )
+
+    if ((j === step - 1) || (j === total - 1)) {
+      // send
+      const ret = await aggregate(calls, config);
+      // record
+      work(ret, i - j, i)
+
+      // reset
+      j = 0
+      calls = []
+    } else {
+      j++
+    }
+  }
+}
 async function getTokenPairs(tm, _total) {
   const tokenPairs = {}
+  const toChainPairIds = {}
   const total = parseInt(_total)
-  for(let i=0; i<total; i++) {
-    const id = parseInt(await tm.mapTokenPairIndex(i));
-    const tokenPairInfo = removeIndexField(await tm.getTokenPairInfo(id));
-    const ancestorInfo = removeIndexField(await tm.getAncestorInfo(id));
-    let tokenInfo = removeIndexField(await getMapTm(parseInt(tokenPairInfo.toChainID)).getTokenInfo(id))
-    const tokenPair = {id: id}
-    
-    Object.assign(tokenPair, ancestorInfo, tokenPairInfo, 
-      {mapName: tokenInfo.name, mapSymbol: tokenInfo.symbol, mapDecimals: tokenInfo.decimals});
-    tokenPairs[id] = tokenPair;
+
+  if (tm.chain.multiCall) {
+    const ids = {}
+    // get ids
+    await getAggregate(tm, total, 100,
+      (i) => ([{
+        target: tm.address,
+        call: ['mapTokenPairIndex(uint256)(uint256)', i],
+        returns: [
+          [`id-${i}`, val => val],
+        ],
+      }]),
+      (ret, start, end) => {
+        for (let k = start; k <= end; k++) {
+          const id = parseInt(ret.results.transformed[`id-${k}`].toString(10))
+          ids[k] = id
+          tokenPairs[id] = {id}
+        }
+      }
+    )
+
+    await getAggregate(tm, total, 20,
+      (i) => ([{
+        target: tm.address,
+        call: ['getTokenPairInfo(uint256)(uint256,bytes,uint256,bytes)', ids[i]],
+        returns: [
+          [`fromChainID-${i}`, val => val],
+          [`fromAccount-${i}`, val => val],
+          [`toChainID-${i}`, val => val],
+          [`toAccount-${i}`, val => val],
+        ],
+      }, {
+        target: tm.address,
+        call: ['getAncestorInfo(uint256)(bytes,string,string,uint8,uint256)', ids[i]],
+        returns: [
+          [`account-${i}`, val => val],
+          [`name-${i}`, val => val],
+          [`symbol-${i}`, val => val],
+          [`decimals-${i}`, val => val],
+          [`chainId-${i}`, val => val],
+        ],
+      }]),
+      (ret, start, end) => {
+        for (let i = start; i <= end; i++) {
+          const id = ids[i]
+          // {
+          //   id: 1,
+          //   account: "0x0000000000000000000000000000000000000000",
+          //   name: "ethereum",
+          //   symbol: "ETH",
+          //   decimals: "18",
+          //   chainId: "2147483708",
+          //   fromChainID: "2147483708",
+          //   fromAccount: "0x0000000000000000000000000000000000000000",
+          //   toChainID: "2153201998",
+          //   toAccount: "0x48344649b9611a891987b2db33faada3ac1d05ec",
+          //   mapName: "wanETH@wanchain",
+          //   mapSymbol: "wanETH",
+          //   mapDecimals: "18",
+          // }
+          tokenPairs[id].account = ret.results.transformed[`account-${i}`]
+          tokenPairs[id].name = ret.results.transformed[`name-${i}`]
+          tokenPairs[id].symbol = ret.results.transformed[`symbol-${i}`]
+          tokenPairs[id].decimals = ret.results.transformed[`decimals-${i}`].toString(10)
+          tokenPairs[id].chainId = ret.results.transformed[`chainId-${i}`].toString(10)
+          tokenPairs[id].fromChainID = ret.results.transformed[`fromChainID-${i}`].toString(10)
+          tokenPairs[id].fromAccount = ret.results.transformed[`fromAccount-${i}`]
+          tokenPairs[id].toChainID = ret.results.transformed[`toChainID-${i}`].toString(10)
+          tokenPairs[id].toAccount = ret.results.transformed[`toAccount-${i}`]
+
+          if (!toChainPairIds[tokenPairs[id].toChainID]) {
+            toChainPairIds[tokenPairs[id].toChainID] = {}
+          }
+
+          toChainPairIds[tokenPairs[id].toChainID][id] = true
+        }
+      }
+    )
+
+    // 每种tm上需要查的token
+    const toIds = Object.keys(toChainPairIds)
+    for (let index in toIds) {
+      const tm = getMapTm(parseInt(toIds[index]))
+      const validIds = Object.keys(toChainPairIds[toIds[index]])
+      await getAggregate(tm, validIds.length, 50,
+        (i) => {
+          const id = validIds[i]
+          return [{
+            target: tm.address,
+            call: ['getTokenInfo(uint256)(address,string,string,uint8)', id],
+            returns: [
+              [`addr-${i}`, val => val],
+              [`name-${i}`, val => val],
+              [`symbol-${i}`, val => val],
+              [`decimals-${i}`, val => val],
+            ],
+          }]
+        },
+        (ret, start, end) => {
+          for (let i = start; i <= end; i++) {
+            const id = validIds[i]
+            tokenPairs[id].mapAddr = ret.results.transformed[`addr-${i}`]
+            tokenPairs[id].mapName = ret.results.transformed[`name-${i}`]
+            tokenPairs[id].mapSymbol = ret.results.transformed[`symbol-${i}`]
+            tokenPairs[id].mapDecimals = ret.results.transformed[`decimals-${i}`].toString(10)
+          }
+        }
+      )
+    }
+    console.log(tokenPairs)
+  } else {
+    for(let i=0; i<total; i++) {
+      const id = parseInt(await tm.mapTokenPairIndex(i));
+      const tokenPairInfo = removeIndexField(await tm.getTokenPairInfo(id));
+      const ancestorInfo = removeIndexField(await tm.getAncestorInfo(id));
+      const tokenInfo = removeIndexField(await getMapTm(parseInt(tokenPairInfo.toChainID)).getTokenInfo(id))
+      const tokenPair = {id: id}
+      
+      Object.assign(tokenPair, ancestorInfo, tokenPairInfo, 
+        {mapName: tokenInfo.name, mapSymbol: tokenInfo.symbol, mapDecimals: tokenInfo.decimals});
+      tokenPairs[id] = tokenPair;
+    }
   }
+
   return tokenPairs;
 }
 
@@ -338,8 +487,8 @@ setTimeout(async function() {
     if (gTip) return
     gTip = true
     await refreshTMS();
-    await refreshOracles();
-    await refreshChains();
+    // await refreshOracles();
+    // await refreshChains();
     gTip = false
   } catch(e) {
     console.log(e);
@@ -348,19 +497,19 @@ setTimeout(async function() {
 }, 0);
 
 
-setInterval(async function() {
-  try {
-    if (gTip) return
-    gTip = true
-    await refreshTMS();
-    await refreshOracles();
-    await refreshChains();
-    gTip = false
-  } catch(e) {
-    console.log(e);
-    gTip = false
-  }
-}, 60000);
+// setInterval(async function() {
+//   try {
+//     if (gTip) return
+//     gTip = true
+//     await refreshTMS();
+//     await refreshOracles();
+//     await refreshChains();
+//     gTip = false
+//   } catch(e) {
+//     console.log(e);
+//     gTip = false
+//   }
+// }, 60000);
 
 app.get('/tms', (req, res) => {
   res.send(tmsResult);
