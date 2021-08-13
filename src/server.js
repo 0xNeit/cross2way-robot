@@ -352,7 +352,7 @@ async function refreshOracles() {
     const oracleStoreman = oracle.chain.chainName === 'wan' ? sgaWan : oracle
     const web3Sgs = {}
     const sgAll = db.getAllSga();
-    if (oracleStoreman.chain.multiCall) {
+    if (!oracleStoreman.chain.multiCall) {
       const isDebtCleans = {}
       await getAggregate(oracle, sgAll.length, 100,
         (i) => {
@@ -411,7 +411,7 @@ async function refreshOracles() {
             config.gpk2 = ret.results.transformed[`gpk2-${i}`]
             config.startTime = ret.results.transformed[`startTime-${i}`].toString(10)
             config.endTime = ret.results.transformed[`endTime-${i}`].toString(10)
-            config.isDebtClean = isDebtCleans[groupId]
+            config.isDebtClean = isDebtCleans[groupId].toString()
   
             web3Sgs[groupId] = config
           }
@@ -435,6 +435,7 @@ async function refreshOracles() {
         web3Sgs[groupId] = config
       }
     }
+    
     result[oracle.chain.chainName] = {
       prices: oracle.chain.chainName !== 'wan' ? {} : prePricesMap,
       sgs: web3Sgs
@@ -550,7 +551,7 @@ const doRefresh = async () => {
 }
 
 setTimeout(doRefresh, 0);
-setInterval(doRefresh, 60000);
+// setInterval(doRefresh, 360000);
 
 app.get('/tms', (req, res) => {
   res.send(tmsResult);
