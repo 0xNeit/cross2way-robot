@@ -298,7 +298,7 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
     }
 
     // const groupName = web3.utils.hexToString(groupId)
-    // if (groupName !== 'dev_030') {
+    // if (groupName !== 'dev_031' && groupName !== 'testnet_027') {
     //   continue
     // }
 
@@ -332,9 +332,10 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
     }
   
     // 4. 如果其他链上都debt clean， 则将debt clean状态同步到wanChain的oracle上
-    // if (isDebtClean_btc && isDebtClean_xrp && isDebtClean_ltc && isDebtClean_dot && totalClean === web3Quotas.length) {
+    if (isDebtClean_btc && isDebtClean_xrp && isDebtClean_ltc && isDebtClean_dot && totalClean === web3Quotas.length) {
       await oracleWan.setDebtClean(groupId, true);
-    // }
+    }
+
     log.info("isDebtClean smgId", groupId, "btc", isDebtClean_btc, "xrp", isDebtClean_xrp, "ltc", isDebtClean_ltc, "dot", isDebtClean_dot, logStr)
   }
 }

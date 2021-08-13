@@ -196,21 +196,6 @@ async function getTokenPairs(tm, _total) {
       (ret, start, end) => {
         for (let i = start; i <= end; i++) {
           const id = ids[i]
-          // {
-          //   id: 1,
-          //   account: "0x0000000000000000000000000000000000000000",
-          //   name: "ethereum",
-          //   symbol: "ETH",
-          //   decimals: "18",
-          //   chainId: "2147483708",
-          //   fromChainID: "2147483708",
-          //   fromAccount: "0x0000000000000000000000000000000000000000",
-          //   toChainID: "2153201998",
-          //   toAccount: "0x48344649b9611a891987b2db33faada3ac1d05ec",
-          //   mapName: "wanETH@wanchain",
-          //   mapSymbol: "wanETH",
-          //   mapDecimals: "18",
-          // }
           tokenPairs[id].account = ret.results.transformed[`account-${i}`]
           tokenPairs[id].name = ret.results.transformed[`name-${i}`]
           tokenPairs[id].symbol = ret.results.transformed[`symbol-${i}`]
@@ -367,20 +352,88 @@ async function refreshOracles() {
     const oracleStoreman = oracle.chain.chainName === 'wan' ? sgaWan : oracle
     const web3Sgs = {}
     const sgAll = db.getAllSga();
-    for (let i = 0; i<sgAll.length; i++) {
-      const sg = sgAll[i];
-      const groupId = sg.groupId;
-      const config = await oracleStoreman.getStoremanGroupConfig(groupId);
-      const ks = Object.keys(config);
-      for (let j = 0; j < ks.length/2; j++) {
-        const str = j.toString();
-        delete config[str];
+    if (oracleStoreman.chain.multiCall) {
+      const isDebtCleans = {}
+      await getAggregate(oracle, sgAll.length, 100,
+        (i) => {
+          const sg = sgAll[i];
+          const groupId = sg.groupId;
+          return [{
+            target: oracle.address,
+            call: ['isDebtClean(bytes32)(bool)', groupId],
+            returns: [
+              [`isDebtClean-${i}`, val => val]
+            ]
+          }]
+        },
+        (ret, start, end) => {
+          for (let i = start; i <= end; i++) {
+            const groupId = sgAll[i].groupId
+            isDebtCleans[groupId] = ret.results.transformed[`isDebtClean-${i}`]
+          }
+        }
+      )
+      await getAggregate(oracleStoreman, sgAll.length, 20,
+        (i) => {
+          const sg = sgAll[i];
+          const groupId = sg.groupId;
+          return [{
+            target: oracleStoreman.address,
+            // bytes gpk1, bytes gpk2, uint startTime, uint endTime
+            call: ['getStoremanGroupConfig(bytes32)(bytes32,uint8,uint256,uint256,uint256,uint256,uint256,bytes,bytes,uint256,uint256)', groupId],
+            returns: [
+              [`groupId-${i}`, val => val],
+              [`status-${i}`, val => val],
+              [`deposit-${i}`, val => val],
+              [`chain1-${i}`, val => val],
+              [`chain2-${i}`, val => val],
+              [`curve1-${i}`, val => val],
+              [`curve2-${i}`, val => val],
+              [`gpk1-${i}`, val => val],
+              [`gpk2-${i}`, val => val],
+              [`startTime-${i}`, val => val],
+              [`endTime-${i}`, val => val],
+            ],
+          }]
+        },
+        (ret, start, end) => {
+          for (let i = start; i <= end; i++) {
+            const groupId = sgAll[i].groupId
+            const config = {}
+            config.groupId = web3.utils.hexToString(ret.results.transformed[`groupId-${i}`])
+            config.status = ret.results.transformed[`status-${i}`].toString(10)
+            config.deposit = ret.results.transformed[`deposit-${i}`].toString(10)
+            config.chain1 = web3.utils.toHex(ret.results.transformed[`chain1-${i}`])
+            config.chain2 = web3.utils.toHex(ret.results.transformed[`chain2-${i}`])
+            config.curve1 = ret.results.transformed[`curve1-${i}`].toString(10)
+            config.curve2 = ret.results.transformed[`curve2-${i}`].toString(10)
+            config.gpk1 = ret.results.transformed[`gpk1-${i}`]
+            config.gpk2 = ret.results.transformed[`gpk2-${i}`]
+            config.startTime = ret.results.transformed[`startTime-${i}`].toString(10)
+            config.endTime = ret.results.transformed[`endTime-${i}`].toString(10)
+            config.isDebtClean = isDebtCleans[groupId]
+  
+            web3Sgs[groupId] = config
+          }
+        }
+      )
+      // 
+    } else {
+      for (let i = 0; i<sgAll.length; i++) {
+        const sg = sgAll[i];
+        const groupId = sg.groupId;
+        const config = await oracleStoreman.getStoremanGroupConfig(groupId);
+        const ks = Object.keys(config);
+        for (let j = 0; j < ks.length/2; j++) {
+          const str = j.toString();
+          delete config[str];
+        }
+        config.groupId = web3.utils.hexToString(groupId)
+        config.chain1 = web3.utils.toHex(config.chain1)
+        config.chain2 = web3.utils.toHex(config.chain2)
+        config.isDebtClean = (await oracle.isDebtClean(groupId)).toString()
+        web3Sgs[groupId] = config
       }
-      config.groupId = web3.utils.hexToString(groupId)
-      config.chain1 = web3.utils.toHex(config.chain1)
-      config.chain2 = web3.utils.toHex(config.chain2)
-      config.isDebtClean = (await oracle.isDebtClean(groupId)).toString()
-      web3Sgs[groupId] = config
     }
     result[oracle.chain.chainName] = {
       prices: oracle.chain.chainName !== 'wan' ? {} : prePricesMap,
@@ -445,9 +498,9 @@ async function refreshChains() {
     result[chain.chainName] = {
       blockNumber: await chain.core.getBlockNumber(),
 
-      oracleProxy: await web3OracleProxies[i].address,
+      oracleProxy: web3OracleProxies[i].address,
       oracleDelegator: await web3OracleProxies[i].implementation(),
-      tokenManagerProxy: await web3TmProxies[i].address,
+      tokenManagerProxy: web3TmProxies[i].address,
       tokenManagerDelegator: await web3TmProxies[i].implementation(),
 
       oracleProxyOwner: await web3OracleProxies[i].getOwner(),
@@ -485,9 +538,9 @@ setTimeout(async function() {
   try {
     if (gTip) return
     gTip = true
-    await refreshTMS();
+    // await refreshTMS();
     await refreshOracles();
-    await refreshChains();
+    // await refreshChains();
     gTip = false
   } catch(e) {
     console.log(e);
@@ -496,19 +549,19 @@ setTimeout(async function() {
 }, 0);
 
 
-setInterval(async function() {
-  try {
-    if (gTip) return
-    gTip = true
-    await refreshTMS();
-    await refreshOracles();
-    await refreshChains();
-    gTip = false
-  } catch(e) {
-    console.log(e);
-    gTip = false
-  }
-}, 60000);
+// setInterval(async function() {
+//   try {
+//     if (gTip) return
+//     gTip = true
+//     await refreshTMS();
+//     await refreshOracles();
+//     await refreshChains();
+//     gTip = false
+//   } catch(e) {
+//     console.log(e);
+//     gTip = false
+//   }
+// }, 60000);
 
 app.get('/tms', (req, res) => {
   res.send(tmsResult);
