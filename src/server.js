@@ -486,8 +486,8 @@ setTimeout(async function() {
     if (gTip) return
     gTip = true
     await refreshTMS();
-    // await refreshOracles();
-    // await refreshChains();
+    await refreshOracles();
+    await refreshChains();
     gTip = false
   } catch(e) {
     console.log(e);
@@ -496,19 +496,19 @@ setTimeout(async function() {
 }, 0);
 
 
-// setInterval(async function() {
-//   try {
-//     if (gTip) return
-//     gTip = true
-//     await refreshTMS();
-//     await refreshOracles();
-//     await refreshChains();
-//     gTip = false
-//   } catch(e) {
-//     console.log(e);
-//     gTip = false
-//   }
-// }, 60000);
+setInterval(async function() {
+  try {
+    if (gTip) return
+    gTip = true
+    await refreshTMS();
+    await refreshOracles();
+    await refreshChains();
+    gTip = false
+  } catch(e) {
+    console.log(e);
+    gTip = false
+  }
+}, 60000);
 
 app.get('/tms', (req, res) => {
   res.send(tmsResult);
