@@ -373,7 +373,7 @@ async function refreshOracles() {
           }
         }
       )
-      await getAggregate(oracleStoreman, sgAll.length, 20,
+      await getAggregate(oracleStoreman, sgAll.length, 10,
         (i) => {
           const sg = sgAll[i];
           const groupId = sg.groupId;
