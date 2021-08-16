@@ -1,6 +1,6 @@
 const iWanClient = require('iwan-sdk');
 const BigNumber = require("bignumber.js");
-const { promisify, sleep, web3, chainIds } = require("./utils");
+const { promisify, sleep, web3 } = require("./utils");
 
 class IWan {
   static sApiClient = null;

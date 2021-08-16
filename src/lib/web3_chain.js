@@ -1,5 +1,5 @@
 const Web3 = require("web3");
-const { promisify, chainIds } = require("./utils");
+const { promisify } = require("./utils");
 
 class Web3Chain {
   constructor(rpc_url, chainType) {
