@@ -151,6 +151,5 @@ function getChains(netWork) {
 
 module.exports = {
   getChain,
-  getChainNames,
   getChains,
 };

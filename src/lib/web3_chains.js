@@ -123,7 +123,7 @@ function getChain(name, network) {
   }
   if (!chains[name].hasOwnProperty(network)) {
     if (!configs.hasOwnProperty(name) || !configs[name].hasOwnProperty(network)) {
-      console.error(`${name} ${network} config not exist`)
+      console.warn(`${name} ${network} config not exist`)
       return null
     }
 
@@ -145,13 +145,15 @@ function getChains(netWork) {
   const networkChains = []
   const chainNames = getChainNames()
   chainNames.forEach(chainName => {
-    networkChains.push(getChain(chainName, netWork))
+    const chain = getChain(chainName, netWork);
+    if (!!chain) {
+      networkChains.push(chain)
+    }
   });
   return networkChains
 }
 
 module.exports = {
   getChain,
-  getChainNames,
   getChains,
 }
