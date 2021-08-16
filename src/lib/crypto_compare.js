@@ -17,7 +17,7 @@ const getData = async url => {
   return null;
 }
 
-
+// https://min-api.cryptocompare.com/data/pricemulti?fsyms=ETH,USDC,TUSD,GUSD,LINK,MKR,ZXC,EURS,USDT,WAN,BTC,EOS,UNI,SUSHI,XRP,ZCN,VIBE,LTC,AVAX,DOT,MATIC&tsyms=USD
 async function getPrices(symbolsStr) {
   const symbols = symbolsStr.replace(/\s+/g,"").split(',');
   const priceMap = {};

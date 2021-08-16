@@ -6,8 +6,9 @@ const db = require('./lib/sqlite_db');
 const xrp = require('./lib/xrp');
 const dot = require('./lib/dot');
 const { default: BigNumber } = require('bignumber.js');
+const getCryptPrices = require('./lib/crypto_compare')
 
-const times = web3.utils.toBN(process.env.THRESHOLD_TIMES);
+const thresholdTimes = web3.utils.toBN(process.env.THRESHOLD_TIMES);
 const zero = web3.utils.toBN(0);
 
 function createScanEvent(contract, eventName, chainName, step, uncertainBlock, delay) {
@@ -43,9 +44,9 @@ async function doSchedule(func, tryTimes = process.env.SCHEDULE_RETRY_TIMES, ...
 async function updatePrice(oracle, pricesMap, symbolsStringArray) {
   log.info(`updatePrice ${oracle.core.chainType} begin`);
 
-  const threshold = oracle.core.chainType === 'ETH' 
-    ? web3.utils.toBN(process.env.THRESHOLD_ETH) 
-    : web3.utils.toBN(process.env.THRESHOLD);
+  const threshold = web3.utils.toBN(process.env.THRESHOLD);
+  const maxThreshold = web3.utils.toBN(process.env.MAXTHRESHOLD);
+  const maxThresholdCmp = web3.utils.toBN(process.env.MAXTHRESHOLD_CMP);
   
   if (pricesMap) {
     const symbols = Object.keys(pricesMap);
@@ -56,27 +57,45 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
       const prePricesMap = {}
       symbolsStringArray.forEach((v,i) => {prePricesMap[v] = prePricesArray[i];})
 
+      let cryptoPriceMap = null
+      const reg = new RegExp(process.env.SYMBOLS_reg, 'g')
+
       const needUpdateMap = {};
       const oldMap = {};
       const deltaMap = {}
-      symbols.forEach(i => {
-        const newPrice = web3.utils.toBN(pricesMap[i]);
-        const oldPrice = web3.utils.toBN(prePricesMap[i]);
+      for (let i = 0; i < symbols.length; i++) {
+        const it = symbols[i];
+
+        const newPrice = web3.utils.toBN(pricesMap[it]);
+        const oldPrice = web3.utils.toBN(prePricesMap[it]);
 
         if (oldPrice.cmp(zero) === 0) {
-          needUpdateMap[i] = '0x' + newPrice.toString(16);
-          oldMap[i] = '0';
-          deltaMap[i] = 'infinity'
+          needUpdateMap[it] = '0x' + newPrice.toString(16);
+          oldMap[it] = '0';
+          deltaMap[it] = 'infinity'
         } else {
-          const deltaTimes = newPrice.sub(oldPrice).mul(times).div(oldPrice).abs();
+          const deltaTimes = newPrice.sub(oldPrice).mul(thresholdTimes).div(oldPrice).abs();
           if (deltaTimes.cmp(threshold) > 0) {
-            needUpdateMap[i] = '0x' + newPrice.toString(16);
-            oldMap[i] = oldPrice.toString(10);
-            deltaMap[i] = deltaTimes.toString(10);
+            // 如果coingecko价格变化 > 30%, 则当crypto价格变化 > 25%, 才算通过
+            if (deltaTimes.cmp(maxThreshold) > 0) {
+              if (!cryptoPriceMap) {
+                cryptoPriceMap = await getCryptPrices(process.env.SYMBOLS.replace(/\s+/g,"").replace(reg,""))
+              }
+              const newCryptoPrice = web3.utils.toBN(cryptoPriceMap[it])
+              const cryptoDeltaTimes = newCryptoPrice.sub(oldPrice).mul(thresholdTimes).div(oldPrice).abs();
+    
+              // 则当crypto价格变化 < 25%, 放弃此次变化
+              if (cryptoDeltaTimes.cmp(maxThresholdCmp) <= 0) {
+                return
+              }
+            }
+            needUpdateMap[it] = '0x' + newPrice.toString(16);
+            oldMap[it] = oldPrice.toString(10);
+            deltaMap[it] = deltaTimes.toString(10);
           }
         }
-      })
-
+      }
+      
       await oracle.updatePrice(needUpdateMap, oldMap, deltaMap);
     }
   }
