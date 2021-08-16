@@ -135,9 +135,14 @@ async function getAggregate(tm, total, _step, buildCall, work) {
 
     if ((j === step - 1) || (i === total - 1)) {
       // send
-      const ret = await aggregate(calls, config);
-      // record
-      work(ret, i - j, i)
+      try {
+        const ret = await aggregate(calls, config);
+        // record
+        work(ret, i - j, i)
+      } catch(e) {
+        log.error(e)
+        throw e
+      }
 
       // reset
       j = 0
@@ -222,7 +227,7 @@ async function getTokenPairs(tm, _total) {
       const validIds = Object.keys(toChainPairIds[toIds[index]])
       await getAggregate(tm, validIds.length, 30,
         (i) => {
-          const id = validIds[i]
+          const id = parseInt(validIds[i])
           return [{
             target: tm.address,
             call: ['getTokenInfo(uint256)(address,string,string,uint8)', id],
@@ -236,7 +241,7 @@ async function getTokenPairs(tm, _total) {
         },
         (ret, start, end) => {
           for (let i = start; i <= end; i++) {
-            const id = validIds[i]
+            const id = parseInt(validIds[i])
             tokenPairs[id].mapAddr = ret.results.transformed[`addr-${i}`]
             tokenPairs[id].mapName = ret.results.transformed[`name-${i}`]
             tokenPairs[id].mapSymbol = ret.results.transformed[`symbol-${i}`]
