@@ -109,9 +109,9 @@ function getMapTm(toChainId) {
 function itemFieldToHex(tokenPairs) {
   for (let i in tokenPairs) {
     const tokenPair = tokenPairs[i]
-    tokenPair.chainId = web3.utils.toHex(tokenPair.chainId) 
-    tokenPair.fromChainID = web3.utils.toHex(tokenPair.fromChainID) 
-    tokenPair.toChainID = web3.utils.toHex(tokenPair.toChainID) 
+    tokenPair.chainId = tokenPair.chainId + '/' + web3.utils.toHex(tokenPair.chainId) 
+    tokenPair.fromChainID = tokenPair.fromChainID + '/' + web3.utils.toHex(tokenPair.fromChainID) 
+    tokenPair.toChainID = tokenPair.toChainID + '/' + web3.utils.toHex(tokenPair.toChainID) 
   }
 }
 
@@ -408,8 +408,8 @@ async function refreshOracles() {
             config.groupId = web3.utils.hexToString(ret.results.transformed[`groupId-${i}`])
             config.status = ret.results.transformed[`status-${i}`].toString(10)
             config.deposit = ret.results.transformed[`deposit-${i}`].toString(10)
-            config.chain1 = web3.utils.toHex(ret.results.transformed[`chain1-${i}`])
-            config.chain2 = web3.utils.toHex(ret.results.transformed[`chain2-${i}`])
+            config.chain1 = ret.results.transformed[`chain1-${i}`] + '/' + web3.utils.toHex(ret.results.transformed[`chain1-${i}`])
+            config.chain2 = ret.results.transformed[`chain2-${i}`] + '/' + web3.utils.toHex(ret.results.transformed[`chain2-${i}`])
             config.curve1 = ret.results.transformed[`curve1-${i}`].toString(10)
             config.curve2 = ret.results.transformed[`curve2-${i}`].toString(10)
             config.gpk1 = ret.results.transformed[`gpk1-${i}`]
@@ -434,8 +434,8 @@ async function refreshOracles() {
           delete config[str];
         }
         config.groupId = web3.utils.hexToString(groupId)
-        config.chain1 = web3.utils.toHex(config.chain1)
-        config.chain2 = web3.utils.toHex(config.chain2)
+        config.chain1 = config.chain1 + '/' + web3.utils.toHex(config.chain1)
+        config.chain2 = config.chain2 + '/' + web3.utils.toHex(config.chain2)
         config.isDebtClean = (await oracle.isDebtClean(groupId)).toString()
         web3Sgs[groupId] = config
       }
@@ -501,6 +501,7 @@ async function refreshChains() {
   for (let i = 0; i < web3Chains.length; i++) {
     const chain = web3Chains[i]
     const curIds = await web3Oracles[i].getCurrentGroupIds()
+    const crossChainId = await web3Cross[i].getChainId()
     result[chain.chainName] = {
       blockNumber: await chain.core.getBlockNumber(),
 
@@ -519,7 +520,7 @@ async function refreshChains() {
       currentStoreman0: web3.utils.hexToString(web3.utils.toHex(curIds[0])),
       currentStoreman1: web3.utils.hexToString(web3.utils.toHex(curIds[1])), 
       chainId: await chain.core.getChainId(),
-      crossChainId: web3.utils.toHex(await web3Cross[i].getChainId()),
+      crossChainId: crossChainId + '/' + web3.utils.toHex(crossChainId),
     }
   }
   // chainsResult = result;
