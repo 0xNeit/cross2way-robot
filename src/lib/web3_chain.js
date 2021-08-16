@@ -9,7 +9,7 @@ class Web3Chain {
       this.web3 = new Web3(new Web3.providers.WebsocketProvider(rpc_url));
     }
     this.chainType = chainType;
-    this.chainId = chainIds[chainType];
+    // this.chainId = chainIds[chainType];
     this.rpcType = process.env.RPC_WEB3;
   }
 

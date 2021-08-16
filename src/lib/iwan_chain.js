@@ -22,7 +22,7 @@ class IWan {
     this.apiClient = IWan.getApiClient();
     this.web3 = web3;
     this.chainType = chainType;
-    this.chainId = chainIds[chainType];
+    // this.chainId = chainIds[chainType];
     this.rpcType = process.env.RPC_IWAN;
   }
 
