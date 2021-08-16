@@ -81,12 +81,14 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
               if (!cryptoPriceMap) {
                 cryptoPriceMap = await getCryptPrices(process.env.SYMBOLS.replace(/\s+/g,"").replace(reg,""))
               }
-              const newCryptoPrice = web3.utils.toBN(cryptoPriceMap[it])
-              const cryptoDeltaTimes = newCryptoPrice.sub(oldPrice).mul(thresholdTimes).div(oldPrice).abs();
-    
-              // 则当crypto价格变化 < 25%, 放弃此次变化
-              if (cryptoDeltaTimes.cmp(maxThresholdCmp) <= 0) {
-                return
+              if (cryptoPriceMap[it]) {
+                const newCryptoPrice = web3.utils.toBN(cryptoPriceMap[it])
+                const cryptoDeltaTimes = newCryptoPrice.sub(oldPrice).mul(thresholdTimes).div(oldPrice).abs();
+      
+                // 则当crypto价格变化 < 25%, 放弃此次变化
+                if (cryptoDeltaTimes.cmp(maxThresholdCmp) <= 0) {
+                  continue
+                }
               }
             }
             needUpdateMap[it] = '0x' + newPrice.toString(16);
