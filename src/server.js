@@ -339,7 +339,7 @@ function mapStr2str(symbolsMapStr) {
 
 async function refreshOracles() {
   const mapStr = mapStr2str(process.env.SYMBOLS_MAP);
-  const WAN_SYMBOLS = process.env.SYMBOLS + (mapStr.length > 0 ? ',' : "") + mapStr;
+  const WAN_SYMBOLS = process.env.SYMBOLS_3RD + ',' + process.env.SYMBOLS_SWAP + (mapStr.length > 0 ? ',' : "") + mapStr;
 
   const prePricesArray = await oracleWan.getValues(WAN_SYMBOLS);
   const symbolsStringArray = WAN_SYMBOLS.replace(/\s+/g,"").split(',');
@@ -501,7 +501,12 @@ async function refreshChains() {
   for (let i = 0; i < web3Chains.length; i++) {
     const chain = web3Chains[i]
     const curIds = await web3Oracles[i].getCurrentGroupIds()
-    const crossChainId = await web3Cross[i].getChainId()
+    let crossChainId = ''
+    try {
+      crossChainId = await web3Cross[i].getChainId()
+    } catch (e) {
+      log.error(`${chain.chainName} cross getChainId failed ${e}`)
+    }
     result[chain.chainName] = {
       blockNumber: await chain.core.getBlockNumber(),
 

@@ -79,7 +79,7 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
             // 如果coingecko价格变化 > 30%, 则当crypto价格变化 > 25%, 才算通过
             if (deltaTimes.cmp(maxThreshold) > 0) {
               if (!cryptoPriceMap) {
-                cryptoPriceMap = await getCryptPrices(process.env.SYMBOLS.replace(/\s+/g,"").replace(reg,""))
+                cryptoPriceMap = await getCryptPrices(process.env.SYMBOLS_3RD.replace(/\s+/g,""))
               }
               if (cryptoPriceMap[it]) {
                 const newCryptoPrice = web3.utils.toBN(cryptoPriceMap[it])
@@ -115,7 +115,7 @@ function mergePrice(pricesMap, symbolsOld, symbolsMapStr) {
 }
 
 async function updatePrice_WAN(oracle, pricesMap) {
-  const symbols = process.env.SYMBOLS.replace(/\s+/g,"").split(',')
+  const symbols = (process.env.SYMBOLS_3RD + ',' + process.env.SYMBOLS_SWAP).replace(/\s+/g,"").split(',')
   mergePrice(pricesMap, symbols, process.env.SYMBOLS_MAP)
   await updatePrice(oracle, pricesMap, symbols)
 }

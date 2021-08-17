@@ -156,10 +156,10 @@ const getContractPrices = async (wanPriceStr) => {
     waspPrice)
 
   return {
-    waspPrice: '0x' + waspPrice.toString(16),
-    zooPrice: '0x' + zooPrice.toString(16),
-    wandPrice: '0x' + wandPrice.toString(16),
-    phxPrice: '0x' + phxPrice.toString(16),
+    WASP: '0x' + waspPrice.toString(16),
+    ZOO: '0x' + zooPrice.toString(16),
+    WAND: '0x' + wandPrice.toString(16),
+    PHX: '0x' + phxPrice.toString(16),
   }
 }
 

@@ -9,7 +9,7 @@ async function getPrices(symbolsStr) {
     method: 'GET',
     uri: process.env.CMC_QUOTES_URL,
     qs: {
-      'symbol': process.env.SYMBOLS,
+      'symbol': symbolsStr,
       'aux': 'cmc_rank',
       'convert': 'USD'
     },
@@ -41,8 +41,8 @@ async function getPrices(symbolsStr) {
 }
 
 // setTimeout(async () => {
-//   // const data = await getIDs("https://api.coingecko.com/api/v3/coins/list", process.env.SYMBOLS);
-//   const data = await getPrices(process.env.SYMBOLS)
+//   // const data = await getIDs("https://api.coingecko.com/api/v3/coins/list", process.env.SYMBOLS_3RD);
+//   const data = await getPrices(process.env.SYMBOLS_3RD)
 //   console.log(JSON.stringify(data, null, 2))
 // }, 0)
 
