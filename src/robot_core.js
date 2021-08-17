@@ -58,7 +58,6 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
       symbolsStringArray.forEach((v,i) => {prePricesMap[v] = prePricesArray[i];})
 
       let cryptoPriceMap = null
-      const reg = new RegExp(process.env.SYMBOLS_reg, 'g')
 
       const needUpdateMap = {};
       const oldMap = {};
@@ -80,7 +79,9 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
             if (deltaTimes.cmp(maxThreshold) > 0) {
               if (!cryptoPriceMap) {
                 cryptoPriceMap = await getCryptPrices(process.env.SYMBOLS_3RD.replace(/\s+/g,""))
+                mergePrice(cryptoPriceMap, null, process.env.SYMBOLS_MAP)
               }
+              
               if (cryptoPriceMap[it]) {
                 const newCryptoPrice = web3.utils.toBN(cryptoPriceMap[it])
                 const cryptoDeltaTimes = newCryptoPrice.sub(oldPrice).mul(thresholdTimes).div(oldPrice).abs();
@@ -109,7 +110,9 @@ function mergePrice(pricesMap, symbolsOld, symbolsMapStr) {
     const kv = i.split(':')
     if (kv.length === 2) {
       pricesMap[kv[0]] = pricesMap[kv[1]]
-      symbolsOld.push(kv[0])
+      if (symbolsOld) {
+        symbolsOld.push(kv[0])
+      }
     }
   })
 }
