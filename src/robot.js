@@ -1,3 +1,4 @@
+"use strict"
 const schedule = require('node-schedule');
 process.env.LOG_ENGINE = process.env.LOG_ENGINE
 const log = require('./lib/log');

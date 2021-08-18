@@ -1,3 +1,4 @@
+"use strict"
 const express = require('express')
 const { aggregate } = require('@makerdao/multicall');
 const app = express()
