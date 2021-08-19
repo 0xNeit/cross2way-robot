@@ -133,24 +133,24 @@ module.exports = {
 
       multiCall: '0x0EA414bAAf9643be59667E92E26a87c4Bae3F33a'.toLowerCase(),
     },
-    // 'mainnet': {
-    //   chainType: 'AVAX',
-    //   rpc: 'https://api.avax.network/ext/bc/C/rpc',
-    //   gasPrice: 0x6d6e2edc00,
-    //   gasLimit: 0x2dc6c0,
-    //   chainId: 43113,
-    //   curveType: '1',
-    //   deployedFile: 'avalancheMainnet.json',
-    //   bip44: 0x80002328,
-    //   ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
-    //   chainKind: 'eth',
+    'mainnet': {
+      chainType: 'AVAX',
+      rpc: 'https://api.avax.network/ext/bc/C/rpc',
+      gasPrice: 0x6d6e2edc00,
+      gasLimit: 0x2dc6c0,
+      chainId: 43113,
+      curveType: '1',
+      deployedFile: 'avalancheMainnet.json',
+      bip44: 0x80002328,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
 
-    //   symbol: 'AVAX',
-    //   decimals: 18,
-    //   chainName: 'avax',
+      symbol: 'AVAX',
+      decimals: 18,
+      chainName: 'avax',
 
-    //   multiCall: '0xA4726706935901fe7dd0F23Cf5D4fb19867dfc88'.toLowerCase(),
-    // }
+      multiCall: '0xA4726706935901fe7dd0F23Cf5D4fb19867dfc88'.toLowerCase(),
+    }
   },
   'moonbeam': {
     'testnet': {

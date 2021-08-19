@@ -66,8 +66,8 @@ function fractionRatioToDecimalString(priceRaw, price_decimal, ratio) {
     return '0x' + price.toString('hex')
 }
 
-function fractionToDecimalString(priceRaw, price_decimal) {
-    let leftDecimal = price_decimal;
+function fractionToDecimalString(priceRaw, _price_decimal) {
+    const price_decimal = parseInt(_price_decimal);
     let decimal = 0;
 
     const priceRawSplit = (priceRaw + "").split('.');

@@ -86,16 +86,17 @@ class Contract {
     log.debug(`${this.core.chainType} do operator: ${opName}`);
     const nonce = await this.core.getTxCount(pkAddress);
 
-    const gas = gasLimit ? gasLimit : await this.core.estimateGas(pkAddress, this.address, value, data) + 200000;
+    const gas = gasLimit ? gasLimit : await this.core.estimateGas(pkAddress, this.address, value, data) + 400000;
     let gasPrice = await this.core.getGasPrice();
     log.debug(`current gas price = ${gasPrice}`)
     let rawTx = null
-    if (opName === 'setStoremanGroupConfig') {
-      // setStoremanGroupConfig maxGasPrice is 400GW
-      rawTx = await this.signTx(gas, nonce, data, privateKey, value, this.address, gasPrice, '0x5d21dba000');
-    } else {
-      rawTx = await this.signTx(gas, nonce, data, privateKey, value, this.address, gasPrice);
-    }
+    // if (opName === 'setStoremanGroupConfig') {
+    //   // setStoremanGroupConfig maxGasPrice is 400GW
+    //   rawTx = await this.signTx(gas, nonce, data, privateKey, value, this.address, gasPrice, '0x5d21dba000');
+    // } else {
+    //   rawTx = await this.signTx(gas, nonce, data, privateKey, value, this.address, gasPrice);
+    // }
+    rawTx = await this.signTx(gas, nonce, data, privateKey, value, this.address, gasPrice);
     const txHash = await this.core.sendRawTxByWeb3(rawTx);
 
     log.info(`${this.core.chainType} ${opName} hash: ${txHash}`);

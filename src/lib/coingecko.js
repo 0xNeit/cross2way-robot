@@ -152,9 +152,10 @@ async function getPrices(symbolsStr3rd, symbolsStrSwap) {
 
     // 如果价格为0 抛异常
     const newPrice = new BigNumber(priceMap[it])
-    if (newPrice.isZero()) {
-      log.error(`newPrice ${it} is 0`)
-      throw new Error(`newPrice ${it} is 0`)
+    // if newPrice <= 0, mail,ding
+    if (newPrice.lte(0)) {
+      log.error(`newPrice ${it} <= 0`)
+      throw new Error(`newPrice ${it} is less than 0`)
     }
   }
 

@@ -18,6 +18,28 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "robot core test",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/test/robot_core_test.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "btc test",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/lib/btc.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "test mem leak",
       "skipFiles": [
         "<node_internals>/**"
@@ -28,7 +50,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "dev lib ltc",
+      "name": "ltc lib testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -50,7 +72,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "dev lib wasp",
+      "name": "wasp lib dev",
       "skipFiles": [
         "<node_internals>/**"
       ],

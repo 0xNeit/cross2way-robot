@@ -84,10 +84,11 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
               
               if (cryptoPriceMap[it]) {
                 const newCryptoPrice = web3.utils.toBN(cryptoPriceMap[it])
-                const cryptoDeltaTimes = newCryptoPrice.sub(oldPrice).mul(thresholdTimes).div(oldPrice).abs();
+                // 两个新的价格做差 > 5%, 则非法
+                const cryptoDeltaTimes = newCryptoPrice.sub(newPrice).mul(thresholdTimes).div(newPrice).abs();
       
-                // 则当crypto价格变化 < 25%, 放弃此次变化
-                if (cryptoDeltaTimes.cmp(maxThresholdCmp) <= 0) {
+                if (cryptoDeltaTimes.gt(maxThresholdCmp)) { 
+                // newCryptoPrice.sub(newPrice).mul(thresholdTimes).div(newPrice).abs()  500
                   continue
                 }
               }
@@ -144,7 +145,7 @@ function writeToDB(config) {
 async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
   log.info(`syncConfigToOtherChain begin`);
 
-  // TODO: set current storeMan group 
+  // set current storeMan group 
   // const currentGroupIdKey1 = web3.utils.keccak256('MULTICOINSTAKE_RESERVED_KEY____1')
   // const currentGroupIdKey2 = web3.utils.keccak256('MULTICOINSTAKE_RESERVED_KEY____2')
   const curConfigs = []
@@ -157,8 +158,8 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       throw e
     }
   }
-  const curTimestamp = Math.floor(Date.now() / 1000)
-  // TODO: end
+  // const curTimestamp = Math.floor(Date.now() / 1000)
+  // end
 
   const sgs = db.getAllSga();
   for (let i = 0; i<sgs.length; i++) {
@@ -169,16 +170,16 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
     const groupId = sg.groupId;
     const config = await sgaContract.getStoremanGroupConfig(groupId);
 
-    // TODO: is a current group
+    // is a current group
     const groupName = web3.utils.hexToString(groupId)
     const groupIdUint = new BigNumber(sg.groupId).toString(10)
     let isCurrentConfig = false
     if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
-      if (config.startTime <= curTimestamp && config.endTime >= curTimestamp) {
+      if (config.status === 5) {
         isCurrentConfig = true
       }
     }
-    // TODO: end
+    // end
     
     if (config) {
       // ignore empty gpk
@@ -188,16 +189,16 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
         }
         continue;
       }
-      
+      let needWriteToDb = false
       for(let j = 0; j<oracles.length; j++) {
         const oracle = oracles[j];
-        // TODO: is need set current group
+        // is need set current group
         if (isCurrentConfig) {
           if (curConfigs[j][0] !== groupIdUint && curConfigs[j][1] !== groupIdUint) {
             await oracle.setCurrentGroupIds([groupIdUint, curConfigs[j][0]])
           }
         }
-        // TODO: end
+        // end
         const config_eth = await oracle.getStoremanGroupConfig(groupId);
         // curve1 -> chain curve type
         const curve1 = !!oracle.chain.curveType ? oracle.chain.curveType : process.env[oracle.chain.core.chainType + '_CURVETYPE']
@@ -229,11 +230,15 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
             config.startTime,
             config.endTime,
           );
-          writeToDB(config)
+          needWriteToDb = true
         } else if (config.status !== config_eth.status) {
           await setStoremanGroupStatus(oracle, groupId, config.status);
-          writeToDB(config)
+          needWriteToDb = true
         }
+      }
+      
+      if (needWriteToDb) {
+        writeToDB(config)
       }
     }
   }
@@ -365,6 +370,9 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
 }
 
 module.exports = {
+  // only for test
+  updatePrice,
+  // for robot
   createScanEvent,
   doSchedule,
   syncConfigToOtherChain,
