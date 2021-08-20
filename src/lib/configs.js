@@ -138,7 +138,7 @@ module.exports = {
       rpc: 'https://api.avax.network/ext/bc/C/rpc',
       gasPrice: 0x6d6e2edc00,
       gasLimit: 0x2dc6c0,
-      chainId: 43113,
+      chainId: 43114,
       curveType: '1',
       deployedFile: 'avalancheMainnet.json',
       bip44: 0x80002328,

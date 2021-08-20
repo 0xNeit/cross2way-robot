@@ -74,10 +74,9 @@ const getBlockNumber = async () => {
   }
 }
 
-
-setInterval(async () => {
-  await getBlockNumber();
-}, 1000)
+// setInterval(async () => {
+//   await getBlockNumber();
+// }, 1000)
 
 module.exports = {
   pkToAddress

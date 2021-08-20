@@ -88,7 +88,7 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
                 const cryptoDeltaTimes = newCryptoPrice.sub(newPrice).mul(thresholdTimes).div(newPrice).abs();
       
                 if (cryptoDeltaTimes.gt(maxThresholdCmp)) { 
-                // newCryptoPrice.sub(newPrice).mul(thresholdTimes).div(newPrice).abs()  500
+                  log.warn(`crypto coingecko ${it} price conflict ${newCryptoPrice.toString(10)}, ${newPrice.toString(10)}`)
                   continue
                 }
               }
@@ -175,7 +175,7 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
     const groupIdUint = new BigNumber(sg.groupId).toString(10)
     let isCurrentConfig = false
     if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
-      if (config.status === 5) {
+      if (config.status === '5') {
         isCurrentConfig = true
       }
     }

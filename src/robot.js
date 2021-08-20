@@ -18,7 +18,7 @@ const chainBtc = require(`./chain/${process.env.IWAN_BTC_CHAIN_ENGINE}`);
 const chainXrp = require(`./chain/${process.env.IWAN_XRP_CHAIN_ENGINE}`);
 const chainLtc = require(`./chain/${process.env.IWAN_LTC_CHAIN_ENGINE}`);
 
-const oracleWan = chainWan.loadContract('OracleDelegate')
+let oracleWan = null
 const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
 
 const web3Oracles = []
@@ -28,6 +28,9 @@ web3Chains.forEach(web3Chain => {
     const oracle = web3Chain.loadContract('OracleDelegate')
     if (!oracle) {
       log.error(`${web3Chain.chainType} has not deployed Oracle`)
+    }
+    if (oracle.chain.chainName === 'wan') {
+      oracleWan = oracle
     }
     web3Oracles.push(oracle)
 
@@ -43,6 +46,9 @@ function getSk(address, tip) {
   let sk = null
   while (!sk) {
     const password = readlineSync.question(tip, {hideEchoBack: true, mask: '*'})
+    if (password === 'quit') {
+      return null
+    }
     try {
       const keyObject = keythereum.importFromFile(address.slice(2), process.env.KEYSTORE_PARENT_FOLD);
       sk = keythereum.recover(password, keyObject);
@@ -140,7 +146,10 @@ setTimeout(async () => {
       const adminAddress = await oracle.admin()
       
       let address = adminAddress.toLowerCase() 
-      let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码：`)
+      let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
+      if (sk === null) {
+        process.exit(0);
+      }
       oracle.setAdminSk(sk)
     }
   }
@@ -153,7 +162,7 @@ setTimeout(async () => {
 
   robotSchedules();
 
-  // setTimeout(updatePriceToWAN, 0)
+  // setTimeout(updateStoreManToChainsPart, 0)
 }, 0)
 
 

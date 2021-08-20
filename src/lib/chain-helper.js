@@ -1,6 +1,6 @@
 const EthTx = require('ethereumjs-tx');
 const log = require('./log');
-const { web3 } = require('./utils');
+const { web3, privateToAddress } = require('./utils');
 
 class ChainHelper {
   constructor(chainConfig) {
@@ -23,7 +23,7 @@ class ChainHelper {
       data: data,
       chainId: web3.utils.toHex(this.chainId),
     };
-    log.info(JSON.stringify(txParams));
+    log.info(JSON.stringify({...txParams, from: privateToAddress(prvKey)}));
     const privateKey = Buffer.from(prvKey, 'hex');
 
     const tx = new EthTx(txParams);
