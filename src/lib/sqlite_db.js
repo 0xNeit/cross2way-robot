@@ -94,28 +94,20 @@ class DB {
   getSga(id) {
     return this.db.prepare(`select * from sga where groupId = ?`).get(id);
   }
+
   getActiveSga() {
     return this.db.prepare(`select * from sga where status < 8`).all();
   }
 
   insertSga(item) {
-    this.db.prepare(`insert into sga values (@groupId, @status, @deposit, @chain1, @chain2, @curve1, @curve2, @gpk1, @gpk2, @startTime, @endTime, @updateTime)`).run(item);
-  }
-
-  insertSgaForce(item) {
-    try {
-      this.db.prepare(`insert into sga values (@groupId, @status, @deposit, @chain1, @chain2, @curve1, @curve2, @gpk1, @gpk2, @startTime, @endTime, @updateTime)`).run(item);
-    } catch (e) {
-      if (e.code === "SQLITE_CONSTRAINT_PRIMARYKEY") {
-        this.updateSga(item);
-      } else {
-        throw e;
-      }
-    }
+    this.db.prepare(`insert into sga values (@groupId, @status, @deposit, @chain1, @chain2, @curve1, @curve2, @gpk1, @gpk2, @startTime, @endTime, @updateTime,@preGroupId,@workStart,@workDuration,@registerDuration)`).run(item);
   }
 
   updateSga(item) {
     this.db.prepare(`update sga set status = @status, deposit = @deposit, chain1 = @chain1, chain2 = @chain2, curve1 = @curve1, curve2 = @curve2, gpk1 = @gpk1, gpk2 = @gpk2, startTime = @startTime, endTime = @endTime, updateTime = @updateTime where groupId = @groupId`).run(item);
+  }
+  updateSgaReg(item) {
+    this.db.prepare(`update sga set preGroupId = @preGroupId, workStart = @workStart, workDuration = @workDuration, registerDuration = @registerDuration where groupId = @groupId`).run(item);
   }
 
   close() {

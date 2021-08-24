@@ -1,3 +1,5 @@
+https://wiki.bitcoinsv.io/index.php/Opcodes_used_in_Bitcoin_Script
+
 curl --user wanglu:Wanchain888 --data-binary '{"method": "getwalletinfo", "params":[], "id": 1}' nodes.wandevs.org:26893
 curl --user wanglu:Wanchain888 --data-binary '{"method": "getwalletinfo", "params":[], "id": 1}' 52.40.34.234:36893
 curl --user  mpc:wanglubtc --data-binary '{"method": "getwalletinfo", "params":[], "id": 1}' 127.0.0.1:8332
@@ -1084,6 +1086,125 @@ getzmqnotifications","error":null,"id":1}
 			["bc1q5l2q43gz4fevu6u2vlcjpgekz6zcmzgfwwyaem", 0.00000000, ""]
 		]
 	],
+	"error": null,
+	"id": 1
+}
+
+
+
+//////////
+curl --user wanglu:Wanchain888 --data-binary '{"method": "help", "params":["getblock"], "id": 1}' 52.40.34.234:36893
+
+{"result":"getblock "blockhash" ( verbosity )
+
+If verbosity is 0, returns a string that is serialized, hex-encoded data for block 'hash'.
+If verbosity is 1, returns an Object with information about block <hash>.
+If verbosity is 2, returns an Object with information about block <hash> and information about each transaction. 
+
+Arguments:
+1. blockhash    (string, required) The block hash
+2. verbosity    (numeric, optional, default=1) 0 for hex-encoded data, 1 for a json object, and 2 for json object with transaction data
+
+Result (for verbosity = 0):
+"hex"    (string) A string that is serialized, hex-encoded data for block 'hash'
+
+Result (for verbosity = 1):
+{                                 (json object)
+  "hash" : "hex",                 (string) the block hash (same as provided)
+  "confirmations" : n,            (numeric) The number of confirmations, or -1 if the block is not on the main chain
+  "size" : n,                     (numeric) The block size
+  "strippedsize" : n,             (numeric) The block size excluding witness data
+  "weight" : n,                   (numeric) The block weight as defined in BIP 141
+  "height" : n,                   (numeric) The block height or index
+  "version" : n,                  (numeric) The block version
+  "versionHex" : "hex",           (string) The block version formatted in hexadecimal
+  "merkleroot" : "hex",           (string) The merkle root
+  "tx" : [                        (json array) The transaction ids
+    "hex",                        (string) The transaction id
+    ...
+  ],
+  "time" : xxx,                   (numeric) The block time expressed in UNIX epoch time
+  "mediantime" : xxx,             (numeric) The median block time expressed in UNIX epoch time
+  "nonce" : n,                    (numeric) The nonce
+  "bits" : "hex",                 (string) The bits
+  "difficulty" : n,               (numeric) The difficulty
+  "chainwork" : "hex",            (string) Expected number of hashes required to produce the chain up to this block (in hex)
+  "nTx" : n,                      (numeric) The number of transactions in the block
+  "previousblockhash" : "hex",    (string) The hash of the previous block
+  "nextblockhash" : "hex"         (string) The hash of the next block
+}
+
+Result (for verbosity = 2):
+{             (json object)
+  ...,        Same output as verbosity = 1
+  "tx" : [    (json array)
+    {         (json object)
+      ...     The transactions in the format of the getrawtransaction RPC. Different from verbosity = 1 "tx" result
+    },
+    ...
+  ]
+}
+
+Examples:
+> bitcoin-cli getblock "00000000c937983704a73af28acdec37b049d214adbda81d7e2a3dd146f6ed09"
+> curl --user myusername --data-binary '{"jsonrpc": "1.0", "id": "curltest", "method": "getblock", "params": ["00000000c937983704a73af28acdec37b049d214adbda81d7e2a3dd146f6ed09"]}' -H 'content-type: text/plain;' http://127.0.0.1:8332/
+","error":null,"id":1}
+
+
+
+
+
+
+
+
+
+
+
+
+{
+	"result": {
+		"hash": "00000000b873e79784647a6c82962c70d228557d24a747ea4d1b8bbe878e1206",
+		"confirmations": 2065490,
+		"strippedsize": 190,
+		"size": 190,
+		"weight": 760,
+		"height": 1,
+		"version": 1,
+		"versionHex": "00000001",
+		"merkleroot": "f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba",
+		"tx": [{
+			"txid": "f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba",
+			"hash": "f0315ffc38709d70ad5647e22048358dd3745f3ce3874223c80a7c92fab0c8ba",
+			"version": 1,
+			"size": 109,
+			"vsize": 109,
+			"weight": 436,
+			"locktime": 0,
+			"vin": [{
+				"coinbase": "0420e7494d017f062f503253482f",
+				"sequence": 4294967295
+			}],
+			"vout": [{
+				"value": 50.00000000,
+				"n": 0,
+				"scriptPubKey": {
+					"asm": "021aeaf2f8638a129a3156fbe7e5ef635226b0bafd495ff03afe2c843d7e3a4b51 OP_CHECKSIG",
+					"hex": "21021aeaf2f8638a129a3156fbe7e5ef635226b0bafd495ff03afe2c843d7e3a4b51ac",
+					"type": "pubkey"
+				}
+			}],
+			"hex": "01000000010000000000000000000000000000000000000000000000000000000000000000ffffffff0e0420e7494d017f062f503253482fffffffff0100f2052a010000002321021aeaf2f8638a129a3156fbe7e5ef635226b0bafd495ff03afe2c843d7e3a4b51ac00000000"
+		}],
+		"time": 1296688928,
+		"mediantime": 1296688928,
+		"nonce": 1924588547,
+		"bits": "1d00ffff",
+		"difficulty": 1,
+		"chainwork": "0000000000000000000000000000000000000000000000000000000200020002",
+		"nTx": 1,
+		"previousblockhash": "000000000933ea01ad0ee984209779baaec3ced90fa3f408719526f8d77f4943",
+		"nextblockhash": "000000006c02c8ea6e4ff69651f7fcde348fb9d557a06e6957b65552002a7820"
+	},
 	"error": null,
 	"id": 1
 }

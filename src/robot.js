@@ -9,7 +9,7 @@ const readlineSync = require('readline-sync');
 const keythereum = require("keythereum");
 const { getChain, getChains } = require("./lib/web3_chains")
 
-const { createScanEvent, doSchedule, updatePrice_WAN, syncConfigToOtherChain, syncIsDebtCleanToWan } = require('./robot_core');
+const { createScanEvent, doSchedule, updatePrice_WAN, syncConfigToOtherChain, syncIsDebtCleanToWan, syncIsDebtCleanToWanV2 } = require('./robot_core');
 
 const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
 const web3Chains = getChains(process.env.NETWORK_TYPE)
@@ -124,6 +124,12 @@ const updateDebtCleanToWan = async function() {
     await syncIsDebtCleanToWan(sgaWan, oracleWan, web3Quotas, chainBtc, chainXrp, chainLtc)
   })
 }
+const updateDebtCleanToWanV2 = async function() {
+  log.info("updateDebtCleanToWanV2")
+  await doSchedule(async () => {
+    await syncIsDebtCleanToWanV2(sgaWan, oracleWan, web3Quotas, chainBtc, chainXrp, chainLtc)
+  })
+}
 const robotSchedules = function() {
   schedule.scheduleJob('20 * * * * *', updatePriceToWAN);
 
@@ -140,32 +146,36 @@ const robotSchedules = function() {
 
 // helper functions
 setTimeout(async () => {
-  if (process.env.USE_KEYSTORE === 'true') {
-    for (let i = 0; i < web3Oracles.length; i++) {
-      const oracle = web3Oracles[i]
-      const adminAddress = await oracle.admin()
+  // if (process.env.USE_KEYSTORE === 'true') {
+  //   for (let i = 0; i < web3Oracles.length; i++) {
+  //     const oracle = web3Oracles[i]
+  //     const adminAddress = await oracle.admin()
       
-      let address = adminAddress.toLowerCase() 
-      let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
-      if (sk === null) {
-        process.exit(0);
-      }
-      oracle.setAdminSk(sk)
-    }
-  }
-  if (process.env.ORACLE_ADMIN_WANCHAIN){
-    oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
-  }
+  //     let address = adminAddress.toLowerCase() 
+  //     let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
+  //     if (sk === null) {
+  //       process.exit(0);
+  //     }
+  //     oracle.setAdminSk(sk)
+  //   }
+  // }
+  // if (process.env.ORACLE_ADMIN_WANCHAIN){
+  //   oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
+  // }
 
-  setTimeout(updatePriceToWAN, 0);
-  setTimeout(scanNewStoreMan, 0);
+  // setTimeout(updatePriceToWAN, 0);
+  // setTimeout(scanNewStoreMan, 0);
 
-  robotSchedules();
+  // robotSchedules();
 
   // setTimeout(updateStoreManToChainsPart, 0)
+  setTimeout(updateDebtCleanToWanV2, 0)
 }, 0)
 
 
+process.on('uncaughtException', err => {
+  log.error(`uncaughtException ${err}`)
+});
 process.on('unhandledRejection', (err) => {
-  log.error(`unhandledRejection ${err}`);
+  log.error(`unhandledRejection ${err}`)
 });

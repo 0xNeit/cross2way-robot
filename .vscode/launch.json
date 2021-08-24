@@ -18,6 +18,28 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "migratedb testnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/migratedb.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "migratedb mainnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/migratedb.js",
+      "envFile": "${workspaceFolder}/.env.production"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "robot core test",
       "skipFiles": [
         "<node_internals>/**"

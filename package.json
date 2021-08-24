@@ -9,6 +9,8 @@
     "deploy_production": "node -r dotenv/config src/deploy.js dotenv_config_path=.env.production",
     "server_testnet": "node -r dotenv/config src/server.js dotenv_config_path=.env.dev",
     "server_production": "node -r dotenv/config src/server.js dotenv_config_path=.env.production",
+    "migratedb_testnet": "node -r dotenv/config src/migratedb.js dotenv_config_path=.env.dev",
+    "migratedb_production": "node -r dotenv/config src/migratedb.js dotenv_config_path=.env.production",
     "check_testnet": "node -r dotenv/config src/check.js dotenv_config_path=.env.dev",
     "check_production": "node -r dotenv/config src/check.js dotenv_config_path=.env.production",
     "tokenPair_testnet": "node -r dotenv/config src/token_pair.js dotenv_config_path=.env.dev",

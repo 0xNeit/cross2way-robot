@@ -5,6 +5,8 @@ const ScanEvent = require('./scan_event');
 const db = require('./lib/sqlite_db');
 const xrp = require('./lib/xrp');
 const dot = require('./lib/dot');
+const btc = require('./lib/btc');
+const ltc = require('./lib/ltc');
 const { default: BigNumber } = require('bignumber.js');
 const getCryptPrices = require('./lib/crypto_compare')
 
@@ -260,6 +262,20 @@ const isBtcDebtClean = async function(chainBtc, sg) {
   // 1 1 的是老store man
   return true
 }
+const isBtcDebtCleanV2 = async function(chainBtc, sg) {
+  if (sg.curve1 === 0 || sg.curve2 === 0) {
+    const gpk = sg.curve1 === 0 ? sg.gpk1 : sg.gpk2
+    const balance = await chainBtc.core.getOneBalance(gpk)
+
+    if (balance.gt(bigZero)) {
+      return false
+    } else {
+      return true
+    }
+  }
+  // 1 1 的是老store man
+  return true
+}
 const isLtcDebtClean = async function(chainLtc, sg) {
   if (sg.curve1 === 0 || sg.curve2 === 0) {
     const gpk = sg.curve1 === 0 ? sg.gpk1 : sg.gpk2
@@ -369,6 +385,52 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
   }
 }
 
+// 
+const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan, chainBtc, chainXrp, chainLtc) {
+  const time = parseInt(new Date().getTime() / 1000);
+  // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
+  const sgs = db.getAllSga();
+  for (let i = 0; i<sgs.length; i++) {
+    const sg = sgs[i];
+    const groupId = sg.groupId;
+    const config = await sgaWan.getStoremanGroupConfig(groupId);
+
+    const isDebtClean = await oracleWan.isDebtClean(groupId)
+    if (isDebtClean) {
+      continue
+    }
+
+    // const groupName = web3.utils.hexToString(groupId)
+    // if (groupName !== 'dev_031' && groupName !== 'testnet_027') {
+    //   continue
+    // }
+
+    let isDebtClean_btc = false
+    let isDebtClean_xrp = false
+    let isDebtClean_ltc = false
+    let isDebtClean_dot = false
+
+    // 1. 记录blocktime > storeman endTime第一个块时，storeman的balance，
+      // 疑点，从startTime开始记录收支？
+    // 2. 扫描新storeman来自旧storeman的资产转移事件，如果转过来的 资产 >= balance，则debtclean
+    if (config.status >= 5) {
+      if (time > config.endTime) {
+        isDebtClean_btc = await isBtcDebtClean(chainBtc, sg)
+        isDebtClean_xrp = await isXrpDebtClean(chainXrp, sg)
+        isDebtClean_ltc = await isLtcDebtClean(chainLtc, sg)
+        isDebtClean_dot = await isDotDebtClean(sg)
+      }
+    }
+  
+    // 4. 如果其他链上都debt clean， 则将debt clean状态同步到wanChain的oracle上
+    if (isDebtClean_btc && isDebtClean_xrp && isDebtClean_ltc && isDebtClean_dot && totalClean === web3Quotas.length) {
+      await oracleWan.setDebtClean(groupId, true);
+    }
+
+    log.info("isDebtClean smgId", groupId, "btc", isDebtClean_btc, "xrp", isDebtClean_xrp, "ltc", isDebtClean_ltc, "dot", isDebtClean_dot, logStr)
+  }
+}
+
 module.exports = {
   // only for test
   updatePrice,
@@ -377,5 +439,6 @@ module.exports = {
   doSchedule,
   syncConfigToOtherChain,
   updatePrice_WAN,
-  syncIsDebtCleanToWan
+  syncIsDebtCleanToWan,
+  syncIsDebtCleanToWanV2,
 }

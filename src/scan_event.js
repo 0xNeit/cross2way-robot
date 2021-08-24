@@ -32,11 +32,25 @@ class ScanEvent {
         gpk2: "0",
         startTime: 0,
         endTime: 0,
-        updateTime: 0
+        updateTime: 0,
+        preGroupId: event.returnValues.preGroupId,
+        workStart: event.returnValues.workStart,
+        workDuration: event.returnValues.workDuration,
+        registerDuration: event.returnValues.registerDuration,
       };
       const sga = db.getSga(event.returnValues.groupId);
       if (!sga) {
         db.insertSga(config);
+      } else {
+        if (!sga.preGroupId) {
+          db.updateSgaReg({
+            groupId: event.returnValues.groupId,
+            preGroupId: event.returnValues.preGroupId,
+            workStart: event.returnValues.workStart,
+            workDuration: event.returnValues.workDuration,
+            registerDuration: event.returnValues.registerDuration,
+          })
+        }
       }
     }
   }
@@ -76,6 +90,14 @@ class ScanEvent {
     }
   
     log.info(`scan from=${from}, to=${to}`);
+    await this.doScan(from, step, to);
+  }
+
+  async scanStoremanGroup(from, to, step) {
+    log.info(`scan from=${from}, to=${to}`);
+    if (from > to) {
+      return
+    }
     await this.doScan(from, step, to);
   }
   
