@@ -309,6 +309,100 @@ describe('bitcoinjs-lib (addresses)', function () {
   })
 });
 
+// 一个签名　＝　长度48 + 72字节内容 = 73字节
+// 48 + 3045022100884d142d86652a3f47ba4746ec719bbfbd040a570b1deccbb6498c75c4ae24cb02204b9f039ff08df09cbe9f6addac960298cad530a863ea8f53982c09db8f6e381301
+// 
+// tx-> hex
+// nVersion + len(tx.vin) + tx.vin + len(tx.vout) + tx.vout + tx.nLockTime
+// nVersion + len(tx.vin) + [hash,n,scriptSig,nSequence] + len(tx.vout) + [nValue, scriptPubKey] + tx.nLockTime
+// 01000000       01  186f9f998a5aa6f048e51dd8419a14d8a0f1a8a2836dd734d2804fe65fa35779 00000000                8b                               483045022100884d142d86652a3f47ba4746ec719bbfbd040a570b1deccbb6498c75c4ae24cb02204b9f039ff08df09cbe9f6addac960298cad530a863ea8f53982c09db8f6e381301410484ecc0d46f1918b30928fa0e4ed99f16a0fb4fde0735e7ade8416ab9fe423cc5412336376789d172787ec3457eee41c04f4938de5cc17b4a10fa336a8d752adf          ffffffff       02               60e3160000000000          19         76a914ab68025513c3dbd2f7b92a94e0581f5d50f654e788ac   d0ef800000000000        19        76a9147f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a888ac      00000000
+// version(4) + [vin(的长度1-9)             +     vin的txid(32,反序)                 + vOutIndex(4)  +   解锁脚本长度(139,接下来的139字节为解锁脚本  +                                                                                                                           解锁脚本　　                                                                                                                                                          nSequence    ＋　tx.vout的长度    +      第一笔的.nValue     + 锁定脚本长度  +                           锁定脚本内容         +          第二笔的nValue  第二笔的锁定脚本长度       锁定脚本内容                                     + nLockTime
+                                                                                                          // 读取首字节, 如果小于253,本字节为长度,
+                                                                                                          //           如果等于253, 接着的2字节为长度,
+                                                                                                          //           如果等于254, 接着的4字节为长度
+                                                                                                          //           如果等于255, 接着的8字节为长度     
+// 锁定脚本内容  76   a9      147f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a8    88          ac
+//            Dup Hash160          (Pubkey Hash)                       EqualVerify CheckSig
+
+// 解锁脚本内容 [48                    30         45         02 21 00884d142d86652a3f47ba4746ec719bbfbd040a570b1deccbb6498c75c4ae24cb 02 20 4b9f039ff08df09cbe9f6addac960298cad530a863ea8f53982c09db8f6e3813   01]                  [41 04 84ecc0d46f1918b30928fa0e4ed99f16a0fb4fde0735e7ade8416ab9fe423cc5412336376789d172787ec3457eee41c04f4938de5cc17b4a10fa336a8d752adf]
+//            [sig] (48 长度72字节  30 push48字节 45 序列的长度    21长度       R 33字节                                                     长度    S 32字节                                                      后缀SIGHASH_ALL)                                      [pubkey] (总长度65, 非压缩, 32 + 32)
+
+// P2PKH => 解锁脚本[(Sig)(PubKey)] + 锁定脚本[Dup Hash160 (Pubkey Hash) EqualVerify CheckSig]
+// p2SH => 解锁脚本[(Sig)(PubKey) CheckSig ] + 锁定脚本[(Hash160 (scrip Hash) EqualVerify)]
+
+
+// class COutPoint {
+//   uint256 hash;
+//   uint32_t n;
+//   (obj.hash, obj.n)
+// }
+
+// typedef prevector<28, unsigned char> CScriptBase;  ==> 字节数组
+// class CScript : public CScriptBase
+
+// class CTxIn {
+//   COutPoint prevout;
+//   CScript scriptSig; // 解锁脚本
+//   uint32_t nSequence;
+//   CScriptWitness scriptWitness;
+/* (obj.prevout, obj.scriptSig, obj.nSequence) */
+/* => (obj.hash, obj.n, obj.scriptSig, obj.nSequence)  */
+// }
+
+/** An output of a transaction.  It contains the public key that the next input must be able to sign with to claim it. */
+// class CTxOut
+// {
+//     CAmount nValue; // int64_t
+//     CScript scriptPubKey;
+//     SERIALIZE_METHODS(CTxOut, obj) { READWRITE(obj.nValue, obj.scriptPubKey); }
+// }
+
+// class CTransaction {
+//   version = 2
+//  const std::vector<CTxIn> vin;
+//  const std::vector<CTxOut> vout;
+//  const int32_t nVersion;
+//  const uint32_t nLockTime;
+// }
+
+// class CMutableTransaction{
+//   std::vector<CTxIn> vin;
+//   std::vector<CTxOut> vout;
+//   int32_t nVersion;
+//   uint32_t nLockTime;
+// }
+// ｖersion默认为２, ＆　0x40000000表示包含witness
+// nVersion  [如果包含witness  + vector<CTxIn>空对象　+ flag(01)]   +  s << tx.vin + s << tx.vout + [s << tx.vin[i].scriptWitness.stack] + s << tx.nLockTime
+// nVersion                                                      +  s << tx.vin + s << tx.vout                                        + s << tx.nLockTime 
+// => nVersion + len(tx.vin) + tx.vin + len(tx.vout) + tx.vout + tx.nLockTime
+// template<typename Stream, typename TxType>
+// inline void SerializeTransaction(const TxType& tx, Stream& s) {
+//     const bool fAllowWitness = !(s.GetVersion() & SERIALIZE_TRANSACTION_NO_WITNESS);
+
+//     s << tx.nVersion;
+//     unsigned char flags = 0;
+//     // Consistency check
+//     if (fAllowWitness) {
+//         /* Check whether witnesses need to be serialized. */
+//         if (tx.HasWitness()) {
+//             flags |= 1;
+//         }
+//     }
+//     if (flags) {
+//         /* Use extended format in case witnesses are to be serialized. */
+//         std::vector<CTxIn> vinDummy;
+//         s << vinDummy;
+//         s << flags;
+//     }
+//     s << tx.vin;
+//     s << tx.vout;
+//     if (flags & 1) {
+//         for (size_t i = 0; i < tx.vin.size(); i++) {
+//             s << tx.vin[i].scriptWitness.stack;
+//         }
+//     }
+//     s << tx.nLockTime;
+// }
 // Alice -> Bob 0.015
 // {
 //   "version": 1,
@@ -333,17 +427,146 @@ describe('bitcoinjs-lib (addresses)', function () {
 //   ]
 // }
 
+// p2pkh
 // 7957a35fe64f80d234d76d83a2a8f1a0d8149a41d81de548f0a65a8a999f6f18
-// value 0.1
-// Inputs
-// index      0, 
-// address    18iWVBbk8tA9bbipS1evviVLP4eE5ga51P
-// Pkscript   Invalid   ASM
-// Sigscript  Invalid   ASM
-// Witness    N/A
-// Value      0.1
-// Outputs
-// index      0
-// address    1Cdid9KFAaatwczBwBttQcwXYCpvK8h7FK
-// Pkscript   Invalid   ASM
-// Value      0.1
+// 0100000001524d288f25cada331c298e21995ad070e1d1a0793e818f2f7cfb5f6122ef3e71000000008c493046022100a59e516883459706ac2e6ed6a97ef9788942d3c96a0108f2699fa48d9a5725d1022100f9bb4434943e87901c0c96b5f3af4e7ba7b83e12c69b1edbfe6965f933fcd17d014104e5a0b4de6c09bd9d3f730ce56ff42657da3a7ec4798c0ace2459fb007236bc3249f70170509ed663da0300023a5de700998bfec49d4da4c66288a58374626c8dffffffff0180969800000000001976a9147f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a888ac00000000
+// {
+// 	"result": {
+// 		"txid": "7957a35fe64f80d234d76d83a2a8f1a0d8149a41d81de548f0a65a8a999f6f18",
+// 		"hash": "7957a35fe64f80d234d76d83a2a8f1a0d8149a41d81de548f0a65a8a999f6f18",
+// 		"version": 1,
+// 		"size": 225,
+// 		"vsize": 225,
+// 		"weight": 900,
+// 		"locktime": 0,
+// 		"vin": [{
+// 			"txid": "713eef22615ffb7c2f8f813e79a0d1e170d05a99218e291c33daca258f284d52",
+// 			"vout": 0,
+// 			"scriptSig": {
+// 				"asm": "3046022100a59e516883459706ac2e6ed6a97ef9788942d3c96a0108f2699fa48d9a5725d1022100f9bb4434943e87901c0c96b5f3af4e7ba7b83e12c69b1edbfe6965f933fcd17d[ALL] 04e5a0b4de6c09bd9d3f730ce56ff42657da3a7ec4798c0ace2459fb007236bc3249f70170509ed663da0300023a5de700998bfec49d4da4c66288a58374626c8d",
+// 				"hex": "493046022100a59e516883459706ac2e6ed6a97ef9788942d3c96a0108f2699fa48d9a5725d1022100f9bb4434943e87901c0c96b5f3af4e7ba7b83e12c69b1edbfe6965f933fcd17d014104e5a0b4de6c09bd9d3f730ce56ff42657da3a7ec4798c0ace2459fb007236bc3249f70170509ed663da0300023a5de700998bfec49d4da4c66288a58374626c8d"
+// 			},
+// 			"sequence": 4294967295
+// 		}],
+// 		"vout": [{
+// 			"value": 0.10000000,
+// 			"n": 0,
+// 			"scriptPubKey": {
+// 				"asm": "OP_DUP OP_HASH160 7f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a8 OP_EQUALVERIFY OP_CHECKSIG",
+// 				"hex": "76a9147f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a888ac",
+// 				"reqSigs": 1,
+// 				"type": "pubkeyhash",
+// 				"addresses": ["1Cdid9KFAaatwczBwBttQcwXYCpvK8h7FK"]
+// 			}
+// 		}]
+// 	},
+// 	"error": null,
+// 	"id": 1
+// }
+
+// p2sh
+// {
+// 	"result": {
+// 		"txid": "40eee3ae1760e3a8532263678cdf64569e6ad06abc133af64f735e52562bccc8",
+// 		"hash": "40eee3ae1760e3a8532263678cdf64569e6ad06abc133af64f735e52562bccc8",
+// 		"version": 1,
+// 		"size": 189,
+// 		"vsize": 189,
+// 		"weight": 756,
+// 		"locktime": 0,
+// 		"vin": [{
+// 			"txid": "42a3fdd7d7baea12221f259f38549930b47cec288b55e4a8facc3c899f4775da",
+// 			"vout": 0,
+// 			"scriptSig": {
+// 				"asm": "3044022048d1468895910edafe53d4ec4209192cc3a8f0f21e7b9811f83b5e419bfb57e002203fef249b56682dbbb1528d4338969abb14583858488a3a766f609185efe68bca[ALL] 031a455dab5e1f614e574a2f4f12f22990717e93899695fb0d81e4ac2dcfd25d00",
+// 				"hex": "473044022048d1468895910edafe53d4ec4209192cc3a8f0f21e7b9811f83b5e419bfb57e002203fef249b56682dbbb1528d4338969abb14583858488a3a766f609185efe68bca0121031a455dab5e1f614e574a2f4f12f22990717e93899695fb0d81e4ac2dcfd25d00"
+// 			},
+// 			"sequence": 4294967295
+// 		}],
+// 		"vout": [{
+// 			"value": 0.00990000,
+// 			"n": 0,
+// 			"scriptPubKey": {
+// 				"asm": "OP_HASH160 e9c3dd0c07aac76179ebc76a6c78d4d67c6c160a OP_EQUAL",
+// 				"hex": "a914e9c3dd0c07aac76179ebc76a6c78d4d67c6c160a87",
+// 				"reqSigs": 1,
+// 				"type": "scripthash",
+// 				"addresses": ["3P14159f73E4gFr7JterCCQh9QjiTjiZrG"]
+// 			}
+// 		}],
+// 		"hex": "0100000001da75479f893cccfaa8e4558b28ec7cb4309954389f251f2212eabad7d7fda342000000006a473044022048d1468895910edafe53d4ec4209192cc3a8f0f21e7b9811f83b5e419bfb57e002203fef249b56682dbbb1528d4338969abb14583858488a3a766f609185efe68bca0121031a455dab5e1f614e574a2f4f12f22990717e93899695fb0d81e4ac2dcfd25d00ffffffff01301b0f000000000017a914e9c3dd0c07aac76179ebc76a6c78d4d67c6c160a8700000000",
+// 		"blockhash": "0000000000000002bc915719cd6e6ceeecd67e7bf66f2aa34804743cf8044e86",
+// 		"confirmations": 425045,
+// 		"time": 1385820619,
+// 		"blocktime": 1385820619
+// 	},
+// 	"error": null,
+// 	"id": 1
+// }
+
+// p2pkh: 解锁脚本 + 锁定脚本 => [sig pubKey] [dup hash160 (pubKey hash160) equalVerify checkSig] => true
+// p2pk: 解锁脚本 + 锁定脚本 => [sig] + [pk checkSig]
+// p2ms: 解锁脚本 + 锁定脚本 => [0 sig1 sig2] + [2 key1 key2 key3 3 checkMultiSig]
+// p2sh:  锁定脚本: hash160 (script hash160) equal
+//        兑现脚本: [2 key1 key2 key3 3 checkMultiSig]
+
+//        解锁脚本 = [0 sig1 sig2] + 兑现脚本 = [0 sig1 sig2] + [2 key1 key2 key3 3 checkMultiSig]
+//        兑现脚本 + 锁定脚本 => true
+//        解锁脚本 => true
+// p2sh: a. 解锁脚本 + 锁定脚本 => [sig pubKey checkSig] + [hash160 (script hash160) equal] => true   (模拟的p2pkh)
+//                           => [0 sig1 sig2 2 key1 key2 key3 3 checkMultiSig] [hash160 (script hash160) equal] => true (模拟的p2ms)
+//       b. 解锁脚本          => [sig pubKey checkSig] => true
+
+// (Sig)(PubKey) ＋　锁定脚本
+// ＝＞　(sig)(pubkey) + Dup Hash160 (Pubkey Hash) EqualVerify CheckSig　Pubkey
+// => 483045022100884d142d86652a3f47ba4746ec719bbfbd040a570b1deccbb6498c75c4ae24cb02204b9f039ff08df09cbe9f6addac960298cad530a863ea8f53982c09db8f6e381301410484ecc0d46f1918b30928fa0e4ed99f16a0fb4fde0735e7ade8416ab9fe423cc5412336376789d172787ec3457eee41c04f4938de5cc17b4a10fa336a8d752adf + 76a9147f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a888ac
+
+
+// 构造签名
+// type MsgTx struct {
+
+//   Version int32
+
+//   TxIn []*TxIn
+
+//   TxOut []*TxOut
+
+//   LockTime uint32
+
+// }
+
+// type TxOut struct {
+
+//   Value int64
+
+//   PkScript []byte
+
+// }
+
+// type TxIn struct {
+
+//   PreviousOutPoint OutPoint
+
+//   SignatureScript []byte
+
+//   Sequence uint32
+
+// }
+
+// type OutPoint struct {
+
+//   Hash chainhash.Hash
+
+//   Index uint32
+
+// }
+
+// 在比特币中，要做一笔交易分为三个步骤：
+
+// 构建原始交易RawTransaction，该交易包含了输入指向的OutPoint，也包含了完整的Output，但是没有签名，也就是没有设置SignatureScript的内容。
+// 用私钥对签名构建的RawTransaction进行签名，并将签名构建成完整的解锁脚本，填入对应的Input的SignatureScript字段中。
+// 将签名后的Transaction发送到P2P网络中。
+
+// 签名: 第n个input签名,则需要把其他input的解锁脚本设置为0,第n个input的解锁脚本,替换锁定脚本, 签名的内容为
+// 01000000       01  186f9f998a5aa6f048e51dd8419a14d8a0f1a8a2836dd734d2804fe65fa35779 00000000                锁定脚本长度                               锁定脚本内容          ffffffff       02               60e3160000000000          19         76a914ab68025513c3dbd2f7b92a94e0581f5d50f654e788ac   d0ef800000000000        19        76a9147f9b1a7fb68d60c536c2fd8aeaa53a8f3cc025a888ac      00000000
+// version(4) + [vin(的长度1-9)             +     vin的txid(32,反序)                 + vOutIndex(4)  +   解锁xxx脚本长度 这里要替换成锁定脚本 +                                                                                                                           解锁脚本　　                                                                                                                                                          nSequence    ＋　tx.vout的长度    +      第一笔的.nValue     + 锁定脚本长度  +                           锁定脚本内容         +          第二笔的nValue  第二笔的锁定脚本长度       锁定脚本内容                                     + nLockTime

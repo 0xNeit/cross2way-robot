@@ -49,8 +49,8 @@ class Web3Chain {
     return await contract.methods[name](key).call();
   }
 
-  async getScFun(name, args, contract, abi) {
-    return await contract.methods[name](...args).call();
+  async getScFun(name, args, contract, abi, defaultBlock=null) {
+    return await contract.methods[name](...args).call(null,defaultBlock);
   }
 
   async getBlockNumber() {

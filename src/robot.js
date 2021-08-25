@@ -23,6 +23,7 @@ const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
 
 const web3Oracles = []
 const web3Quotas = []
+const web3Tms = []
 web3Chains.forEach(web3Chain => {
   if (!!web3Chain.deployedFile) {
     const oracle = web3Chain.loadContract('OracleDelegate')
@@ -39,6 +40,12 @@ web3Chains.forEach(web3Chain => {
       log.error(`${web3Chain.chainType} has not deployed Quota`)
     }
     web3Quotas.push(quota)
+
+    const tm = web3Chain.loadContract('TokenManagerDelegate')
+    if (!tm) {
+      log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
+    }
+    web3Tms.push(tm)
   }
 })
 
@@ -127,7 +134,7 @@ const updateDebtCleanToWan = async function() {
 const updateDebtCleanToWanV2 = async function() {
   log.info("updateDebtCleanToWanV2")
   await doSchedule(async () => {
-    await syncIsDebtCleanToWanV2(sgaWan, oracleWan, web3Quotas, chainBtc, chainXrp, chainLtc)
+    await syncIsDebtCleanToWanV2(sgaWan, oracleWan, web3Tms, chainBtc, chainXrp, chainLtc)
   })
 }
 const robotSchedules = function() {
@@ -146,30 +153,30 @@ const robotSchedules = function() {
 
 // helper functions
 setTimeout(async () => {
-  if (process.env.USE_KEYSTORE === 'true') {
-    for (let i = 0; i < web3Oracles.length; i++) {
-      const oracle = web3Oracles[i]
-      const adminAddress = await oracle.admin()
+  // if (process.env.USE_KEYSTORE === 'true') {
+  //   for (let i = 0; i < web3Oracles.length; i++) {
+  //     const oracle = web3Oracles[i]
+  //     const adminAddress = await oracle.admin()
       
-      let address = adminAddress.toLowerCase() 
-      let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
-      if (sk === null) {
-        process.exit(0);
-      }
-      oracle.setAdminSk(sk)
-    }
-  }
-  if (process.env.ORACLE_ADMIN_WANCHAIN){
-    oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
-  }
+  //     let address = adminAddress.toLowerCase() 
+  //     let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
+  //     if (sk === null) {
+  //       process.exit(0);
+  //     }
+  //     oracle.setAdminSk(sk)
+  //   }
+  // }
+  // if (process.env.ORACLE_ADMIN_WANCHAIN){
+  //   oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
+  // }
 
-  setTimeout(updatePriceToWAN, 0);
-  setTimeout(scanNewStoreMan, 0);
+  // setTimeout(updatePriceToWAN, 0);
+  // setTimeout(scanNewStoreMan, 0);
 
-  robotSchedules();
+  // robotSchedules();
 
-  setTimeout(updateStoreManToChainsPart, 0)
-  // setTimeout(updateDebtCleanToWanV2, 0)
+  // setTimeout(updateStoreManToChainsPart, 0)
+  setTimeout(updateDebtCleanToWanV2, 0)
 }, 0)
 
 

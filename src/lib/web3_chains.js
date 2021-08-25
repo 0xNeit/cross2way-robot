@@ -83,9 +83,14 @@ class Chain extends BaseChain {
     }
 
     this.core = this
+
+    this.nameContractMap = {}
   }
 
   loadContract = (contractName) => {
+    if (this.nameContractMap[contractName]) {
+      return this.nameContractMap[contractName]
+    }
     const config = this.deployConfig
     const ownerPrivateKey = this.ownerSk
     const ownerAddress = this.ownerAddress
@@ -93,26 +98,42 @@ class Chain extends BaseChain {
     const {abiPath, address} = getAddressAndABI(config, contractName)
     const abi = require(abiPath)
     assert.ok(abi, `${contractName}, no valid abi file at ${abiPath}`)
+
+    let contract = null
     if (contracts[contractName]) {
-      return new contracts[contractName](this, address, ownerPrivateKey, ownerAddress, abi)
+      contract = new contracts[contractName](this, address, ownerPrivateKey, ownerAddress, abi)
     } else {
-      return new Contract(this, address, ownerPrivateKey, ownerAddress, abi)
+      contract = new Contract(this, address, ownerPrivateKey, ownerAddress, abi)
     }
+
+    this.nameContractMap[contractName] = contract
+    return contract
   }
   
   loadContractAt = (contractName, address) => {
     const config = this.deployConfig
+    const ownerPrivateKey = this.ownerSk
+    const ownerAddress = this.ownerAddress
   
-    const {abiPath} = getAddressAndABI(config, contractName)
+    let abiPath = null
+    if (contractName === 'MappingToken') {
+      abiPath = path.resolve(process.env.DEPLOYED_FOLD, 'abi.MappingToken.json')
+    } else {
+      abiPath = getAddressAndABI(config, contractName).abiPath
+    }
     const abi = require(abiPath)
     assert.ok(abi, `${contractName}, no valid abi file at ${abiPath}`)
+    let contract = null
     if (contracts[contractName]) {
-      return new contracts[contractName](this, address, null, null, abi)
+      contract = new contracts[contractName](this, address, ownerPrivateKey, ownerAddress, abi)
     } else {
-      return new Contract(this, address, null, null, abi)
+      contract = new Contract(this, address, ownerPrivateKey, ownerAddress, abi)
     }
+
+    return contract
   }
 }
+
 const chainNames = []
 const chains = {}
 
