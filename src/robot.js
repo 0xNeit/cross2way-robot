@@ -155,11 +155,11 @@ const robotSchedules = function() {
 
   schedule.scheduleJob('30 */1 * * * *', updateStoreManToChainsPart);
 
-  // schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWan);
-  schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWanV2);
+  schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWan);
+  // schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWanV2);
 
   // save debt
-  schedule.scheduleJob('5 0 */12 * * *', updateDebt);
+  // schedule.scheduleJob('5 0 */12 * * *', updateDebt);
 };
 
 // helper functions
