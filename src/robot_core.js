@@ -1,3 +1,4 @@
+"use strict"
 const log = require('./lib/log');
 const { sleep, web3 } = require('./lib/utils');
 const logAndSendMail = require('./lib/email');
@@ -8,6 +9,7 @@ const dot = require('./lib/dot');
 const btc = require('./lib/btc');
 const ltc = require('./lib/ltc');
 const { default: BigNumber } = require('bignumber.js');
+const { aggregate } = require('@makerdao/multicall');
 const getCryptPrices = require('./lib/crypto_compare')
 
 const thresholdTimes = web3.utils.toBN(process.env.THRESHOLD_TIMES);
@@ -434,18 +436,18 @@ async function getAggregate(tm, total, _step, buildCall, work) {
 
 // btc => chains
 let gTokenPairs = {}
-let gSymbolAddressTokenMap = {}
-let gTotal = 0
-async function getTokenPairsAndSymbolTms(tm, total) {
+let gSymbolChainTokenMap = {}
+let gTotalTokenPairs = 0
+async function getTokenPairsAndSymbolTms(tm, total, web3Tms) {
   const tokenPairs = {}
   const symbolChainTokenMap = {}
-
-  if (gTotal !== total) {
+  if (gTotalTokenPairs === total) {
     return {
       tokenPairs: gTokenPairs,
-      symbolChainTokenMap: gSymbolAddressTokenMap,
+      symbolChainTokenMap: gSymbolChainTokenMap,
     }
   }
+
   process.env.SYMBOLS_NONCONTRACT.split(',').forEach(symbol => {symbolChainTokenMap[symbol] = {}})
 
   if (tm.chain.multiCall) {
@@ -505,10 +507,8 @@ async function getTokenPairsAndSymbolTms(tm, total) {
 
           if (symbolChainTokenMap[tokenPair.symbol]) {
             const toChainID = tokenPair.toChainID
-            const tm = getMapTm(parseInt(toChainID))
-            symbolChainTokenMap[tokenPair.symbol] = {
-              [tm.chain.chainType]: tm.chain.loadContractAt('MappingToken', tokenPair.toAccount.toLowerCase())
-            }
+            const tm = getMapTm(web3Tms, parseInt(toChainID))
+            symbolChainTokenMap[tokenPair.symbol][tm.chain.chainType] = tm.chain.loadContractAt('MappingToken', tokenPair.toAccount.toLowerCase())
           }
         }
       }
@@ -518,7 +518,7 @@ async function getTokenPairsAndSymbolTms(tm, total) {
       const id = parseInt(await tm.mapTokenPairIndex(i));
       const tokenPairInfo = removeIndexField(await tm.getTokenPairInfo(id));
       const ancestorInfo = removeIndexField(await tm.getAncestorInfo(id));
-      const tokenInfo = removeIndexField(await getMapTm(parseInt(tokenPairInfo.toChainID)).getTokenInfo(id))
+      const tokenInfo = removeIndexField(await getMapTm(web3Tms, parseInt(tokenPairInfo.toChainID)).getTokenInfo(id))
       const tokenPair = {id: id}
       
       Object.assign(tokenPair, ancestorInfo, tokenPairInfo, 
@@ -527,30 +527,53 @@ async function getTokenPairsAndSymbolTms(tm, total) {
 
       if (symbolChainTokenMap[tokenPair.symbol]) {
         const toChainID = tokenPair.toChainID
-        const tm = getMapTm(parseInt(toChainID))
-        symbolChainTokenMap[tokenPair.symbol] = {
-          [tm.chain.chainType]: tm.chain.loadContractAt('MappingToken', tokenPairInfo.toAccount.toLowerCase())
-        }
+        const tm = getMapTm(web3Tms, parseInt(toChainID))
+        symbolChainTokenMap[tokenPair.symbol][tm.chain.chainType] = tm.chain.loadContractAt('MappingToken', tokenPairInfo.toAccount.toLowerCase())
       }
     }
   }
 
   gTokenPairs = tokenPairs
-  gSymbolAddressTokenMap = symbolChainTokenMap
-  gTotal = total
+  gSymbolChainTokenMap = symbolChainTokenMap
+  gTotalTokenPairs = total
   return {
     tokenPairs,
     symbolChainTokenMap,
   }
 }
 
-const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan, web3Tms, chainBtc, chainXrp, chainLtc) {
+const getDebts = () => {
+  const debts = {}
+  const allDebts = db.getAllDebt()
+  for (let i = 0; i < allDebts.length; i++) {
+    const debt = allDebts[i];
+    if (!debts[debt.groupId]) {
+      debts[debt.groupId] = {}
+    }
+    if (!debts[debt.groupId][debt.coinType]) {
+      debts[debt.groupId][debt.coinType] = {}
+    }
+
+    debts[debt.groupId][debt.coinType] = {
+      isDebtClean: debt.isDebtClean,
+      totalSupply: debt.totalSupply,
+      totalReceive: debt.totalReceive,
+      lastReceiveTx: debt.lastReceiveTx,
+    }
+  }
+}
+
+const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   const time = parseInt(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
   const sgs = db.getAllSga();
+  const debts = getDebts()
   for (let i = 0; i<sgs.length; i++) {
     const sg = sgs[i];
     const groupId = sg.groupId;
+    if (sg.status === 7) {
+      continue;
+    }
     const config = await sgaWan.getStoremanGroupConfig(groupId);
 
     const isDebtClean = await oracleWan.isDebtClean(groupId)
@@ -558,35 +581,48 @@ const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan, web3Tms, chainB
       continue
     }
 
-    // 获取在各个链上,endTime前的总债务
-
-    // 1. 记录blocktime > storeman endTime第一个块时，storeman的balance，
-      // 疑点，从startTime开始记录收支？
-    // 2. 扫描新storeman来自旧storeman的资产转移事件，如果转过来的 资产 >= balance，则debtclean
     if (config.status >= 5) {
-      // 提前100分钟,开始获取关键数据
       if (time > config.endTime) {
-        // 如果db里没保存当前sm的最终debt,
-        // 根据endTime, 在过了安全块时间后, 获取各个链上最后一块的totalSupply
-        // 只查非合约链的资产, 目前有BTC,LTC,XRP,DOT这4种资产
+        log.info("isDebtClean2 time > endTime smgId", groupId)
         const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
-        const total = parseInt(await tm.totalTokenPairs())
-        const { symbolChainTokenMap } = getTokenPairsAndSymbolTms(tmWan, total)
+        const total = parseInt(await tmWan.totalTokenPairs())
+        const { symbolChainTokenMap } = await getTokenPairsAndSymbolTms(tmWan, total, web3Tms)
 
         for (let symbol in symbolChainTokenMap) {
-          const tm = symbolChainTokenMap[symbol]
-          console.log(`token ${symbol} in chain ${tm.chain.chainType}`)
+          const chainTokenMap = symbolChainTokenMap[symbol]
+          for (let chainSymbol in chainTokenMap) {
+            const totalSupply = await chainTokenMap[chainSymbol].getFun('totalSupply')
+            console.log(`token ${symbol} in chain ${chainSymbol} totalSupply = ${totalSupply}`)
+            if (!debts[groupId]) {
+              debts[groupId] = {}
+            }
+            if (!debts[groupId][chainSymbol]) {
+              debts[groupId][chainSymbol] = {
+                isDebtClean: false,
+                totalSupply: debt.totalSupply,
+                totalReceive: "",
+                lastReceiveTx: "",
+              }
+              db.insertDebt({
+                groupId,
+                coinType: chainSymbol,
+                ...debts[groupId][chainSymbol]
+              });
+            }
+          }
         }
       }
     }
-  
-    // 4. 如果其他链上都debt clean， 则将debt clean状态同步到wanChain的oracle上
-    if (isDebtClean_btc && isDebtClean_xrp && isDebtClean_ltc && isDebtClean_dot) {
-      await oracleWan.setDebtClean(groupId, true);
-    }
-
-    log.info("isDebtClean2 smgId", groupId, "btc", isDebtClean_btc, "xrp", isDebtClean_xrp, "ltc", isDebtClean_ltc, "dot", isDebtClean_dot)
   }
+}
+
+// 从数据库状态中,获取是否该设置为clean
+const syncIsDebtCleanToWanV2 = async function() {
+  const sgs = db.getAllSga();
+  const allDebts = db.getAllDebt()
+  // 获取groupId的某个资产类别的debt, 在链上从endTime开始监测转移事件
+
+
 }
 
 module.exports = {
@@ -598,5 +634,6 @@ module.exports = {
   syncConfigToOtherChain,
   updatePrice_WAN,
   syncIsDebtCleanToWan,
+  syncDebt,
   syncIsDebtCleanToWanV2,
 }

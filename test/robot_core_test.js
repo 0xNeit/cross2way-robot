@@ -2,7 +2,7 @@ process.env.LOG_ENGINE = process.env.LOG_ENGINE
 const log = require('../src/lib/log');
 const { getChain, getChains } = require("../src/lib/web3_chains")
 
-const { updatePrice} = require('../src/robot_core');
+const { updatePrice, syncIsDebtCleanToWanV2} = require('../src/robot_core');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
 
@@ -30,6 +30,22 @@ const getTotalSupply = async() => {
   }
 }
 
+const checkDebt = async () => {
+  const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
+  const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
+  const oracleWan = chainWan.loadContract('OracleDelegate')
+  const web3Chains = getChains(process.env.NETWORK_TYPE)
+  const web3Tms = []
+  web3Chains.forEach(web3Chain => {
+    const tm = web3Chain.loadContract('TokenManagerDelegate')
+    if (!tm) {
+      log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
+    }
+    web3Tms.push(tm)
+  })
+  await syncIsDebtCleanToWanV2(sgaWan, oracleWan, web3Tms)
+}
+
 setTimeout(async () => {
-  await getTotalSupply()
+  await checkDebt()
 }, 0)

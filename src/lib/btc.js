@@ -4,6 +4,7 @@ const BtcClient = require('bitcoin-core');
 const { version } = require('keythereum');
 
 function pkToAddress(gpk, network = 'mainnet') {
+  console.log(`..${"04" + gpk.slice(2)}`)
   const pkBuffer = Buffer.from("04" + gpk.slice(2), 'hex')
   const hash160 = bitcoin.crypto.hash160
   let prefix = 0x00
@@ -205,10 +206,13 @@ const getBalance = async (from, _to, sg) => {
 }
 
 // setTimeout(async () => {
-//   const blockNumber = await getClient().getBlockCount();
-//   await getBalance(2065118, blockNumber, {
+//   // const blockNumber = await getClient().getBlockCount();
+//   // await getBalance(2065118, blockNumber, {
     
-//   })
+//   // })
+//   // 0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866
+//   // 0x273c3273c072f826f728f865d58ccd297b293b87045fd806973d2a4d82f220a072bc5240c7d5920e0ddfdb0e01aeba184de9ef8ae14f5748243d8fa58d28e136
+//   pkToAddress('0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866', 'testnet')
 // }, 10)
 
 module.exports = {

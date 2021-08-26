@@ -87,6 +87,22 @@ class DB {
     this.db.prepare(`update scan set blockNumber = @blockNumber where chainType = @chainType`).run(item);
   }
 
+  insertDebt(item) {
+    this.db.prepare(`insert into debt values (@groupId, @coinType, @isDebtClean, @totalSupply, @totalReceive, @lastReceiveTx)`).run(item);
+  }
+
+  updateDebt(item) {
+    this.db.prepare(`update debt set isDebtClean = @isDebtClean, totalSupply = @totalSupply, totalReceive = @totalReceive, lastReceiveTx = @lastReceiveTx where groupId = @groupId, coinType=@coinType`).run(item);
+  }
+
+  getAllDebt() {
+    return this.db.prepare(`select * from debt`).all();
+  }
+
+  getAllUnCleanDebt() {
+    return this.db.prepare(`select * from debt where isDebtClean != true`).all();
+  }
+
   // store man group admin
   getAllSga() {
     return this.db.prepare(`select * from sga`).all();
