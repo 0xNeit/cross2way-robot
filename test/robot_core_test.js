@@ -1,11 +1,14 @@
 process.env.LOG_ENGINE = process.env.LOG_ENGINE
 const log = require('../src/lib/log');
 const { getChain, getChains } = require("../src/lib/web3_chains")
+const {web3} = require('../src/lib/utils')
 
-const { updatePrice, syncIsDebtCleanToWanV2} = require('../src/robot_core');
+const { updatePrice, syncIsDebtCleanToWanV2, syncDebt} = require('../src/robot_core');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
 
+// const registerTopics = web3.utils.keccak256('StoremanGroupRegisterStartEvent(bytes32,bytes32,uint256,uint256,uint256)');
+// console.log(`${registerTopics.toString('hex')}`)
 
 const doUpdatePrice = async() => {
   const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
@@ -43,9 +46,12 @@ const checkDebt = async () => {
     }
     web3Tms.push(tm)
   })
-  await syncIsDebtCleanToWanV2(sgaWan, oracleWan, web3Tms)
+  await syncDebt(sgaWan, oracleWan, web3Tms)
 }
 
+const checkDebtClean = async() => {
+  await syncIsDebtCleanToWanV2()
+}
 setTimeout(async () => {
-  await checkDebt()
+  await syncIsDebtCleanToWanV2()
 }, 0)

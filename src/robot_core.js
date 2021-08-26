@@ -561,6 +561,7 @@ const getDebts = () => {
       lastReceiveTx: debt.lastReceiveTx,
     }
   }
+  return debts
 }
 
 const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
@@ -584,32 +585,45 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     if (config.status >= 5) {
       if (time > config.endTime) {
         log.info("isDebtClean2 time > endTime smgId", groupId)
+        const debtToSave = {}
+        if (!debts[groupId]) {
+          debts[groupId] = {}
+          debtToSave[groupId] = {}
+        }
         const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
         const total = parseInt(await tmWan.totalTokenPairs())
         const { symbolChainTokenMap } = await getTokenPairsAndSymbolTms(tmWan, total, web3Tms)
 
         for (let symbol in symbolChainTokenMap) {
           const chainTokenMap = symbolChainTokenMap[symbol]
+          if (!debts[groupId][symbol]) {
+            debts[groupId][symbol] = {
+              isDebtClean: 0,
+              totalSupply: "0",
+              totalReceive: "",
+              lastReceiveTx: "",
+            }
+            debtToSave[groupId][symbol] = debts[groupId][symbol]
+          }
           for (let chainSymbol in chainTokenMap) {
             const totalSupply = await chainTokenMap[chainSymbol].getFun('totalSupply')
-            console.log(`token ${symbol} in chain ${chainSymbol} totalSupply = ${totalSupply}`)
-            if (!debts[groupId]) {
-              debts[groupId] = {}
-            }
-            if (!debts[groupId][chainSymbol]) {
-              debts[groupId][chainSymbol] = {
-                isDebtClean: false,
-                totalSupply: debt.totalSupply,
-                totalReceive: "",
-                lastReceiveTx: "",
-              }
+            log.info(`token ${symbol} in chain ${chainSymbol} totalSupply = ${totalSupply}`)
+            debts[groupId][symbol].totalSupply = new BigNumber(totalSupply).plus(debts[groupId][symbol].totalSupply).toString(10)
+            debtToSave[groupId][symbol].totalSupply = debts[groupId][symbol].totalSupply
+          }
+        }
+
+        if (debtToSave[groupId]) {
+          const insertOneGroup = db.db.transaction((gId, debtMap) => {
+            for (const coinType in debtMap) {
               db.insertDebt({
-                groupId,
-                coinType: chainSymbol,
-                ...debts[groupId][chainSymbol]
+                groupId: gId,
+                coinType,
+                ...debtMap[coinType]
               });
             }
-          }
+          })
+          insertOneGroup(groupId, debtToSave[groupId])
         }
       }
     }
@@ -619,9 +633,10 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 // 从数据库状态中,获取是否该设置为clean
 const syncIsDebtCleanToWanV2 = async function() {
   const sgs = db.getAllSga();
-  const allDebts = db.getAllDebt()
+  const allDebts = db.getAllUnCleanDebt()
+  console.log(`${JSON.stringify(allDebts)}`)
   // 获取groupId的某个资产类别的debt, 在链上从endTime开始监测转移事件
-
+  
 
 }
 

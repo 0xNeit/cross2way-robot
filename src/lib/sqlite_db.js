@@ -100,7 +100,7 @@ class DB {
   }
 
   getAllUnCleanDebt() {
-    return this.db.prepare(`select * from debt where isDebtClean != true`).all();
+    return this.db.prepare(`select * from debt where isDebtClean == 0`).all();
   }
 
   // store man group admin
