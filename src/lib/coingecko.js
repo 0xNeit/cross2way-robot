@@ -113,6 +113,7 @@ const getMaps = (symbolsStr3rd) => {
     AVAX: 'avalanche-2',
     DOT: 'polkadot',
     MATIC: 'matic-network',
+    DOGE: 'dogecoin',
   }
 
   const symbols = symbolsStr3rd.replace(/\s+/g,"").split(',')
@@ -174,13 +175,14 @@ async function getPrices(symbolsStr3rd, symbolsStrSwap) {
 }
 
 // setTimeout(async () => {
-//   const symbolsStr = "ETH,USDC,TUSD,GUSD,LINK,MKR,ZXC,EURS,USDT,WAN,FNX,BTC,EOS,UNI,SUSHI,WASP,XRP,ZCN,VIBE,LTC,AVAX,DOT,MATIC"
+//   const symbolsStr = process.env.SYMBOLS_3RD
 //   await printIDs("https://api.coingecko.com/api/v3/coins/list", symbolsStr)
 // }, 0);
 
 // https://api.coingecko.com/api/v3/coins/list
 // https://api.coingecko.com/api/v3/simple/price?ids=<coin>&vs_currencies=usd
 // https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&order=market_cap_desc&per_page=100&page=3
+
 // setTimeout(async () => {
 //   // const data = await getIDs("https://api.coingecko.com/api/v3/coins/list", process.env.SYMBOLS_3RD);
 //   const data = await getPrices(process.env.SYMBOLS_3RD, process.env.SYMBOLS_SWAP)
