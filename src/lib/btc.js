@@ -18,6 +18,7 @@ function pkToAddress(gpk, network = 'mainnet') {
   }
   const v = Buffer.from([prefix])
   const b20 = hash160(Buffer.from(pkBuffer, 'hex'))
+  console.log(`hash160 ${b20.toString('hex')}`)
   const payload = Buffer.concat([v, b20])
   const address = bs58check.encode(payload)
 
@@ -156,40 +157,12 @@ const getBalance = async (from, _to, sg) => {
               const op_return_type = parseInt(op_return.substring(0, 2), 16);
               if (op_return_type >= op_return_begin && op_return_type <= op_return_end) {
                 console.log(`blockNumber = ${curIndex}, op = ${op_return_type} len = ${op_return.length}`)
-                if (op_return_type === op_return_cross_type && op_return.length >= 46 && op_return.length <= 54) {
-                  for (let j = 0; j < vOut.length; j++) {
-                    const scriptPubKeyJ = vOut[j].scriptPubKey
-                    if (scriptPubKeyJ &&
-                      scriptPubKeyJ.type === "pubkeyhash" &&
-                      scriptPubKeyJ.addresses && scriptPubKeyJ.addresses.length === 1 && scriptPubKeyJ.addresses.includes(accountName)) {
-                      const tokenPairId = parseInt(op_return.substring(2, 6), 16);
-                      const userAccount = op_return.substring(6, 46);
-                      const networkFee = (op_return.length === 46) ? 0 : parseInt(op_return.substr(46), 16);
-                      op.event = this.crossInfo.EVENT.Lock.walletRapid[0];
-                      op.vout = vOut[j];
-                      op.args = {
-                        uniqueID: tx.txid,
-                        value: vOut[j].value,
-                        tokenPairID: tokenPairId,
-                        userAccount: '0x' + userAccount,
-                        tokenAccount: "0x0000000000000000000000000000000000000000",
-                        fee: networkFee
-                      };
-                      break;
-                    }
-                  }
-                } else if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
-                  const srcSmg = '0x' + op_return.substr(2);
+                if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
+                  const nextGroupId = '0x' + op_return.substr(2);
                   for (let j = 0; j < vOut.length; j++) {
                     if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses) {
-                      op.event = 'TransferAssetLogger';
-                      op.vout = vOut[j];
-                      op.destSmgAddr = accountName;
-                      op.args = {
-                        uniqueID: tx.txid,
-                        value: vOut[j].value,
-                        srcSmgID: srcSmg
-                      };
+                      console.log(`dest = ${nextGroupId}, value = ${vOut[j].value}, tx = ${tx.txid}, `)
+                      // 这是转移过来的资产
                       break;
                     }
                   }
@@ -205,17 +178,28 @@ const getBalance = async (from, _to, sg) => {
   }
 }
 
-// setTimeout(async () => {
-//   // const blockNumber = await getClient().getBlockCount();
-//   // await getBalance(2065118, blockNumber, {
-    
-//   // })
-//   // 0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866
-//   // 0x273c3273c072f826f728f865d58ccd297b293b87045fd806973d2a4d82f220a072bc5240c7d5920e0ddfdb0e01aeba184de9ef8ae14f5748243d8fa58d28e136
-//   pkToAddress('0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866', 'testnet')
-// }, 10)
+// 方案一 1. 从上个storeMan的endTime开始, 扫描发送到下个storeMan的交易,累加起来,如果超过本资产的债务,则设置本种债务为clean状态
+function getDebtTasks(preGroupId, nextGroupId, preEndTime, totalDebt, receivedDebt) {
+  gNewTasks[preGroupId] = {
+    nextGroupId,
+    preEndTime,
+    totalDebt,
+    receivedDebt
+  }
+  return gNewTasks
+}
+
+// 2. 如果所有债务都为clean,设置wan上的状态
+
+setTimeout(async () => {
+  // const blockNumber = await getClient().getBlockCount();
+  // await getBalance(2063996, blockNumber, {})
+  pkToAddress('0xabb0bfb5980f02c0468fcc3f27524aaeaf7b02ecbcd0da938f1ac4923b0bfafc3aed88237caf0d91df8d087b34489fd62477ba61257e543b1078f9ef229fb93b', 'testnet')
+  pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
+
+}, 10)
 
 module.exports = {
   pkToAddress,
-  getBalance
+  getBalance,
 }

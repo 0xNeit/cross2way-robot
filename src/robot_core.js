@@ -564,6 +564,9 @@ const getDebts = () => {
   return debts
 }
 
+// groupId
+const gDebtTasks = {}
+
 const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   const time = parseInt(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
@@ -586,10 +589,13 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
       if (time > config.endTime) {
         log.info("isDebtClean2 time > endTime smgId", groupId)
         const debtToSave = {}
-        if (!debts[groupId]) {
+        if (debts[groupId]) {
+          continue
+        } else {
           debts[groupId] = {}
           debtToSave[groupId] = {}
         }
+
         const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
         const total = parseInt(await tmWan.totalTokenPairs())
         const { symbolChainTokenMap } = await getTokenPairsAndSymbolTms(tmWan, total, web3Tms)
@@ -624,6 +630,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
             }
           })
           insertOneGroup(groupId, debtToSave[groupId])
+          addToDebtTask(preGroupId, nextGroupId, preEndTime, totalDebt, receivedDebt)
         }
       }
     }

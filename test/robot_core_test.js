@@ -53,5 +53,5 @@ const checkDebtClean = async() => {
   await syncIsDebtCleanToWanV2()
 }
 setTimeout(async () => {
-  await syncIsDebtCleanToWanV2()
+  await checkDebt()
 }, 0)
