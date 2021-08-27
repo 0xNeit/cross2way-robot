@@ -114,6 +114,7 @@ const getMaps = (symbolsStr3rd) => {
     DOT: 'polkadot',
     MATIC: 'matic-network',
     DOGE: 'dogecoin',
+    // MOVR: 'moonriver',
   }
 
   const symbols = symbolsStr3rd.replace(/\s+/g,"").split(',')
@@ -175,7 +176,7 @@ async function getPrices(symbolsStr3rd, symbolsStrSwap) {
 }
 
 // setTimeout(async () => {
-//   const symbolsStr = process.env.SYMBOLS_3RD
+//   const symbolsStr = process.env.SYMBOLS_3RD + ',MOVR'
 //   await printIDs("https://api.coingecko.com/api/v3/coins/list", symbolsStr)
 // }, 0);
 

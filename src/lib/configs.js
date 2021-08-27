@@ -171,6 +171,24 @@ module.exports = {
 
       multiCall: '0x136333217C18Cd6E018B85Aaf8Bd563EB72E97Fd'.toLowerCase(),
     },
+    'mainnet': {
+      chainType: 'MOVR',
+      rpc: 'https://rpc.moonriver.moonbeam.network',
+      gasPrice: 0x3b9aca00,
+      gasLimit: 0x7a1200,
+      chainId: 1285,
+      curveType: '1',
+      deployedFile: 'moonbeamMainnet.json',
+      bip44: 0x40000001,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
+
+      symbol: 'MOVR',
+      decimals: 18,
+      chainName: 'moonbeam',
+
+      multiCall: '0x1Fe0C23940FcE7f440248e00Ce2a175977EE4B16'.toLowerCase(),
+    },
   },
   'polygon': {
     'testnet': {
