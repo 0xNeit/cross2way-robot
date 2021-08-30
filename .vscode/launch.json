@@ -40,7 +40,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "robot core test",
+      "name": "robot_core testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -51,7 +51,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "btc test",
+      "name": "btc testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -62,17 +62,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "test mem leak",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/mem-leak.js",
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "ltc lib testnet",
+      "name": "ltc testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -83,7 +73,29 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "reg test",
+      "name": "xrp testnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/lib/xrp.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "dot testnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/lib/dot.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "reg testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -94,7 +106,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "wasp lib dev",
+      "name": "wasp testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -112,17 +124,6 @@
       "cwd": "${workspaceRoot}",
       "program": "${workspaceFolder}/src/lib/coingecko.js",
       "envFile": "${workspaceFolder}/.env.dev"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "deploy eth local",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/deploy.js",
-      "envFile": "${workspaceFolder}/.env.dev.local"
     },
     {
       "type": "node",
@@ -215,17 +216,6 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "token pair local",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/token_pair.js",
-      "envFile": "${workspaceFolder}/.env.dev.local"
-    },
-    {
-      "type": "node",
-      "request": "launch",
       "name": "admin testnet",
       "skipFiles": [
         "<node_internals>/**"
@@ -233,28 +223,6 @@
       "cwd": "${workspaceRoot}",
       "program": "${workspaceFolder}/src/admin.js",
       "envFile": "${workspaceFolder}/.env.dev"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "admin local",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/admin.js",
-      "envFile": "${workspaceFolder}/.env.dev.local"
-    },
-    {
-      "type": "node",
-      "request": "launch",
-      "name": "robot local",
-      "skipFiles": [
-        "<node_internals>/**"
-      ],
-      "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/robot.js",
-      "envFile": "${workspaceFolder}/.env.dev.local"
     },
     {
       "type": "node",
@@ -311,7 +279,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "test local btc address",
+      "name": "test btc local",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -343,7 +311,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "test db",
+      "name": "test db local",
       "skipFiles": [
         "<node_internals>/**"
       ],

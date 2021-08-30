@@ -27,6 +27,29 @@ function pkToAddress(gpk, network = 'mainnet') {
   return address
 }
 
+function hash160ToAddress(h, network = 'mainnet') {
+  console.log(`hash160ToAddress h = ${h}`)
+  const hash160 = bitcoin.crypto.hash160
+  let prefix = 0x00
+  switch(network) {
+    case 'mainnet':
+      prefix = 0x00
+      break
+    default:
+      prefix = 0x6f
+      break
+  }
+  const v = Buffer.from([prefix])
+  const b20 = h
+  console.log(`hash160 ${b20.toString('hex')}`)
+  const payload = Buffer.concat([v, b20])
+  const address = bs58check.encode(payload)
+
+  console.log(address)
+
+  return address
+}
+
 const configs = {
   'testnet': {
     "nodeUrl": "52.40.34.234:36893",
@@ -137,41 +160,50 @@ const getBalance = async (from, _to, sg) => {
       return null
     }
 
-    const self = this;
     for (let curIndex = from; curIndex < to; curIndex++) {
       const bhash = await client.getBlockHash(curIndex)
       const block = await client.getBlock(bhash, 2)
 
       console.log(`blockNumber = ${curIndex} begin`)
-      if (block && block.tx) {
-        block.tx.forEach((tx) => {
-          const vOut = tx.vout
-          if (vOut.length === 1) {
-            return
-          }
-
-          vOut.forEach(async (out) => {
-            const scriptPubKey = out.scriptPubKey
-            if (scriptPubKey && scriptPubKey.hex && scriptPubKey.hex.length > 6 && 0 == scriptPubKey.hex.indexOf('6a')) {
-              const op_return = format_cross_op_return(scriptPubKey.asm);
-              const op_return_type = parseInt(op_return.substring(0, 2), 16);
-              if (op_return_type >= op_return_begin && op_return_type <= op_return_end) {
-                console.log(`blockNumber = ${curIndex}, op = ${op_return_type} len = ${op_return.length}`)
-                if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
-                  const nextGroupId = '0x' + op_return.substr(2);
-                  for (let j = 0; j < vOut.length; j++) {
-                    if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses) {
-                      console.log(`dest = ${nextGroupId}, value = ${vOut[j].value}, tx = ${tx.txid}, `)
-                      // 这是转移过来的资产
-                      break;
+      if (!block || !block.tx) {
+        continue
+      }
+      block.tx.forEach((tx) => {
+        const vOut = tx.vout
+        if (vOut.length === 1) {
+          return
+        }
+        
+        vOut.forEach(async (out) => {
+          const scriptPubKey = out.scriptPubKey
+          if (scriptPubKey && scriptPubKey.hex && scriptPubKey.hex.length > 6 && scriptPubKey.hex.startsWith('6a')) {
+            const op_return = format_cross_op_return(scriptPubKey.asm);
+            const op_return_type = parseInt(op_return.substring(0, 2), 16);
+            if (op_return_type >= op_return_begin && op_return_type <= op_return_end) {
+              console.log(`blockNumber = ${curIndex}, op = ${op_return_type} len = ${op_return.length}`)
+              if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
+                const nextGroupId = '0x' + op_return.substr(2);
+                for (let j = 0; j < vOut.length; j++) {
+                  if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses) {
+                    console.log(`receive nextGroupId = ${nextGroupId}, value = ${vOut[j].value}, tx = ${tx.txid}, `)
+                    for (let i = 0; i < tx.vin.length; i++) {
+                      const ss = tx.vin[i].scriptSig
+                      if (ss && ss.hex && ss.hex.length && ss.hex[0]) {
+                        if (ss.hex.length === 278 && ss.hex.startsWith('48') && ss.hex.startsWith('41', 146)) {
+                          const preGroupGpk = '0x' + ss.hex.substring(148)
+                          // check whether exist, save to db
+                          console.log(`send pre = ${preGroupGpk}`)
+                        }
+                      }
                     }
+                    break;
                   }
                 }
               }
             }
-          })
+          }
         })
-      }
+      })
     }
   } catch (e) {
     console.log(`getBalance error ${e}`)
@@ -192,11 +224,10 @@ function getDebtTasks(preGroupId, nextGroupId, preEndTime, totalDebt, receivedDe
 // 2. 如果所有债务都为clean,设置wan上的状态
 
 setTimeout(async () => {
+  pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
+  pkToAddress('0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866', 'testnet')
   // const blockNumber = await getClient().getBlockCount();
   // await getBalance(2063996, blockNumber, {})
-  pkToAddress('0xabb0bfb5980f02c0468fcc3f27524aaeaf7b02ecbcd0da938f1ac4923b0bfafc3aed88237caf0d91df8d087b34489fd62477ba61257e543b1078f9ef229fb93b', 'testnet')
-  pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
-
 }, 10)
 
 module.exports = {

@@ -1,0 +1,55 @@
+{
+        "_id" : "6110ca9ab5a0501aa64009d6",
+        "hashX" : "0xe7296931ac6870c880b36ee96f1856ef9da53d6a3bb0407a31a40f069e867148",
+        "__v" : 0,
+        "actionChain" : "XRP",
+        "crossChain" : "XRP",
+        "destSmg" : "0x000000000000000000000000000000000000000000746573746e65745f303237",
+        "direction" : 0,
+        "from" : "r5o9n68whdrmumnegpbbvgjdr27ffltbb",
+        "isDebt" : true,
+        "originChain" : "XRP",
+        "srcSmg" : "0x000000000000000000000000000000000000000000746573746e65745f303236",
+        "storeman" : "0x000000000000000000000000000000000000000000746573746e65745f303237",
+        "timestamp" : 1628490840000,
+        "toHtlcAddr" : "rAM7jA7CC7dafSBGTSroUdkHQJQwH8vEW",
+        "x" : "0xfa142955a2a2d6ee3775a4e9d42b9b8d8b5cc85296411cfef0d4c6146264d626",
+        "status" : "redeemFinished",
+        "failAction" : "debtAction",
+        "failReason" : "debtAction signMpc failed: not enough data collected 0xef1Df88aB86Ce47baCB01ccB52818E87DdE08137,0xD409BC9F0aCC5a4C8A86fEBb2D99bb87ef7e268D,0x6856efA5116647149Eb79872D9Ec3bdf4069438a,0x14Fb8385FfFc86899c469e9489eFb97d9A3F8BA6,0xcaABc8d5c0f6f0b54375a24B975e04254e1a40EC,0x54a859166C87bfDB6A97b3D250DdC102954CbA7D,0xe16c3D972951D651918aafD4446AE6403a3685fC,0xF91DE87af38d3d69f43049b22A728EbdBb235536,0x15566346fd9700c49f6159655bE8B43dFF658DEe,0xdAA052b4bf398E57F8225cb4145f18452cB00692,0xEC7174ba8E2db778C77fc83fCdD23184eF5Ae650,0xB68eF1Be30cD2DB85b99161cb52d92f323A5AaDf,0xAa5FB966978Fb08FC4E2b9AdBa6Fb6470Ae754B7,0x54d3Cd7919eec59756369080f6a231F06AdCFCC3,0xB83abB0B1A064086ca3889e69d6A47aF82e34a8F,",
+        "actionChainID" : 2147483792,
+        "blockNumber" : 19964353,
+        "crossChainID" : 2147483792,
+        "originChainID" : 2147483792,
+        "srcTransferEvent" : [
+                {
+                        "event" : "TransferAssetLogger",
+                        "destSmgAddr" : "rAM7jA7CC7dafSBGTSroUdkHQJQwH8vEW",
+                        "args" : {
+                                "uniqueID" : "B988D85023219B2D7D269209E0F5EAE09DE5119D3340E385A5935BFCC74A1F77",
+                                "value" : "5260.578578",
+                                "srcSmgID" : "0x000000000000000000000000000000000000000000746573746e65745f303236",
+                                "destSmgID" : "0x000000000000000000000000000000000000000000746573746e65745f303237"
+                        },
+                        "transactionHash" : "B988D85023219B2D7D269209E0F5EAE09DE5119D3340E385A5935BFCC74A1F77",
+                        "memo" : "05000000000000000000000000000000000000000000746573746e65745f303236",
+                        "src_address" : "r5o9n68whdrmumnEgPbBvgjdr27fFLtBb",
+                        "src_tag" : null,
+                        "des_address" : "rAM7jA7CC7dafSBGTSroUdkHQJQwH8vEW",
+                        "des_tag" : null,
+                        "fee" : "0.000012",
+                        "currency" : "XRP",
+                        "blockNumber" : 19964353,
+                        "blockHash" : "B988D85023219B2D7D269209E0F5EAE09DE5119D3340E385A5935BFCC74A1F77",
+                        "timestamp" : 1628490840,
+                        "storeman" : "rAM7jA7CC7dafSBGTSroUdkHQJQwH8vEW"
+                }
+        ],
+        "value" : "5260578578",
+        "actionTime" : 1628490836161,
+        "srcTransferTxHash" : [
+                "B988D85023219B2D7D269209E0F5EAE09DE5119D3340E385A5935BFCC74A1F77"
+        ],
+        "transRetried" : 0,
+        "transConfirmed" : 0
+}

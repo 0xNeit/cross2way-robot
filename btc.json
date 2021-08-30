@@ -1,0 +1,64 @@
+{
+        "_id" : "6110ca9ab5a0501aa64009a2",
+        "hashX" : "0x6af9f703c0f570e637944bc420685cd3890095cd8ef78dbff96f331689c6f6ea",
+        "__v" : 0,
+        "actionChain" : "BTC",
+        "crossChain" : "BTC",
+        "destSmg" : "0x000000000000000000000000000000000000000000746573746e65745f303237",
+        "direction" : 0,
+        "from" : "mtwg8njd5jee9dfnqg6vrfafxdagxdpczu",
+        "isDebt" : true,
+        "originChain" : "BTC",
+        "srcSmg" : "0x000000000000000000000000000000000000000000746573746e65745f303236",
+        "storeman" : "0x000000000000000000000000000000000000000000746573746e65745f303237",
+        "timestamp" : 1628491579000,
+        "toHtlcAddr" : "mpMSmT9mgMSVrhqnP38Kto4DWi7BKgLeRt",
+        "x" : "0xe9806ff98deb02f81bcf43ac88451cecc86bea1be6a43b5be0f170d9c0cc6caa",
+        "status" : "redeemFinished",
+        "failAction" : "debtAction",
+        "failReason" : "debtAction signMpc failed: not enough data collected 0xef1Df88aB86Ce47baCB01ccB52818E87DdE08137,0xD409BC9F0aCC5a4C8A86fEBb2D99bb87ef7e268D,0x6856efA5116647149Eb79872D9Ec3bdf4069438a,0x14Fb8385FfFc86899c469e9489eFb97d9A3F8BA6,0xcaABc8d5c0f6f0b54375a24B975e04254e1a40EC,0x54a859166C87bfDB6A97b3D250DdC102954CbA7D,0xe16c3D972951D651918aafD4446AE6403a3685fC,0xF91DE87af38d3d69f43049b22A728EbdBb235536,0x15566346fd9700c49f6159655bE8B43dFF658DEe,0xEC7174ba8E2db778C77fc83fCdD23184eF5Ae650,0xB68eF1Be30cD2DB85b99161cb52d92f323A5AaDf,0xAa5FB966978Fb08FC4E2b9AdBa6Fb6470Ae754B7,0x54d3Cd7919eec59756369080f6a231F06AdCFCC3,0xB83abB0B1A064086ca3889e69d6A47aF82e34a8F,",
+        "actionTime" : 1628490842135,
+        "srcTransferTxHash" : [
+                "5d1d7a0cdb0d0b7fec2a32f447c422cff74d92264ee97276a993fc1ca608d252"
+        ],
+        "transRetried" : 0,
+        "transConfirmed" : 0,
+        "actionChainID" : 2147483648,
+        "blockNumber" : 2063996,
+        "crossChainID" : 2147483648,
+        "originChainID" : 2147483648,
+        "srcTransferEvent" : [
+                {
+                        "transactionHash" : "5d1d7a0cdb0d0b7fec2a32f447c422cff74d92264ee97276a993fc1ca608d252",
+                        "blockNumber" : 2063996,
+                        "blockHash" : "0000000000005adb2569553628d636d226dbc87afbe4dbdb73cc88daf5ac2bb7",
+                        "confirmations" : 5,
+                        "timestamp" : 1628491579,
+                        "storeman" : "mpMSmT9mgMSVrhqnP38Kto4DWi7BKgLeRt",
+                        "address" : "mpMSmT9mgMSVrhqnP38Kto4DWi7BKgLeRt",
+                        "op_return" : "06000000000000000000000000000000000000000000746573746e65745f303236",
+                        "event" : "TransferAssetLogger",
+                        "vout" : {
+                                "value" : 0.10704145,
+                                "n" : 0,
+                                "scriptPubKey" : {
+                                        "asm" : "OP_DUP OP_HASH160 60ecbd6f1eaa03ec385b666ee419908eef8faaf9 OP_EQUALVERIFY OP_CHECKSIG",
+                                        "hex" : "76a91460ecbd6f1eaa03ec385b666ee419908eef8faaf988ac",
+                                        "reqSigs" : 1,
+                                        "type" : "pubkeyhash",
+                                        "addresses" : [
+                                                "mpMSmT9mgMSVrhqnP38Kto4DWi7BKgLeRt"
+                                        ]
+                                }
+                        },
+                        "destSmgAddr" : "mpMSmT9mgMSVrhqnP38Kto4DWi7BKgLeRt",
+                        "args" : {
+                                "uniqueID" : "5d1d7a0cdb0d0b7fec2a32f447c422cff74d92264ee97276a993fc1ca608d252",
+                                "value" : 0.10704145,
+                                "srcSmgID" : "0x000000000000000000000000000000000000000000746573746e65745f303236",
+                                "destSmgID" : "0x000000000000000000000000000000000000000000746573746e65745f303237"
+                        }
+                }
+        ],
+        "value" : "10704145"
+}

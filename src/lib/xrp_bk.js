@@ -15,15 +15,10 @@ function pkToAddress(gpk) {
   return addr
 }
 
-const dropsPerXrp = 1000000
-const memo_smgDebt_type = 5
-
 const XRP_CONN_READY_CHECK_TIMEOUT = 30*1000;  // 30s
 const XRP_CONN_FAILED_RETRY_DELAY_MS = 3*1000  // 3s
 
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
+const dropsPerXrp = 1000000
 
 class XrpChain {
   constructor(chainConfig) {
@@ -115,68 +110,11 @@ class XrpChain {
     if(!this.isReady()) {
       throw new Error(`XRP connection not ready within ${timeoutMs} seconds!`);
     }
-  }
-
-  async scanBlock(from, to, sg) {
-    const self = this
-
-    const options = {
-      earliestFirst: true,
-      minLedgerVersion: from,
-      maxLedgerVersion: to,
-      types: ['payment', 'accountDelete'],
-    }
-
-    const sgAddress = pkToAddress(sg.gpk2);
-
-    await this.waitForApiReady()
-
-    const fee = await this.api.getFee()
-    const accountInfo = await this.api.getAccountInfo(sgAddress)
-
-    // txs send to storemanGroupAddress
-    const txs = await self.api.getTransactions(sgAddress, {...options, initiated: true})
-    txs.map(tx => {info
-      const info = tx.specification
-      if (tx.type === 'accountDelete' || (info.destination && info.memos)) {
-        if (tx.type === 'payment' && info && (info.destination.address === sgAddress || info.source.address === sgAddress) && tx.outcome && tx.outcome.result === 'tesSUCCESS') {
-          const memoAll = info.memos;
-          if (!memoAll || !memoAll[0]) {
-            return
-          }
-
-          const memo = memoAll[0]
-          log.info("xrp chain memo found one cross-xrp Tx ... memo[0]: ", JSON.stringify(memo))
-            
-          if (!memo || memo.type !== 'CrossChainInfo' || memo.format !== 'text/plain') {
-            return
-          }
-
-          const memoData = memo.data;
-          const memo_return_type = memoData.substring(0, 2);
-
-          if (parseInt(memo_return_type, 16) === memo_smgDebt_type && memoData.length === 66 &&
-            (info.source.address === storemanAddr || info.destination.address === storemanAddr)) {
-              const preGroupId = '0x' + memoData.substr(2);
-              const nextGroupId = info.destination.address;
-              log.info(`pre ${preGroupId}, next ${nextGroupId}`)
-          }
-        }
-      }
-    })
-    
-  }
-
-  close() {
-    this.api.disconnect()
-    log.info('close and disconnected.');
-  }
+}
 }
 
 setTimeout(async () => {
   const chain = new XrpChain(config[process.env.NETWORK_TYPE])
-  // await chain.scanBlock('19964353', '19964353', {gpk2: '0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1'})
-  await chain.scanBlock(19964353, 19964354, {gpk2: '0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866'})
   console.log(`chain`)
 }, 0)
 

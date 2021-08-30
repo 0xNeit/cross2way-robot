@@ -1,0 +1,71 @@
+{
+
+        "_id" : "6110ca9ab5a0501aa64009f8",
+        "hashX" : "0x456aee303cf670324bbcd947df2e2d64389cc058088f693d4a06d9e0a0c3a79d",
+        "__v" : 0,
+        "actionChain" : "DOT",
+        "crossChain" : "DOT",
+        "destSmg" : "0x000000000000000000000000000000000000000000746573746e65745f303237",
+        "direction" : 0,
+        "from" : "5gzyrkg728r1w44xngftsujcatxx5us9fve84cy5spze6fa5",
+        "isDebt" : true,
+        "originChain" : "DOT",
+        "srcSmg" : "0x000000000000000000000000000000000000000000746573746e65745f303236",
+        "storeman" : "0x000000000000000000000000000000000000000000746573746e65745f303237",
+        "timestamp" : 1628490846000,
+        "toHtlcAddr" : "5CheapCr2civbsDJe8sZxPb2LBTpPAXM9vr5oCuL722cNy9r",
+        "x" : "0xf149dcdbc9243a4721027928e1b51cccd74ee45d73fc27c45cb85603f0f3f0c3",
+        "status" : "redeemFinished",
+        "mpcTx" : [
+                {
+                        "TxData" : "{\"from\":\"5GZyrkG728R1w44XngFtSuJcAtxX5US9Fve84cy5SpzE6Fa5\",\"to\":\"5CheapCr2civbsDJe8sZxPb2LBTpPAXM9vr5oCuL722cNy9r\",\"amount\":5974869974187,\"memo\":\"05000000000000000000000000000000000000000000746573746e65745f303236\",\"blockNumber\":6845266,\"blockHash\":\"0xe13edc09ba2ce6995a1dbdc8bf20b84d7f5e50c2631f081bcc31bd162435448b\",\"nonce\":\"15\",\"keepAlive\":true,\"uuid\":\"162849042720969913345\",\"hashX\":\"0x456aee303cf670324bbcd947df2e2d64389cc058088f693d4a06d9e0a0c3a79d\"}",
+                        "TxHash" : "0x3d01700dd213af288e8171761b74eb60090daa35b8a86096af6773a11ecd394b",
+                        "PKBytes" : "0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1",
+                        "ChainType" : "DOT"
+                }
+        ],
+        "failAction" : "debtAction",
+        "failReason" : "debtAction signMpc failed: not enough data collected 0xef1Df88aB86Ce47baCB01ccB52818E87DdE08137,0xD409BC9F0aCC5a4C8A86fEBb2D99bb87ef7e268D,0x6856efA5116647149Eb79872D9Ec3bdf4069438a,0x14Fb8385FfFc86899c469e9489eFb97d9A3F8BA6,0xcaABc8d5c0f6f0b54375a24B975e04254e1a40EC,0x54a859166C87bfDB6A97b3D250DdC102954CbA7D,0xe16c3D972951D651918aafD4446AE6403a3685fC,0xF91DE87af38d3d69f43049b22A728EbdBb235536,0x15566346fd9700c49f6159655bE8B43dFF658DEe,0xEC7174ba8E2db778C77fc83fCdD23184eF5Ae650,0xB68eF1Be30cD2DB85b99161cb52d92f323A5AaDf,0xAa5FB966978Fb08FC4E2b9AdBa6Fb6470Ae754B7,0x54d3Cd7919eec59756369080f6a231F06AdCFCC3,0xB83abB0B1A064086ca3889e69d6A47aF82e34a8F,",
+        "actionTime" : 1628490857200,
+        "srcTransferTxHash" : [
+                {
+                        "txHash" : "0x97dbdf6775ba025981d58078a226df979651dc2d69732f7a10f11e6b001f58ce",
+                        "blockHash" : "",
+                        "indexInBlock" : 0
+                }
+        ],
+        "transRetried" : 0,
+        "transConfirmed" : 0,
+        "actionChainID" : 2147484002,
+        "blockNumber" : 6845337,
+        "crossChainID" : 2147484002,
+        "originChainID" : 2147484002,
+        "srcTransferEvent" : [
+                {
+                        "args" : {
+                                "uniqueID" : "0x1375d86746a9e0693dd533c8570646260054b67fe25efc05bf313c211ca2e453",
+                                "value" : 5974869974187,
+                                "srcSmgID" : "0x000000000000000000000000000000000000000000746573746e65745f303236",
+                                "xHash" : "0x1375d86746a9e0693dd533c8570646260054b67fe25efc05bf313c211ca2e453",
+                                "destSmgID" : "0x000000000000000000000000000000000000000000746573746e65745f303237"
+                        },
+                        "isBridge" : true,
+                        "transactionHash" : "0x97dbdf6775ba025981d58078a226df979651dc2d69732f7a10f11e6b001f58ce",
+                        "memo" : "05000000000000000000000000000000000000000000746573746e65745f303236",
+                        "src_address" : "5GZyrkG728R1w44XngFtSuJcAtxX5US9Fve84cy5SpzE6Fa5",
+                        "des_address" : "5CheapCr2civbsDJe8sZxPb2LBTpPAXM9vr5oCuL722cNy9r",
+                        "value" : 5974869974187,
+                        "storeman" : "5GZyrkG728R1w44XngFtSuJcAtxX5US9Fve84cy5SpzE6Fa5",
+                        "event" : "TransferAssetLogger",
+                        "destSmgAddr" : "5CheapCr2civbsDJe8sZxPb2LBTpPAXM9vr5oCuL722cNy9r",
+                        "smgID" : "0x000000000000000000000000000000000000000000746573746e65745f303236",
+                        "smgPublicKey" : "0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1",
+                        "hashX" : "0x1375d86746a9e0693dd533c8570646260054b67fe25efc05bf313c211ca2e453",
+                        "indexInBlock" : 2,
+                        "blockNumber" : 6845337,
+                        "blockHash" : "0xe2d6f9bac2d2d65406cd083131afd0ba1613067d61c8429d1766809b0ba93841",
+                        "timestamp" : 1628490846
+                }
+        ],
+        "value" : "5974869974187"
+}

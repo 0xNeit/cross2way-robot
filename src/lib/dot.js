@@ -59,6 +59,12 @@ async function getBalance(address) {
   return Number(balance.free.toString());
 }
 
+class DotChain {
+  constructor(chainConfig) {
+
+  }
+}
+
 module.exports = {
   longPubKeyToAddress,
   getBalance,
