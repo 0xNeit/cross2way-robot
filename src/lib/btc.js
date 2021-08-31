@@ -26,6 +26,16 @@ function pkToAddress(gpk, network = 'mainnet') {
 
   return address
 }
+// getP2SHAddress(hashVal, publicKey, networkInfo) {
+//   const p2sh = bitcoin.payments.p2sh({
+//       network: networkInfo,
+//       redeem: {
+//           output: this.getRedeemScript(hashVal, publicKey),
+//           network: networkInfo
+//       },
+//   });
+//   return p2sh.address;
+// }
 
 function hash160ToAddress(h, network = 'mainnet') {
   console.log(`hash160ToAddress h = ${h}`)

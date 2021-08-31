@@ -1,5 +1,6 @@
 const { Keyring, ApiPromise, WsProvider } = require('@polkadot/api');
 // const { decodeAddress, encodeAddress } = require('@polkadot/keyring');
+const config = require('./configs-other').DOT
 
 const _util = require("@polkadot/util");
 const _utilCrypto = require("@polkadot/util-crypto");
@@ -10,31 +11,6 @@ setTimeout(async () => {
   api = await ApiPromise.create({ provider: provider });
 }, 0)
 
-// function pkToObj (pkStr) {
-//   let result = toByteArray(pkStr)
-//   console.log("pkToObj result: ", result);
-//   return result;
-// }
-
-// // to Uint8Array Type
-// const toByteArray = hexString =>
-//   new Uint8Array(hexString.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-  
-// function publicKeyToAddress(publicKey){
-//   let pkObj = publicKey;
-
-//   if("string" === typeof publicKey) {
-//       console.log("publicKeyToAddress() convert string type public-key to object ....");
-//       pkObj = pkToObj(publicKey)
-//   }
-
-//   const raw = TYPE_ADDRESS["ecdsa"](pkObj);
-
-//   const keyRing = new Keyring({type: 'ecdsa' });
-//   const toSS58 = keyRing.encodeAddress;
-
-//   return toSS58(raw);
-// }
 
 function longPubKeyToAddress(longPubKey, ss58Format = 42) {
   longPubKey = '0x04'+longPubKey.slice(2);
@@ -59,11 +35,69 @@ async function getBalance(address) {
   return Number(balance.free.toString());
 }
 
+function sleep(ms) {
+  return new Promise(function(resolve, reject) {
+    setTimeout(function() {
+      resolve();
+    }, ms);
+  })
+}
+
+// polka
 class DotChain {
   constructor(chainConfig) {
+    const provider = new WsProvider(chainConfig.rpc)
+    Object.assign(this, chainConfig)
+  }
 
+  async createApi() {
+    const api = await ApiPromise.create({ provider })
+    this.api = api
+    api.on('connected', () => {
+      console.log(' Polka API has been connected to the endpoint');
+    });
+
+    api.on('ready', () => {
+        console.log(' Polka API ready...');
+    });
+
+    api.on('disconnected', () => {
+        console.log(' Polka API has been disconnected from the endpoint');
+    });
+
+    api.on('error', (error) => {
+        console.log(' Polka API got an error: ', error);
+    });
+
+    await this.api.isReady
+    return this.api
+  }
+
+
+  async getBlockNumber() {
+    const lastHeader = await this.api.rpc.chain.getHeader()
+    const blockNumber = lastHeader.number.toNumber()
+    return blockNumber
+  }
+
+  async scanBlock(from, to, sg) {
+    for(let i = fromBlk; i < toBlk; i++) {
+    }
   }
 }
+
+setTimeout(async () => {
+  const chain = new DotChain(config[process.env.NETWORK_TYPE])
+  await chain.createApi()
+  // Retrieve the chain name
+  // const chainName = await api.rpc.system.chain()
+
+  // Retrieve the latest header
+  const num = await chain.getBlockNumber()
+
+  // Log the information
+  console.log(` last block #${num} `)
+}, 0)
 
 module.exports = {
   longPubKeyToAddress,

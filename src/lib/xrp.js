@@ -5,6 +5,7 @@ const keypairs = require('ripple-keypairs')
 const RippleAPI = require('ripple-lib').RippleAPI;
 const log = require('./log')
 const config = require('./configs-other').XRP
+const TimeoutPromise = require('./timeoutPromise')
 
 function pkToAddress(gpk) {
   const pubkey = Secp256k1.keyFromPublic("04" + gpk.slice(2), 'hex')
@@ -25,6 +26,7 @@ function sleep(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
+// ripple
 class XrpChain {
   constructor(chainConfig) {
     this.api = new RippleAPI({ 
@@ -57,7 +59,7 @@ class XrpChain {
       if (msg instanceof this.api.errors.DisconnectedError ||
         msg instanceof this.api.errors.NotConnectedError) {
           that.isApiReady = false;
-          tryConnect(5 * 1000)
+          self.tryConnect(5 * 1000)
       }
     })
 
@@ -70,7 +72,7 @@ class XrpChain {
     this.api.on('disconnected', (code) => {
       log.warn('XRP connection disconnected. Code:', code)
       this.isApiReady = false
-      tryConnect(5 * 1000)
+      self.tryConnect(5 * 1000)
     })
   }
 
@@ -117,13 +119,19 @@ class XrpChain {
     }
   }
 
+  async getBlockNumber() {
+    await this.waitForApiReady()
+    const blockNumber = await this.api.getLedgerVersion()
+    return blockNumber
+  }
+
   async scanBlock(from, to, sg) {
     const self = this
 
     const options = {
       earliestFirst: true,
-      minLedgerVersion: from,
-      maxLedgerVersion: to,
+      minLedgerVersion: Number(from),
+      maxLedgerVersion: Number(to),
       types: ['payment', 'accountDelete'],
     }
 
@@ -134,8 +142,11 @@ class XrpChain {
     const fee = await this.api.getFee()
     const accountInfo = await this.api.getAccountInfo(sgAddress)
 
+    // txs send from storemanGroupAddress
+    // const txs = await self.api.getTransactions(sgAddress, {...options, initiated: true})
+
     // txs send to storemanGroupAddress
-    const txs = await self.api.getTransactions(sgAddress, {...options, initiated: true})
+    const txs = await self.api.getTransactions(sgAddress, {...options, initiated: false})
     txs.map(tx => {info
       const info = tx.specification
       if (tx.type === 'accountDelete' || (info.destination && info.memos)) {
@@ -176,7 +187,9 @@ class XrpChain {
 setTimeout(async () => {
   const chain = new XrpChain(config[process.env.NETWORK_TYPE])
   // await chain.scanBlock('19964353', '19964353', {gpk2: '0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1'})
-  await chain.scanBlock(19964353, 19964354, {gpk2: '0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866'})
+  // await chain.scanBlock(19964353, 19964354, {gpk2: '0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866'})
+  const blockNumber = await chain.getBlockNumber()
+  await chain.scanBlock(blockNumber - 1000, blockNumber - 10, {gpk2: '0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866'})
   console.log(`chain`)
 }, 0)
 
