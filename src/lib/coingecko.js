@@ -171,7 +171,8 @@ async function getPrices(symbolsStr3rd, symbolsStrSwap) {
     priceMap[symbol] = contractPrices[symbol]
   })
 
-  // priceMap['FNX'] = '0x01'
+  // TODO: remove
+  priceMap['FNX'] = '0x1000'
   return priceMap
 }
 

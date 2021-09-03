@@ -56,6 +56,9 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
     const symbols = Object.keys(pricesMap);
 
     if (symbols.length > 0) {
+      // TODO: remove
+      symbolsStringArray.push('FNX')
+      
       const prePricesArray = await oracle.getValuesByArray(symbolsStringArray);
 
       const prePricesMap = {}
@@ -313,12 +316,18 @@ const isXrpDebtClean = async function(chainXrp, sg) {
 }
 
 // 10 * 10 ** 10
+// export enum PolkadotSS58Format {
+// 	polkadot = 0,
+// 	kusama = 2,
+// 	westend = 42,
+// 	substrate = 42,
+// }
 const minDotAmount = new BigNumber(process.env.MIN_DOT)
 const isDotDebtClean = async function(sg) {
   if (sg.curve1 === 0 || sg.curve2 === 0) {
     const gpk = sg.curve1 === 0 ? sg.gpk1 : sg.gpk2
-    const address = dot.longPubKeyToAddress(gpk)
-    const balanceStr = await dot.getBalance(address)
+    const address = dot.longPubKeyToAddress(gpk, process.env.NETWORK_TYPE)
+    const balanceStr = await dot.dotChain.getBalance(address)
 
     const balance = new BigNumber(balanceStr)
     if (balance.lt(minDotAmount)) {

@@ -15,8 +15,8 @@ const doUpdatePrice = async() => {
   const oracleWan = chainWan.loadContractAt('OracleDelegate')
   oracleWan.setAdminSk('06a03207128827eaae0d31d97a7a6243de31f2baf99eabd764e33389ecf436fc')
 
-  const symbols = ['WAN']
-  const pricesMap = {'WAN': '1086330000000000000'}
+  const symbols = ['FNX']
+  const pricesMap = {'FNX': '1000'}
 
   await updatePrice(oracleWan, pricesMap, symbols)
 }
@@ -49,9 +49,16 @@ const checkDebt = async () => {
   await syncDebt(sgaWan, oracleWan, web3Tms)
 }
 
+const getStoreManConfig = async () => {
+  const chainEth = getChain('ethereum', process.env.NETWORK_TYPE);
+  const oracleEth = chainEth.loadContract('OracleDelegate')
+  const c = await oracleEth.getStoremanGroupConfig('0x000000000000000000000000000000000000000000000000006465765f303234')
+  console.log(`${JSON.stringify(c, null, 2)}`)
+}
+
 const checkDebtClean = async() => {
   await syncIsDebtCleanToWanV2()
 }
 setTimeout(async () => {
-  await checkDebt()
+  await doUpdatePrice()
 }, 0)

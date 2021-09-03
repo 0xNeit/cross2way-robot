@@ -184,14 +184,14 @@ class XrpChain {
   }
 }
 
-setTimeout(async () => {
-  const chain = new XrpChain(config[process.env.NETWORK_TYPE])
-  // await chain.scanBlock('19964353', '19964353', {gpk2: '0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1'})
-  // await chain.scanBlock(19964353, 19964354, {gpk2: '0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866'})
-  const blockNumber = await chain.getBlockNumber()
-  await chain.scanBlock(blockNumber - 1000, blockNumber - 10, {gpk2: '0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866'})
-  console.log(`chain`)
-}, 0)
+// setTimeout(async () => {
+//   const chain = new XrpChain(config[process.env.NETWORK_TYPE])
+//   // await chain.scanBlock('19964353', '19964353', {gpk2: '0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1'})
+//   // await chain.scanBlock(19964353, 19964354, {gpk2: '0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866'})
+//   const blockNumber = await chain.getBlockNumber()
+//   await chain.scanBlock(blockNumber - 1000, blockNumber - 10, {gpk2: '0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866'})
+//   console.log(`chain`)
+// }, 0)
 
 // console.log(pkToAddress("0x2e9ad92f5f541b6c2ddb672a70577c252aaa8b9b8dfdff9a5381912395985d12dc18f19ecb673a3b675697ae97913fcb69598c089f6d66ae7a3f6dc179e4da56"))
 module.exports = {

@@ -233,12 +233,12 @@ function getDebtTasks(preGroupId, nextGroupId, preEndTime, totalDebt, receivedDe
 
 // 2. 如果所有债务都为clean,设置wan上的状态
 
-setTimeout(async () => {
-  pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
-  pkToAddress('0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866', 'testnet')
-  // const blockNumber = await getClient().getBlockCount();
-  // await getBalance(2063996, blockNumber, {})
-}, 10)
+// setTimeout(async () => {
+//   pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
+//   pkToAddress('0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866', 'testnet')
+//   // const blockNumber = await getClient().getBlockCount();
+//   // await getBalance(2063996, blockNumber, {})
+// }, 10)
 
 module.exports = {
   pkToAddress,

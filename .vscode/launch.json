@@ -18,6 +18,17 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "dot test",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/test/dot_test.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "migratedb testnet",
       "skipFiles": [
         "<node_internals>/**"
@@ -40,7 +51,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "robot_core testnet",
+      "name": "robot_core test",
       "skipFiles": [
         "<node_internals>/**"
       ],
