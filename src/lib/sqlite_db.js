@@ -103,6 +103,10 @@ class DB {
     return this.db.prepare(`select * from debt where isDebtClean == 0`).all();
   }
 
+  getDebtsByGroupId(item) {
+    return this.db.prepare(`select * from debt where groupId == @groupId`).run(item);
+  }
+
   // store man group admin
   getAllSga() {
     return this.db.prepare(`select * from sga`).all();

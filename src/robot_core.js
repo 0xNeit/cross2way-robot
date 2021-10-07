@@ -639,21 +639,67 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
             }
           })
           insertOneGroup(groupId, debtToSave[groupId])
-          addToDebtTask(preGroupId, nextGroupId, preEndTime, totalDebt, receivedDebt)
+          // TODO: 添加监测任务，监测债务
+          for (const coinType in debtToSave[groupId]) {
+            // addToDebtTask(debtMap[coinType])
+          }
         }
       }
     }
   }
 }
 
-// 从数据库状态中,获取是否该设置为clean
-const syncIsDebtCleanToWanV2 = async function() {
+const monitorDebts = async () => {
   const sgs = db.getAllSga();
   const allDebts = db.getAllUnCleanDebt()
+
+}
+
+// 
+const syncIsDebtCleanToWanV2 = async function() {
+  const sgs = db.getAllSga();
+  const allDebts = db.getAllDebt()
   console.log(`${JSON.stringify(allDebts)}`)
   // 获取groupId的某个资产类别的debt, 在链上从endTime开始监测转移事件
-  
+  for (let i = 0; i < sgs.length; i++) {
+    const sg = sgs[i];
+    const groupId = sg.groupId;
+    const config = await sgaWan.getStoremanGroupConfig(groupId);
 
+    const isDebtClean = await oracleWan.isDebtClean(groupId)
+    if (isDebtClean) {
+      continue
+    }
+
+    if (config.status >= 5) {
+      if (time > config.endTime) {
+        // 先从db里查找groupId的各项，
+        const debts = db.getDebtsByGroupId(sg)
+        // 如果debts信息还没被同步
+        if (debts.length <= 0) {
+          continue
+        }
+
+        let uncleanCount = 0
+        let logStr = ''
+        for (let j = 0; j < debts.length; j++) {
+          const debt = debts[j]
+          if (!debt.isDebtClean) {
+            uncleanCount++
+          }
+          logStr += ` ${debt.coinType} ${debt.isDebtClean}`
+        }
+
+        // 如果全都isDebtClean，则设置为debtClean
+        if (uncleanCount === 0) {
+          await oracleWan.setDebtClean(groupId, true);
+        }
+
+        log.info("isDebtClean2 smgId", groupId, logStr)
+      }
+    }
+  }
+  
 }
 
 module.exports = {
