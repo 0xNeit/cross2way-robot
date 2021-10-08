@@ -7,15 +7,15 @@ function pkToAddress(gpk, network = 'mainnet') {
   console.log(`..${"04" + gpk.slice(2)}`)
   const pkBuffer = Buffer.from("04" + gpk.slice(2), 'hex')
   const hash160 = bitcoin.crypto.hash160
-  let prefix = 0x00
-  switch(network) {
-    case 'mainnet':
-      prefix = 0x00
-      break
-    default:
-      prefix = 0x6f
-      break
-  }
+    let prefix = 0x00
+    switch(network) {
+      case 'mainnet':
+        prefix = 0x00
+        break
+      default:
+        prefix = 0x6f
+        break
+    }
   const v = Buffer.from([prefix])
   const b20 = hash160(Buffer.from(pkBuffer, 'hex'))
   console.log(`hash160 ${b20.toString('hex')}`)
@@ -117,16 +117,6 @@ const getClient = () => {
   return gClient
 }
 
-const send = () => {
-  const client = createClient()
-
-  try {
-    client.send()
-  } catch (e) {
-
-  }
-}
-
 const getBlockNumber = async () => {
   const client = createClient()
 
@@ -150,16 +140,12 @@ function format_cross_op_return (op_return) {
 };
 
 const op_return_cross_type = 1
-const op_return_smg_type = 2
-const op_return_smgOtaRedeem_type = 3
-const op_return_smgTransfer_type = 4
-const op_return_smgOtaTransfer_type = 5
 const op_return_smgDebt_type = 6
 
 const op_return_begin = op_return_cross_type
 const op_return_end = op_return_smgDebt_type
 
-const getBalance = async (from, _to, sg) => {
+const scanMessages = async (from, _to, sgs) => {
   const client = getClient()
   try {
     const safeBlockNumber = 10
@@ -169,6 +155,8 @@ const getBalance = async (from, _to, sg) => {
     if (from > to) {
       return null
     }
+
+    const msgs = []
 
     for (let curIndex = from; curIndex < to; curIndex++) {
       const bhash = await client.getBlockHash(curIndex)
@@ -192,21 +180,24 @@ const getBalance = async (from, _to, sg) => {
             if (op_return_type >= op_return_begin && op_return_type <= op_return_end) {
               console.log(`blockNumber = ${curIndex}, op = ${op_return_type} len = ${op_return.length}`)
               if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
-                const nextGroupId = '0x' + op_return.substr(2);
+                const fromGroupId = '0x' + op_return.substr(2);
                 for (let j = 0; j < vOut.length; j++) {
                   if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses) {
-                    console.log(`receive nextGroupId = ${nextGroupId}, value = ${vOut[j].value}, tx = ${tx.txid}, `)
-                    for (let i = 0; i < tx.vin.length; i++) {
-                      const ss = tx.vin[i].scriptSig
-                      if (ss && ss.hex && ss.hex.length && ss.hex[0]) {
-                        if (ss.hex.length === 278 && ss.hex.startsWith('48') && ss.hex.startsWith('41', 146)) {
-                          const preGroupGpk = '0x' + ss.hex.substring(148)
-                          // check whether exist, save to db
-                          console.log(`send pre = ${preGroupGpk}`)
-                        }
-                      }
+                    // const toHash160 = vOut[j].scriptPubKey.hex.match(/^76a914(.{40})88ac$/)[1]
+                    const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
+                    const toAddress = pkToAddress(toSg.gpk2, process.env.NETWORK_TYPE)
+                    if (vOut[j].scriptPubKey.addresses.length === 1 && vOut[j].scriptPubKey.addresses[0] === toAddress) {
+                      console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${vOut[j].value}, tx = ${tx.txid}`)
+                    
+                      msgs.push({
+                        from: fromGroupId,
+                        coin: 'BTC',
+                        to : toSg.groupId,
+                        value: vOut[j].value,
+                        tx : tx.txid,
+                      })
+                      break;
                     }
-                    break;
                   }
                 }
               }
@@ -215,8 +206,11 @@ const getBalance = async (from, _to, sg) => {
         })
       })
     }
+
+    return msgs
   } catch (e) {
-    console.log(`getBalance error ${e}`)
+    console.log(`scanMessages error ${e}`)
+    return null
   }
 }
 
@@ -233,14 +227,19 @@ function getDebtTasks(preGroupId, nextGroupId, preEndTime, totalDebt, receivedDe
 
 // 2. 如果所有债务都为clean,设置wan上的状态
 
-// setTimeout(async () => {
-//   pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
-//   pkToAddress('0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866', 'testnet')
-//   // const blockNumber = await getClient().getBlockCount();
-//   // await getBalance(2063996, blockNumber, {})
-// }, 10)
+setTimeout(async () => {
+  // pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
+  // pkToAddress('0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866', 'testnet')
+
+  const db = require('./sqlite_db');
+  setTimeout(async () => {
+    const sgs = db.getAllSga();
+    const blockNumber = await getClient().getBlockCount();
+    await scanMessages(2063996, 2063996 + 12, sgs)
+  }, 0)
+}, 10)
 
 module.exports = {
   pkToAddress,
-  getBalance,
+  scanMessages,
 }

@@ -95,6 +95,16 @@ class DB {
     this.db.prepare(`update debt set isDebtClean = @isDebtClean, totalSupply = @totalSupply, totalReceive = @totalReceive, lastReceiveTx = @lastReceiveTx where groupId = @groupId, coinType=@coinType`).run(item);
   }
 
+  tryUpdateDebt(item) {
+    const debt = this.db.prepare(`select * from debt where groupId == @groupId, coinType=@coinType`).run(item);
+    if (debt) {
+      // TODO: item debt 合并
+      updateDebt(item)
+    } else {
+      insertDebt(item)
+    }
+  }
+
   getAllDebt() {
     return this.db.prepare(`select * from debt`).all();
   }

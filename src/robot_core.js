@@ -11,6 +11,7 @@ const ltc = require('./lib/ltc');
 const { default: BigNumber } = require('bignumber.js');
 const { aggregate } = require('@makerdao/multicall');
 const getCryptPrices = require('./lib/crypto_compare')
+const nonContractChainConfigs = require('./lib/configs-other')
 
 const thresholdTimes = web3.utils.toBN(process.env.THRESHOLD_TIMES);
 const zero = web3.utils.toBN(0);
@@ -573,9 +574,20 @@ const getDebts = () => {
   return debts
 }
 
-// groupId
-const gDebtTasks = {}
+// 判断债务是该设置为已清空
+// 1. 每天12点记录(数据库debt表)到期的storeMan各个币种的债务, 如果已经记录过某个storeMan,就不记录了
+//    syncDebt
+// 2. 各个币,扫链,把新storeMan所有接收钱的消息保存下来(数据库msg表)
+//    scanMessages: [ ReceiveMessage ]
+// 3. 处理收钱消息, 把各个币的债务与收钱消息做对比,如果收的钱大于等于债务,则该债务被清空(更新debt表)
+//    doReceiveMessage (没实现, 因为只有一种消息, 我们就不把消息保存了, 直接更新入)
+// 注意: 我们的实现这里把2-3合并成scanNonContractChainMsgs,省略了msg表,只要新storeMan有收钱消息,
+//        就认为是上storeMan的债务,
+//        直接更新到上个storeMan的debt表中
+// 4. 如果该storeMan的所有币债务都被清空, 且余额为0, 则设置isDebtClean为true
+//    syncIsDebtCleanToWanV2
 
+// 第1步
 const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   const time = parseInt(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
@@ -649,13 +661,12 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   }
 }
 
-const monitorDebts = async () => {
-  const sgs = db.getAllSga();
-  const allDebts = db.getAllUnCleanDebt()
-
+// 第2,3步
+const scanNonContractChainMsgs = async () => {
+  
 }
 
-// 
+// 第4步
 const syncIsDebtCleanToWanV2 = async function() {
   const sgs = db.getAllSga();
   const allDebts = db.getAllDebt()

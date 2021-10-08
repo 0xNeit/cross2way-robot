@@ -65,6 +65,7 @@ module.exports = {
       "bip44": 0x80000162,
       // "startBlockNumber": 7034365,
       "startBlockNumber": 6834365,
+      "symbol": "WND",
     },
     'mainnet': {
       "rpc": "wss://nodes.wandevs.org/polkadot",
