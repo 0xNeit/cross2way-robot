@@ -10,7 +10,7 @@ async function v0Tov1() {
     db.db.exec(`
       create table msg (
         groupId char(66) NOT NULL,
-        coinType char(20) NOT NULL,
+        chainType char(20) NOT NULL,
         receive char(80) NOT NULL,
         tx char(128)
       );
@@ -20,7 +20,7 @@ async function v0Tov1() {
     db.db.exec(`
       create table debt (
         groupId char(66) NOT NULL,
-        coinType char(20) NOT NULL,
+        chainType char(20) NOT NULL,
         isDebtClean boolean,
         totalSupply char(80),
         totalReceive char(80),

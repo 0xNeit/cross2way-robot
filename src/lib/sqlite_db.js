@@ -88,15 +88,15 @@ class DB {
   }
 
   insertDebt(item) {
-    this.db.prepare(`insert into debt values (@groupId, @coinType, @isDebtClean, @totalSupply, @totalReceive, @lastReceiveTx)`).run(item);
+    this.db.prepare(`insert into debt values (@groupId, @chainType, @isDebtClean, @totalSupply, @totalReceive, @lastReceiveTx)`).run(item);
   }
 
   updateDebt(item) {
-    this.db.prepare(`update debt set isDebtClean = @isDebtClean, totalSupply = @totalSupply, totalReceive = @totalReceive, lastReceiveTx = @lastReceiveTx where groupId = @groupId, coinType=@coinType`).run(item);
+    this.db.prepare(`update debt set isDebtClean = @isDebtClean, totalSupply = @totalSupply, totalReceive = @totalReceive, lastReceiveTx = @lastReceiveTx where groupId = @groupId, chainType=@chainType`).run(item);
   }
 
   getDebt(item) {
-    return this.db.prepare(`select * from debt where groupId = @groupId, coinType=@coinType`).run(item);
+    return this.db.prepare(`select * from debt where groupId = @groupId, chainType=@chainType`).run(item);
   }
 
   getAllDebt() {
@@ -104,11 +104,11 @@ class DB {
   }
 
   insertMsg(item) {
-    this.db.prepare(`insert into msg values (@groupId, @coinType, @receive, @tx)`).run(item);
+    this.db.prepare(`insert into msg values (@groupId, @chainType, @receive, @tx)`).run(item);
   }
 
   getMsgs(item) {
-    return this.db.prepare(`select * from msg where groupId = @groupId, coinType=@coinType`).run(item);
+    return this.db.prepare(`select * from msg where groupId = @groupId, chainType=@chainType`).run(item);
   }
 
   getAllUnCleanDebt() {

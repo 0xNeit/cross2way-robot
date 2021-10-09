@@ -196,14 +196,13 @@ class BtcChain extends NccChain {
         item.receive = BigNumber(item.value).multipliedBy(this.coinUnit).toString()
         db.insertMsg({
           groupId: item.groupId,
-          coinType: this.coinType,
+          chainType: this.chainType,
           receive: item.receive,
           tx: item.tx,
         })
       }
     })
     insertMsgs(items)
-    db.updateScan({chainType: this.chainType, blockNumber: next});
 
     console.log('handleMessages finished')
   }
@@ -221,6 +220,7 @@ setTimeout(async () => {
     const blockNumber = await btcChain.getBlockNumber();
     const msgs = await btcChain.scanMessages(2063996, 2063996 + 3, sgs)
     btcChain.handleMessages(msgs, sgs, db)
+    db.updateScan({chainType: btcChain.chainType, blockNumber: next});
   }, 0)
 }, 10)
 

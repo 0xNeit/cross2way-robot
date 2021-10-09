@@ -12,7 +12,7 @@ module.exports = {
       "startBlockNumber": 693992,
       "safeBlockCount": 1,
       "decimals": 8,
-      "coinType": 'BTC',
+      "chainType": 'BTC',
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
     },
@@ -25,7 +25,7 @@ module.exports = {
       "startBlockNumber": 2062740,
       "safeBlockNumber": 1,
       "decimals": 8,
-      "coinType": 'BTC',
+      "chainType": 'BTC',
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
     }

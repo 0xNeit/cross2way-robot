@@ -560,11 +560,11 @@ const getDebts = () => {
     if (!debts[debt.groupId]) {
       debts[debt.groupId] = {}
     }
-    if (!debts[debt.groupId][debt.coinType]) {
-      debts[debt.groupId][debt.coinType] = {}
+    if (!debts[debt.groupId][debt.chainType]) {
+      debts[debt.groupId][debt.chainType] = {}
     }
 
-    debts[debt.groupId][debt.coinType] = {
+    debts[debt.groupId][debt.chainType] = {
       isDebtClean: debt.isDebtClean,
       totalSupply: debt.totalSupply,
       totalReceive: debt.totalReceive,
@@ -642,11 +642,11 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 
         if (debtToSave[groupId]) {
           const insertOneGroup = db.db.transaction((gId, debtMap) => {
-            for (const coinType in debtMap) {
+            for (const chainType in debtMap) {
               db.insertDebt({
                 groupId: gId,
-                coinType,
-                ...debtMap[coinType]
+                chainType,
+                ...debtMap[chainType]
               });
             }
           })
@@ -744,7 +744,7 @@ const syncIsDebtCleanToWanV2 = async function() {
           if (!debt.isDebtClean) {
             uncleanCount++
           }
-          logStr += ` ${debt.coinType} ${debt.isDebtClean}`
+          logStr += ` ${debt.chainType} ${debt.isDebtClean}`
         }
 
         // 如果全都isDebtClean，则设置为debtClean
