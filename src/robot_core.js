@@ -11,7 +11,7 @@ const ltc = require('./lib/ltc');
 const { default: BigNumber } = require('bignumber.js');
 const { aggregate } = require('@makerdao/multicall');
 const getCryptPrices = require('./lib/crypto_compare')
-const nonContractChainConfigs = require('./lib/configs-other')
+const nonContractChainConfigs = require('./lib/configs-ncc')
 
 const thresholdTimes = web3.utils.toBN(process.env.THRESHOLD_TIMES);
 const zero = web3.utils.toBN(0);
@@ -578,7 +578,7 @@ const getDebts = () => {
 // 1. 每天12点记录(数据库debt表)到期的storeMan各个币种的债务, 如果已经记录过某个storeMan,就不记录了
 //    syncDebt
 // 2. 各个币,扫链,把新storeMan所有接收钱的消息保存下来(数据库msg表)
-//    scanMessages: [ ReceiveMessage ]
+//    scanAssetTransfer: [ ReceiveMessage ]
 // 3. 处理收钱消息, 把各个币的债务与收钱消息做对比,如果收的钱大于等于债务,则该债务被清空(更新debt表)
 //    doReceiveMessage (没实现, 因为只有一种消息, 我们就不把消息保存了, 直接更新入)
 // 注意: 我们的实现这里把2-3合并成scanNonContractChainMsgs,省略了msg表,只要新storeMan有收钱消息,
@@ -651,10 +651,6 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
             }
           })
           insertOneGroup(groupId, debtToSave[groupId])
-          // TODO: 添加监测任务，监测债务
-          for (const coinType in debtToSave[groupId]) {
-            // addToDebtTask(debtMap[coinType])
-          }
         }
       }
     }
@@ -662,8 +658,58 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 }
 
 // 第2,3步
-const scanNonContractChainMsgs = async () => {
-  
+const doScan = async (chain, sgs, from, step, to) => {
+  let next = from + step;
+  if (next > to) {
+    next = to
+  }
+
+  // 扫描获取感兴趣的事件
+  const msgs = await chain.scanMessages(from, to, sgs)
+  // 处理这些事件
+  for (let i = 0; i < msgs.length; i++) {
+    const msg = msgs[i]
+  }
+  db.updateScan({chainType: chain.chainType, blockNumber: next});
+
+  if (next < to) {
+    setTimeout( async () => {
+      await doScan(chain, next + 1, step, to)
+    }, 0)
+  } else {
+    // doScan finished? try again scanInterval seconds later
+    setTimeout(async () => {
+      await scan(chain)
+    }, chain.scanInterval * 1000)
+  }
+}
+
+const scan = async (chain) => {
+  const sgs = db.getActiveSga();
+  const blockNumber = await chain.getBlockNumber()
+
+  const from = await chain.loadStartBlockNumber()
+  const step = chain.scanStep
+  const to = blockNumber - chain.safeBlockCount
+
+  if (from > to) {
+    return []
+  }
+
+  log.info(`scan chain=${chain.chainType}, from=${from}, to=${to}`);
+
+  await doScan(chain, sgs, from, step, to)
+}
+
+const scanAllChains = () => {
+  const chains = [btc, ltc, xrp, dot]
+
+  // 并发扫链
+  for (let i = 0; i < chains.length; i++) {
+    setTimeout(async () => {
+      await scan(chains[i])
+    }, 0)
+  }
 }
 
 // 第4步

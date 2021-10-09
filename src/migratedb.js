@@ -1,10 +1,20 @@
 const db = require('./lib/sqlite_db')
 const ScanEvent = require('./scan_event');
 const { getChain } = require('./lib/web3_chains')
-const otherChainsConfig = require('./lib/configs-other')
+const otherChainsConfig = require('./lib/configs-ncc')
 
 async function v0Tov1() {
   try {
+    // create msg table
+    // storeManGroupId, token, totalSupply, totalReceive
+    db.db.exec(`
+      create table msg (
+        groupId char(66) NOT NULL,
+        coinType char(20) NOT NULL,
+        receive char(80) NOT NULL,
+        tx char(128)
+      );
+    `)
     // create debt table
     // storeManGroupId, token, totalSupply, totalReceive
     db.db.exec(`
@@ -41,7 +51,7 @@ async function v0Tov1() {
     );
 
     const blockNumber = await chainWan.getBlockNumber()
-    const from = parseInt(process.env.SCAN_WAN_FROM)
+    const from = parseInt(process.env.SCAN_WAN_FROM) - 1
     const to = blockNumber - parseInt(process.env.SCAN_UNCERTAIN_BLOCK)
     const step = parseInt(process.env.SCAN_STEP)
     await scanInst.scanStoremanGroup(from, to, step);

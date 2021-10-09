@@ -4,7 +4,7 @@ const Secp256k1 = elliptic.ec('secp256k1');
 const keypairs = require('ripple-keypairs')
 const RippleAPI = require('ripple-lib').RippleAPI;
 const log = require('./log')
-const config = require('./configs-other').XRP
+const config = require('./configs-ncc').XRP
 const TimeoutPromise = require('./timeoutPromise')
 
 function pkToAddress(gpk) {

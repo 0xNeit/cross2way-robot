@@ -29,6 +29,17 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "es6 test",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/test/es6_test.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "migratedb testnet",
       "skipFiles": [
         "<node_internals>/**"

@@ -95,18 +95,20 @@ class DB {
     this.db.prepare(`update debt set isDebtClean = @isDebtClean, totalSupply = @totalSupply, totalReceive = @totalReceive, lastReceiveTx = @lastReceiveTx where groupId = @groupId, coinType=@coinType`).run(item);
   }
 
-  tryUpdateDebt(item) {
-    const debt = this.db.prepare(`select * from debt where groupId == @groupId, coinType=@coinType`).run(item);
-    if (debt) {
-      // TODO: item debt 合并
-      updateDebt(item)
-    } else {
-      insertDebt(item)
-    }
+  getDebt(item) {
+    return this.db.prepare(`select * from debt where groupId = @groupId, coinType=@coinType`).run(item);
   }
 
   getAllDebt() {
     return this.db.prepare(`select * from debt`).all();
+  }
+
+  insertMsg(item) {
+    this.db.prepare(`insert into msg values (@groupId, @coinType, @receive, @tx)`).run(item);
+  }
+
+  getMsgs(item) {
+    return this.db.prepare(`select * from msg where groupId = @groupId, coinType=@coinType`).run(item);
   }
 
   getAllUnCleanDebt() {
@@ -126,7 +128,7 @@ class DB {
   }
 
   getActiveSga() {
-    return this.db.prepare(`select * from sga where status < 8`).all();
+    return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
   }
 
   insertSga(item) {

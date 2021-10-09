@@ -10,6 +10,11 @@ module.exports = {
       // "startBlockNumber": 696992,
       // one day 6 x 24 = 144 blocks,  one week 144 x 7 = 1008
       "startBlockNumber": 693992,
+      "safeBlockCount": 1,
+      "decimals": 8,
+      "coinType": 'BTC',
+      "rpcUser": "wanglu",
+      "rpcPassword": "Wanchain888",
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26893",
@@ -18,6 +23,11 @@ module.exports = {
       "bip44": 0x80000000,
       // "startBlockNumber": 2065740,
       "startBlockNumber": 2062740,
+      "safeBlockNumber": 1,
+      "decimals": 8,
+      "coinType": 'BTC',
+      "rpcUser": "wanglu",
+      "rpcPassword": "Wanchain888",
     }
   },
   // 2.5分钟一个块
@@ -29,6 +39,7 @@ module.exports = {
       "bip44": 0x80000002,
       // "startBlockNumber": 1998882,
       "startBlockNumber": 1988882,
+      "safeBlockNumber": 1,
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26894",
@@ -37,6 +48,7 @@ module.exports = {
       "bip44": 0x80000002,
       // "startBlockNumber": 2109295,
       "startBlockNumber": 2100295,
+      "safeBlockNumber": 1,
     }
   },
   // 3秒一个块
@@ -47,6 +59,7 @@ module.exports = {
       "bip44": 0x80000090,
       // "startBlockNumber": 20340261,
       "startBlockNumber": 20300261,
+      "safeBlockNumber": 1,
     },
     'mainnet': {
       "rpc": "wss://nodes.wandevs.org/xrp",

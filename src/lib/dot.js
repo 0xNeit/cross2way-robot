@@ -2,7 +2,7 @@ const { Keyring, ApiPromise, WsProvider } = require('@polkadot/api');
 const _util = require("@polkadot/util");
 const _utilCrypto = require("@polkadot/util-crypto");
 // const { decodeAddress, encodeAddress } = require('@polkadot/keyring');
-const config = require('./configs-other').DOT
+const config = require('./configs-ncc').DOT
 const log = require('./log')
 
 // const provider = new WsProvider(process.env.RPC_URL_DOT);

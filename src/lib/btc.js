@@ -2,6 +2,27 @@ const bitcoin = require( 'bitcoinjs-lib' );
 const bs58check = require('bs58check')
 const BtcClient = require('bitcoin-core');
 const { version } = require('keythereum');
+const btcConfigs = require('./configs-ncc').BTC;
+const { default: BigNumber } = require('bignumber.js');
+const NccChain = require('./ncc_chain')
+
+
+const op_return_cross_type = 1
+const op_return_smgDebt_type = 6
+
+const op_return_begin = op_return_cross_type
+const op_return_end = op_return_smgDebt_type
+
+function format_cross_op_return (op_return) {
+  //$log.debug('OP_RETURN Unformatted: ' + op_return);
+  var content = '';
+  if (op_return && op_return.indexOf("OP_RETURN") > -1) {
+    var op_string = new String(op_return);
+    content = op_string.substring(op_string.indexOf("OP_RETURN") + 9, op_string.length).trim();
+  }
+  //$log.debug('OP_RETURN Formatted: ' + content);
+  return content;
+};
 
 function pkToAddress(gpk, network = 'mainnet') {
   console.log(`..${"04" + gpk.slice(2)}`)
@@ -26,16 +47,6 @@ function pkToAddress(gpk, network = 'mainnet') {
 
   return address
 }
-// getP2SHAddress(hashVal, publicKey, networkInfo) {
-//   const p2sh = bitcoin.payments.p2sh({
-//       network: networkInfo,
-//       redeem: {
-//           output: this.getRedeemScript(hashVal, publicKey),
-//           network: networkInfo
-//       },
-//   });
-//   return p2sh.address;
-// }
 
 function hash160ToAddress(h, network = 'mainnet') {
   console.log(`hash160ToAddress h = ${h}`)
@@ -60,109 +71,65 @@ function hash160ToAddress(h, network = 'mainnet') {
   return address
 }
 
-const configs = {
-  'testnet': {
-    "nodeUrl": "52.40.34.234:36893",
-    "feeUrl": "https://api.blockcypher.com/v1/btc/test3",
-    "foundationAddr": "mpSRUeY5RWgxUyEFr7Dn1QCffZMJhPehwx",
-    "chainID": "2147483648",
-    host: '52.40.34.234',
-    port: '36893',
-    rpcuser: 'wanglu',
-    rpcpassword: 'Wanchain888',
-    network: 'testnet',
-  },
-  'mainnet': {
-    "nodeUrl": "nodes.wandevs.org:26893",
-    "feeUrl": "https://api.blockcypher.com/v1/btc/main",
-    "foundationAddr": "bc1q8ak3pfl9r3julum2s9763tvt8rmcxtzqll8s2l",
-    "chainID": "2147492648",
-    host: 'nodes.wandevs.org',
-    port: '26893',
-    rpcuser: 'wanglu',
-    rpcpassword: 'Wanchain888',
-    network: 'bitcoin',
-  },
-  'regtest': {
-    "nodeUrl": "127.0.0.1:8332",
-    "feeUrl": "https://api.blockcypher.com/v1/btc/test3",
-    "foundationAddr": "mpSRUeY5RWgxUyEFr7Dn1QCffZMJhPehwx",
-    "chainID": "2147483648",
-    host: '127.0.0.1',
-    port: '8332',
-    rpcuser: 'mpc',
-    rpcpassword: 'wanglubtc',
-    network: 'regtest',
+function hash160ToAddress(h, network = 'mainnet') {
+  console.log(`hash160ToAddress h = ${h}`)
+  const hash160 = bitcoin.crypto.hash160
+  let prefix = 0x00
+  switch(network) {
+    case 'mainnet':
+      prefix = 0x00
+      break
+    default:
+      prefix = 0x6f
+      break
   }
+  const v = Buffer.from([prefix])
+  const b20 = h
+  console.log(`hash160 ${b20.toString('hex')}`)
+  const payload = Buffer.concat([v, b20])
+  const address = bs58check.encode(payload)
+
+  console.log(address)
+
+  return address
 }
 
-function createClient(network) {
-  const conf = configs[network]
-  return new BtcClient({
-    // bitcoin, testnet, regtest
-    network: conf.network,
-    host: conf.host,
-    port: conf.port,
-    username: conf.rpcuser,
-    password: conf.rpcpassword,
-    timeout: 600000,
-  })
-}
+class BtcChain extends NccChain {
+  constructor(config) {
+    super(config)
 
-let gClient = null
-const getClient = () => {
-  if (!gClient) {
-    gClient = createClient(process.env.NETWORK_TYPE)
+    const [host, port] = config.rpc.split(':')
+    const {rpcUser, rpcPassword} = config
+
+    this.api = new BtcClient({
+      host,
+      port,
+      username: rpcUser,
+      password: rpcPassword,
+      timeout: 600000,
+    })
+
+    this.coinUnit = new BigNumber(10).pow(config.decimals)
   }
-  return gClient
-}
 
-const getBlockNumber = async () => {
-  const client = createClient()
-
-  try {
-    const blockNumber = await client.getBlockCount();
-    console.log(`current block ${blockNumber}`)
-  } catch (e) {
-    console.log(`getBlockCount failed ${e}`)
+  getBlockNumber = async () => {
+    return await this.api.getBlockCount();
   }
-}
 
-function format_cross_op_return (op_return) {
-  //$log.debug('OP_RETURN Unformatted: ' + op_return);
-  var content = '';
-  if (op_return && op_return.indexOf("OP_RETURN") > -1) {
-    var op_string = new String(op_return);
-    content = op_string.substring(op_string.indexOf("OP_RETURN") + 9, op_string.length).trim();
-  }
-  //$log.debug('OP_RETURN Formatted: ' + content);
-  return content;
-};
-
-const op_return_cross_type = 1
-const op_return_smgDebt_type = 6
-
-const op_return_begin = op_return_cross_type
-const op_return_end = op_return_smgDebt_type
-
-const scanMessages = async (from, _to, sgs) => {
-  const client = getClient()
-  try {
-    const safeBlockNumber = 10
-
-    const to = _to - safeBlockNumber
-
+  scanMessages = async (from, to) => {
+    const client = this.api
+    
     if (from > to) {
       return null
     }
 
+    console.log(`scanMessages BTC from = ${from} to = ${to}`)
     const msgs = []
 
     for (let curIndex = from; curIndex < to; curIndex++) {
-      const bhash = await client.getBlockHash(curIndex)
-      const block = await client.getBlock(bhash, 2)
+      const bHash = await client.getBlockHash(curIndex)
+      const block = await client.getBlock(bHash, 2)
 
-      console.log(`blockNumber = ${curIndex} begin`)
       if (!block || !block.tx) {
         continue
       }
@@ -184,20 +151,12 @@ const scanMessages = async (from, _to, sgs) => {
                 for (let j = 0; j < vOut.length; j++) {
                   if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses) {
                     // const toHash160 = vOut[j].scriptPubKey.hex.match(/^76a914(.{40})88ac$/)[1]
-                    const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
-                    const toAddress = pkToAddress(toSg.gpk2, process.env.NETWORK_TYPE)
-                    if (vOut[j].scriptPubKey.addresses.length === 1 && vOut[j].scriptPubKey.addresses[0] === toAddress) {
-                      console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${vOut[j].value}, tx = ${tx.txid}`)
-                    
-                      msgs.push({
-                        from: fromGroupId,
-                        coin: 'BTC',
-                        to : toSg.groupId,
-                        value: vOut[j].value,
-                        tx : tx.txid,
-                      })
-                      break;
-                    }
+                    msgs.push({
+                      msgType: 'DebtTransfer',
+                      vOut: vOut[j],
+                      fromGroupId,
+                      tx
+                    })
                   }
                 }
               }
@@ -208,24 +167,49 @@ const scanMessages = async (from, _to, sgs) => {
     }
 
     return msgs
-  } catch (e) {
-    console.log(`scanMessages error ${e}`)
-    return null
+  }
+
+  handleMessages = (msgs, sgs, db) => {
+    const items = []
+    msgs.forEach(msg => {
+      const { msgType, vOut, fromGroupId, tx } = msg
+      if (msgType === 'DebtTransfer') {
+        const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
+        const toAddress = pkToAddress(toSg.gpk2, process.env.NETWORK_TYPE)
+        if (vOut.scriptPubKey.addresses.length === 1 && vOut.scriptPubKey.addresses[0] === toAddress) {
+          console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${vOut.value}, tx = ${tx.txid}`)
+        
+          items.push({
+            groupId: fromGroupId,
+            toGroupId : toSg.groupId,
+            value: vOut.value,
+            tx : tx.txid,
+          })
+        }
+      }
+    })
+
+    // insert to msg db
+    const insertMsgs = db.db.transaction((items) => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        item.receive = BigNumber(item.value).multipliedBy(this.coinUnit).toString()
+        db.insertMsg({
+          groupId: item.groupId,
+          coinType: this.coinType,
+          receive: item.receive,
+          tx: item.tx,
+        })
+      }
+    })
+    insertMsgs(items)
+    db.updateScan({chainType: this.chainType, blockNumber: next});
+
+    console.log('handleMessages finished')
   }
 }
 
-// 方案一 1. 从上个storeMan的endTime开始, 扫描发送到下个storeMan的交易,累加起来,如果超过本资产的债务,则设置本种债务为clean状态
-function getDebtTasks(preGroupId, nextGroupId, preEndTime, totalDebt, receivedDebt) {
-  gNewTasks[preGroupId] = {
-    nextGroupId,
-    preEndTime,
-    totalDebt,
-    receivedDebt
-  }
-  return gNewTasks
-}
-
-// 2. 如果所有债务都为clean,设置wan上的状态
+const btcChain = new BtcChain(btcConfigs[process.env.NETWORK_TYPE])
 
 setTimeout(async () => {
   // pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
@@ -234,12 +218,13 @@ setTimeout(async () => {
   const db = require('./sqlite_db');
   setTimeout(async () => {
     const sgs = db.getAllSga();
-    const blockNumber = await getClient().getBlockCount();
-    await scanMessages(2063996, 2063996 + 12, sgs)
+    const blockNumber = await btcChain.getBlockNumber();
+    const msgs = await btcChain.scanMessages(2063996, 2063996 + 3, sgs)
+    btcChain.handleMessages(msgs, sgs, db)
   }, 0)
 }, 10)
 
 module.exports = {
   pkToAddress,
-  scanMessages,
+  btcChain,
 }
