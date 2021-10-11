@@ -96,7 +96,7 @@ class DB {
   }
 
   getDebt(item) {
-    return this.db.prepare(`select * from debt where groupId = @groupId, chainType=@chainType`).run(item);
+    return this.db.prepare(`select * from debt where groupId = @groupId and chainType=@chainType`).run(item);
   }
 
   getAllDebt() {
@@ -128,7 +128,8 @@ class DB {
   }
 
   getActiveSga() {
-    return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
+    // return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
+    return this.db.prepare(`select * from sga where status != 7`).all();
   }
 
   insertSga(item) {

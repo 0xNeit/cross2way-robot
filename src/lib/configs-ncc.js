@@ -11,8 +11,15 @@ module.exports = {
       // one day 6 x 24 = 144 blocks,  one week 144 x 7 = 1008
       "startBlockNumber": 693992,
       "safeBlockCount": 1,
+
+      "symbol": "BTC",
       "decimals": 8,
+
       "chainType": 'BTC',
+      // scan every 5 min ?
+      "scanInterval": 300,
+      "scanStep": 2,
+
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
     },
@@ -23,13 +30,22 @@ module.exports = {
       "bip44": 0x80000000,
       // "startBlockNumber": 2065740,
       "startBlockNumber": 2062740,
-      "safeBlockNumber": 1,
+      "safeBlockCount": 1,
+
+      "symbol": "BTC",
       "decimals": 8,
+
       "chainType": 'BTC',
+      // scan every 5 min ?
+      "scanInterval": 300,
+      "scanStep": 10,
+
+
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
     }
   },
+
   // 2.5分钟一个块
   'LTC': {
     'testnet': {
@@ -39,7 +55,16 @@ module.exports = {
       "bip44": 0x80000002,
       // "startBlockNumber": 1998882,
       "startBlockNumber": 1988882,
-      "safeBlockNumber": 1,
+      "safeBlockCount": 3,
+
+      "symbol": "LTC",
+      "decimals": 8,
+
+      "chainType": 'LTC',
+      // scan every 1 min ?
+      "scanInterval": 60,
+      "scanStep": 20,
+
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26894",
@@ -48,9 +73,19 @@ module.exports = {
       "bip44": 0x80000002,
       // "startBlockNumber": 2109295,
       "startBlockNumber": 2100295,
-      "safeBlockNumber": 1,
+      "safeBlockCount": 3,
+
+      "symbol": "LTC",
+      "decimals": 8,
+
+      "chainType": 'LTC',
+      // scan every 1 min ?
+      "scanInterval": 60,
+      "scanStep": 20,
+
     }
   },
+
   // 3秒一个块
   'XRP': {
     'testnet': {
@@ -59,7 +94,15 @@ module.exports = {
       "bip44": 0x80000090,
       // "startBlockNumber": 20340261,
       "startBlockNumber": 20300261,
-      "safeBlockNumber": 1,
+      "safeBlockCount": 5,
+
+      "symbol": "XRP",
+      "decimals": 6,
+
+      "chainType": 'XRP',
+      // scan every 20 sec ?
+      "scanInterval": 20,
+      "scanStep": 100,
     },
     'mainnet': {
       "rpc": "wss://nodes.wandevs.org/xrp",
@@ -67,8 +110,18 @@ module.exports = {
       "bip44": 0x80000090,
       // "startBlockNumber": 65833345,
       "startBlockNumber": 65433345,
+      "safeBlockCount": 5,
+
+      "symbol": "XRP",
+      "decimals": 6,
+
+      "chainType": 'XRP',
+      // scan every 20 sec ?
+      "scanInterval": 20,
+      "scanStep": 100,
     }
   },
+
   //主网：polkadot，测试网：westend， 6秒一个块
   'DOT': {
     'testnet': {
@@ -78,7 +131,15 @@ module.exports = {
       "bip44": 0x80000162,
       // "startBlockNumber": 7034365,
       "startBlockNumber": 6834365,
+      "safeBlockCount": 5,
+
       "symbol": "WND",
+      "decimals": 12,
+
+      "chainType": 'DOT',
+      // scan every 30 sec ?
+      "scanInterval": 30,
+      "scanStep": 100,
     },
     'mainnet': {
       "rpc": "wss://nodes.wandevs.org/polkadot",
@@ -87,6 +148,15 @@ module.exports = {
       "bip44": 0x80000162,
       // "startBlockNumber": 6493248,
       "startBlockNumber": 6293248,
+      "safeBlockCount": 5,
+
+      "symbol": "DOT",
+      "decimals": 10,
+
+      "chainType": 'DOT',
+      // scan every 30 set ?
+      "scanInterval": 60,
+      "scanStep": 100,
     }
   }
 }

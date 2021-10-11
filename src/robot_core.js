@@ -268,20 +268,7 @@ const isBtcDebtClean = async function(chainBtc, sg) {
   // 1 1 的是老store man
   return true
 }
-const isBtcDebtCleanV2 = async function(chainBtc, sg) {
-  if (sg.curve1 === 0 || sg.curve2 === 0) {
-    const gpk = sg.curve1 === 0 ? sg.gpk1 : sg.gpk2
-    const balance = await chainBtc.core.getOneBalance(gpk)
 
-    if (balance.gt(bigZero)) {
-      return false
-    } else {
-      return true
-    }
-  }
-  // 1 1 的是老store man
-  return true
-}
 const isLtcDebtClean = async function(chainLtc, sg) {
   if (sg.curve1 === 0 || sg.curve2 === 0) {
     const gpk = sg.curve1 === 0 ? sg.gpk1 : sg.gpk2
@@ -577,17 +564,14 @@ const getDebts = () => {
 // 判断债务是该设置为已清空
 // 1. 每天12点记录(数据库debt表)到期的storeMan各个币种的债务, 如果已经记录过某个storeMan,就不记录了
 //    syncDebt
-// 2. 各个币,扫链,把新storeMan所有接收钱的消息保存下来(数据库msg表)
-//    scanAssetTransfer: [ ReceiveMessage ]
-// 3. 处理收钱消息, 把各个币的债务与收钱消息做对比,如果收的钱大于等于债务,则该债务被清空(更新debt表)
-//    doReceiveMessage (没实现, 因为只有一种消息, 我们就不把消息保存了, 直接更新入)
-// 注意: 我们的实现这里把2-3合并成scanNonContractChainMsgs,省略了msg表,只要新storeMan有收钱消息,
-//        就认为是上storeMan的债务,
-//        直接更新到上个storeMan的debt表中
+// 2. 各个币,扫链,把新storeMan所有接收钱的消息
+//    scanMessages: [ ReceiveMessage ]
+// 3. 处理收到的消息, 保存到msg表
+//    handleMessages (处理完消息, 更新scan到的blockNumber到数据库)
 // 4. 如果该storeMan的所有币债务都被清空, 且余额为0, 则设置isDebtClean为true
 //    syncIsDebtCleanToWanV2
 
-// 第1步
+// 第1步, 同步债务, 如果storeMan到了endTime, 我们获取原生币的所有各个mapToken的totalSupply之和作为该原生币的总债务
 const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   const time = parseInt(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
@@ -606,51 +590,58 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
       continue
     }
 
-    if (config.status >= 5) {
-      if (time > config.endTime) {
-        log.info("isDebtClean2 time > endTime smgId", groupId)
-        const debtToSave = {}
-        if (debts[groupId]) {
-          continue
-        } else {
+    const groupName = web3.utils.hexToString(groupId)
+    // 测试网, 只关注dev_开头的storeMan
+    if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
+      if (config.status >= 5) {
+        if (time > config.endTime) {
+          log.info("isDebtClean2 time > endTime smgId", groupId)
+          const debtToSave = {}
+          if (debts[groupId]) {
+            continue
+          }
+
           debts[groupId] = {}
           debtToSave[groupId] = {}
-        }
-
-        const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
-        const total = parseInt(await tmWan.totalTokenPairs())
-        const { symbolChainTokenMap } = await getTokenPairsAndSymbolTms(tmWan, total, web3Tms)
-
-        for (let symbol in symbolChainTokenMap) {
-          const chainTokenMap = symbolChainTokenMap[symbol]
-          if (!debts[groupId][symbol]) {
-            debts[groupId][symbol] = {
-              isDebtClean: 0,
-              totalSupply: "0",
-              totalReceive: "",
-              lastReceiveTx: "",
+  
+          const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
+          const total = parseInt(await tmWan.totalTokenPairs())
+          // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
+          const { symbolChainTokenMap } = await getTokenPairsAndSymbolTms(tmWan, total, web3Tms)
+  
+          // storeMan的所有支持的token
+          for (let symbol in symbolChainTokenMap) {
+            const chainTokenMap = symbolChainTokenMap[symbol]
+            if (!debts[groupId][symbol]) {
+              debts[groupId][symbol] = {
+                isDebtClean: 0,
+                totalSupply: "0",
+                totalReceive: "",
+                lastReceiveTx: "",
+              }
+              debtToSave[groupId][symbol] = debts[groupId][symbol]
             }
-            debtToSave[groupId][symbol] = debts[groupId][symbol]
-          }
-          for (let chainSymbol in chainTokenMap) {
-            const totalSupply = await chainTokenMap[chainSymbol].getFun('totalSupply')
-            log.info(`token ${symbol} in chain ${chainSymbol} totalSupply = ${totalSupply}`)
-            debts[groupId][symbol].totalSupply = new BigNumber(totalSupply).plus(debts[groupId][symbol].totalSupply).toString(10)
-            debtToSave[groupId][symbol].totalSupply = debts[groupId][symbol].totalSupply
-          }
-        }
-
-        if (debtToSave[groupId]) {
-          const insertOneGroup = db.db.transaction((gId, debtMap) => {
-            for (const chainType in debtMap) {
-              db.insertDebt({
-                groupId: gId,
-                chainType,
-                ...debtMap[chainType]
-              });
+            // 每个支持的token,对应很多个mapToken, 累加起来这些mapToken的totalSupply,为总的债务
+            for (let chainSymbol in chainTokenMap) {
+              const totalSupply = await chainTokenMap[chainSymbol].getFun('totalSupply')
+              log.info(`token ${symbol} in chain ${chainSymbol} totalSupply = ${totalSupply}`)
+              debts[groupId][symbol].totalSupply = new BigNumber(totalSupply).plus(debts[groupId][symbol].totalSupply).toString(10)
+              debtToSave[groupId][symbol].totalSupply = debts[groupId][symbol].totalSupply
             }
-          })
-          insertOneGroup(groupId, debtToSave[groupId])
+          }
+  
+          if (debtToSave[groupId]) {
+            const insertOneGroup = db.db.transaction((gId, debtMap) => {
+              for (const chainType in debtMap) {
+                db.insertDebt({
+                  groupId: gId,
+                  chainType,
+                  ...debtMap[chainType]
+                });
+              }
+            })
+            insertOneGroup(groupId, debtToSave[groupId])
+          }
         }
       }
     }
@@ -658,27 +649,29 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 }
 
 // 第2,3步
+// 2. 各个币,扫链,把新storeMan所有接收钱的消息
+//    scanMessages: [ ReceiveMessage ]
+// 3. 处理收到的消息, 保存到msg表
+//    handleMessages (处理完消息, 更新scan到的blockNumber到数据库)
 const doScan = async (chain, sgs, from, step, to) => {
-  let next = from + step;
+  console.trace(`doScan`)
+  let next = from + step - 1;
   if (next > to) {
     next = to
   }
 
   // 扫描获取感兴趣的事件
-  const msgs = await chain.scanMessages(from, to, sgs)
-  // 处理这些事件
-  for (let i = 0; i < msgs.length; i++) {
-    const msg = msgs[i]
-  }
-  db.updateScan({chainType: chain.chainType, blockNumber: next});
+  const msgs = await chain.scanMessages(from, next)
+  // 处理这些事件, 一次性写db
+  chain.handleMessages(msgs, sgs, db, next)
 
   if (next < to) {
-    setTimeout( async () => {
-      await doScan(chain, next + 1, step, to)
+    return setTimeout( async () => {
+      await doScan(chain, sgs, next + 1, step, to)
     }, 0)
   } else {
     // doScan finished? try again scanInterval seconds later
-    setTimeout(async () => {
+    return setTimeout(async () => {
       await scan(chain)
     }, chain.scanInterval * 1000)
   }
@@ -688,12 +681,13 @@ const scan = async (chain) => {
   const sgs = db.getActiveSga();
   const blockNumber = await chain.getBlockNumber()
 
-  const from = await chain.loadStartBlockNumber()
+  const from = db.getScan(chain.chainType).blockNumber + 1
   const step = chain.scanStep
-  const to = blockNumber - chain.safeBlockCount
+  // const to = blockNumber - chain.safeBlockCount
+  const to = from + 10 - chain.safeBlockCount
 
   if (from > to) {
-    return []
+    return
   }
 
   log.info(`scan chain=${chain.chainType}, from=${from}, to=${to}`);
@@ -713,8 +707,9 @@ const scanAllChains = () => {
 }
 
 // 第4步
+// 如果该storeMan的所有币债务都被清空, 则设置isDebtClean为true, (且余额为0, 这个就不用了?)
 const syncIsDebtCleanToWanV2 = async function() {
-  const sgs = db.getAllSga();
+  const sgs = db.getActiveSga();
   const allDebts = db.getAllDebt()
   console.log(`${JSON.stringify(allDebts)}`)
   // 获取groupId的某个资产类别的debt, 在链上从endTime开始监测转移事件
@@ -728,6 +723,7 @@ const syncIsDebtCleanToWanV2 = async function() {
       continue
     }
 
+    // 测试网, 只关注dev_开头的storeMan
     if (config.status >= 5) {
       if (time > config.endTime) {
         // 先从db里查找groupId的各项，
@@ -743,6 +739,8 @@ const syncIsDebtCleanToWanV2 = async function() {
           const debt = debts[j]
           if (!debt.isDebtClean) {
             uncleanCount++
+          } else {
+            // 从msg获取总转账金额,如果大于债务,设置该币的isDebtClean
           }
           logStr += ` ${debt.chainType} ${debt.isDebtClean}`
         }
@@ -770,4 +768,6 @@ module.exports = {
   syncIsDebtCleanToWan,
   syncDebt,
   syncIsDebtCleanToWanV2,
+  scanAllChains,
+  scan,
 }

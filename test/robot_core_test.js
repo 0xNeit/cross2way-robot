@@ -2,8 +2,10 @@ process.env.LOG_ENGINE = process.env.LOG_ENGINE
 const log = require('../src/lib/log');
 const { getChain, getChains } = require("../src/lib/web3_chains")
 const {web3} = require('../src/lib/utils')
+const db = require('../src/lib/sqlite_db')
 
-const { updatePrice, syncIsDebtCleanToWanV2, syncDebt} = require('../src/robot_core');
+const btc = require('../src/lib/btc');
+const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scan} = require('../src/robot_core');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
 
@@ -59,6 +61,58 @@ const getStoreManConfig = async () => {
 const checkDebtClean = async() => {
   await syncIsDebtCleanToWanV2()
 }
+
+const scanBtc = async () => {
+  await scan(btc.btcChain)
+}
+
+const getDebt = async () => {
+  const a = db.getDebt({
+    groupId: '0x000000000000000000000000000000000000000000746573746e65745f303236',
+    chainType: 'BTC'
+  });
+  console.log(`${a.length}`)
+}
+
+function factorial2 (number) {
+  console.trace(`t ${number}`)
+  if (number < 2) {
+    return 1
+  } else {
+    return number * factorial2(number - 1)
+  }
+}
+
+function factorial (number, result = 1) {
+  console.trace(`t ${number}`)
+  if (number === 1) return result
+  return factorial(number - 1, number * result)
+}
+
+function factorial3 (o, result = 1) {
+  console.trace(`t ${o.number}`)
+  if (o.number === 1) {
+    console.log('result', result)
+    return result
+  }
+  setTimeout(() => {
+    factorial3({number: o.number - 1}, o.number * result)
+  }, 0)
+}
+
+process.on('uncaughtException', err => {
+  log.error(`uncaughtException ${err}`)
+});
+process.on('unhandledRejection', (err) => {
+  log.error(`unhandledRejection ${err}`)
+});
+
 setTimeout(async () => {
-  await doUpdatePrice()
+  // factorial(3)
+  // factorial2(3)
+  // factorial3({number: 3})
+
+  // await scanBtc()
+  // await checkDebtClean()
+  getDebt()
 }, 0)

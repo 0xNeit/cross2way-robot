@@ -73,12 +73,12 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "btc testnet",
+      "name": "test btc testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/lib/btc.js",
+      "program": "${workspaceFolder}/test/btc_test.js",
       "envFile": "${workspaceFolder}/.env.dev"
     },
     {
@@ -301,7 +301,7 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "test btc local",
+      "name": "test btc address testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
@@ -311,7 +311,7 @@
 			"runtimeExecutable": null,
 			"env": { "NODE_ENV": "develop"},
       "program": "${workspaceFolder}/node_modules/.bin/_mocha",
-      "args": ["./test/btc_test.js", "dotenv_config_path=.env.local"]
+      "args": ["./test/btc_test.js", "dotenv_config_path=.env.dev"]
     },
     {
       "type": "node",

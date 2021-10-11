@@ -126,7 +126,7 @@ class BtcChain extends NccChain {
     console.log(`scanMessages BTC from = ${from} to = ${to}`)
     const msgs = []
 
-    for (let curIndex = from; curIndex < to; curIndex++) {
+    for (let curIndex = from; curIndex <= to; curIndex++) {
       const bHash = await client.getBlockHash(curIndex)
       const block = await client.getBlock(bHash, 2)
 
@@ -169,7 +169,11 @@ class BtcChain extends NccChain {
     return msgs
   }
 
-  handleMessages = (msgs, sgs, db) => {
+  handleMessages = (msgs, sgs, db, next) => {
+    if (!msgs) {
+      return
+    }
+
     const items = []
     msgs.forEach(msg => {
       const { msgType, vOut, fromGroupId, tx } = msg
@@ -201,6 +205,7 @@ class BtcChain extends NccChain {
           tx: item.tx,
         })
       }
+      db.updateScan({chainType: this.chainType, blockNumber: next});
     })
     insertMsgs(items)
 
@@ -209,20 +214,6 @@ class BtcChain extends NccChain {
 }
 
 const btcChain = new BtcChain(btcConfigs[process.env.NETWORK_TYPE])
-
-setTimeout(async () => {
-  // pkToAddress('0x60fc57b762f4f4c17c2fd6e8d093c4cd8f3e1ec431e6b508700160e66749ff7104b2e2fb7dad08e4eaca22dbf184ecede5ea24e7ec3b106905f1830a2a7f50b1', 'testnet')
-  // pkToAddress('0x042089c439045b2cfd283bb986697af2f5122792b3f60960d8026b7ce071a9cf1365798130f76a8a4f2d390d21db4bfab87b7f465cc9db38972494fb1de67866', 'testnet')
-
-  const db = require('./sqlite_db');
-  setTimeout(async () => {
-    const sgs = db.getAllSga();
-    const blockNumber = await btcChain.getBlockNumber();
-    const msgs = await btcChain.scanMessages(2063996, 2063996 + 3, sgs)
-    btcChain.handleMessages(msgs, sgs, db)
-    db.updateScan({chainType: btcChain.chainType, blockNumber: next});
-  }, 0)
-}, 10)
 
 module.exports = {
   pkToAddress,

@@ -12,7 +12,7 @@ async function v0Tov1() {
         groupId char(66) NOT NULL,
         chainType char(20) NOT NULL,
         receive char(80) NOT NULL,
-        tx char(128)
+        tx char(128) NOT NULL,
       );
     `)
     // create debt table
