@@ -4,10 +4,6 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { promisify, sleep } = require("./utils");
-
-console.log(os.platform());
-console.log(os.homedir());
-
 class DB {
   constructor() {
     this.isInit = false;
@@ -29,8 +25,8 @@ class DB {
 
     let db = null;
     if (!fs.existsSync(filePath)) {
-      // db = new Sqlite3(filePath, {verbose: console.log});
-      db = new Sqlite3(filePath);
+      db = new Sqlite3(filePath, {verbose: console.log});
+      // db = new Sqlite3(filePath);
       db.exec(`
         create table scan (
           chainType char(20) PRIMARY KEY NOT NULL,
@@ -92,11 +88,11 @@ class DB {
   }
 
   updateDebt(item) {
-    this.db.prepare(`update debt set isDebtClean = @isDebtClean, totalSupply = @totalSupply, totalReceive = @totalReceive, lastReceiveTx = @lastReceiveTx where groupId = @groupId, chainType=@chainType`).run(item);
+    this.db.prepare(`update debt set isDebtClean = @isDebtClean, totalSupply = @totalSupply, totalReceive = @totalReceive, lastReceiveTx = @lastReceiveTx where groupId = @groupId and chainType=@chainType`).run(item);
   }
 
   getDebt(item) {
-    return this.db.prepare(`select * from debt where groupId = @groupId and chainType=@chainType`).run(item);
+    return this.db.prepare(`select * from debt where groupId = @groupId and chainType=@chainType`).get(item);
   }
 
   getAllDebt() {
@@ -107,8 +103,8 @@ class DB {
     this.db.prepare(`insert into msg values (@groupId, @chainType, @receive, @tx)`).run(item);
   }
 
-  getMsgs(item) {
-    return this.db.prepare(`select * from msg where groupId = @groupId, chainType=@chainType`).run(item);
+  getMsgsByGroupId(item) {
+    return this.db.prepare(`select * from msg where groupId = @groupId and chainType=@chainType`).all(item);
   }
 
   getAllUnCleanDebt() {
@@ -116,7 +112,7 @@ class DB {
   }
 
   getDebtsByGroupId(item) {
-    return this.db.prepare(`select * from debt where groupId == @groupId`).run(item);
+    return this.db.prepare(`select * from debt where groupId == @groupId`).all(item);
   }
 
   // store man group admin

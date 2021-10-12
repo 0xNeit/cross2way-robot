@@ -5,6 +5,7 @@ const keypairs = require('ripple-keypairs')
 const RippleAPI = require('ripple-lib').RippleAPI;
 const log = require('./log')
 const config = require('./configs-ncc').XRP
+const NccChain = require('./ncc_chain')
 const TimeoutPromise = require('./timeoutPromise')
 
 function pkToAddress(gpk) {
@@ -27,7 +28,7 @@ function sleep(ms) {
 }
 
 // ripple
-class XrpChain {
+class XrpChain extends NccChain {
   constructor(chainConfig) {
     this.api = new RippleAPI({ 
       server: chainConfig.rpc,
@@ -125,7 +126,7 @@ class XrpChain {
     return blockNumber
   }
 
-  async scanBlock(from, to, sg) {
+  scanMessages = async (from, to, sg) {
     const self = this
 
     const options = {

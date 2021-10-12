@@ -5,7 +5,7 @@ const { version } = require('keythereum');
 const btcConfigs = require('./configs-ncc').BTC;
 const { default: BigNumber } = require('bignumber.js');
 const NccChain = require('./ncc_chain')
-
+const log = require('./log');
 
 const op_return_cross_type = 1
 const op_return_smgDebt_type = 6
@@ -25,7 +25,6 @@ function format_cross_op_return (op_return) {
 };
 
 function pkToAddress(gpk, network = 'mainnet') {
-  console.log(`..${"04" + gpk.slice(2)}`)
   const pkBuffer = Buffer.from("04" + gpk.slice(2), 'hex')
   const hash160 = bitcoin.crypto.hash160
     let prefix = 0x00
@@ -39,69 +38,23 @@ function pkToAddress(gpk, network = 'mainnet') {
     }
   const v = Buffer.from([prefix])
   const b20 = hash160(Buffer.from(pkBuffer, 'hex'))
-  console.log(`hash160 ${b20.toString('hex')}`)
   const payload = Buffer.concat([v, b20])
   const address = bs58check.encode(payload)
-
-  console.log(address)
 
   return address
 }
 
-function hash160ToAddress(h, network = 'mainnet') {
-  console.log(`hash160ToAddress h = ${h}`)
-  const hash160 = bitcoin.crypto.hash160
-  let prefix = 0x00
-  switch(network) {
-    case 'mainnet':
-      prefix = 0x00
-      break
-    default:
-      prefix = 0x6f
-      break
-  }
-  const v = Buffer.from([prefix])
-  const b20 = h
-  console.log(`hash160 ${b20.toString('hex')}`)
-  const payload = Buffer.concat([v, b20])
-  const address = bs58check.encode(payload)
+class BtcBase extends NccChain {
+  constructor(configs, network) {
+    const config = configs[network]
 
-  console.log(address)
-
-  return address
-}
-
-function hash160ToAddress(h, network = 'mainnet') {
-  console.log(`hash160ToAddress h = ${h}`)
-  const hash160 = bitcoin.crypto.hash160
-  let prefix = 0x00
-  switch(network) {
-    case 'mainnet':
-      prefix = 0x00
-      break
-    default:
-      prefix = 0x6f
-      break
-  }
-  const v = Buffer.from([prefix])
-  const b20 = h
-  console.log(`hash160 ${b20.toString('hex')}`)
-  const payload = Buffer.concat([v, b20])
-  const address = bs58check.encode(payload)
-
-  console.log(address)
-
-  return address
-}
-
-class BtcChain extends NccChain {
-  constructor(config) {
-    super(config)
+    super(config, network)
 
     const [host, port] = config.rpc.split(':')
     const {rpcUser, rpcPassword} = config
 
     this.api = new BtcClient({
+      network,
       host,
       port,
       username: rpcUser,
@@ -123,7 +76,7 @@ class BtcChain extends NccChain {
       return null
     }
 
-    console.log(`scanMessages BTC from = ${from} to = ${to}`)
+    console.log(`scanMessages ${this.chainType} from = ${from} to = ${to}`)
     const msgs = []
 
     for (let curIndex = from; curIndex <= to; curIndex++) {
@@ -179,7 +132,7 @@ class BtcChain extends NccChain {
       const { msgType, vOut, fromGroupId, tx } = msg
       if (msgType === 'DebtTransfer') {
         const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
-        const toAddress = pkToAddress(toSg.gpk2, process.env.NETWORK_TYPE)
+        const toAddress = this.getP2PKHAddress(toSg.gpk2)
         if (vOut.scriptPubKey.addresses.length === 1 && vOut.scriptPubKey.addresses[0] === toAddress) {
           console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${vOut.value}, tx = ${tx.txid}`)
         
@@ -204,6 +157,22 @@ class BtcChain extends NccChain {
           receive: item.receive,
           tx: item.tx,
         })
+
+        // 设置转移的资产总量, 超过债务时,设置债务clean为true
+        const assets = db.getMsgsByGroupId({groupId: item.groupId, chainType: this.chainType})
+        const reducer = (sum, asset) => sum.plus(BigNumber(asset.receive))
+        const totalAssets = assets.reduce(reducer, BigNumber(0))
+        const debt = db.getDebt({groupId: item.groupId, chainType: this.chainType})
+        if (debt) {
+          if (totalAssets.comparedTo(BigNumber(debt.totalSupply)) >= 0) {
+            debt.isDebtClean = 1
+          }
+          debt.totalReceive = totalAssets.toString()
+          debt.lastReceiveTx = item.tx
+          db.updateDebt(debt)
+        } else {
+          log.error(`debt not exist, ${item.groupId}, ${item.chainType}, ${totalAssets}`)
+        }
       }
       db.updateScan({chainType: this.chainType, blockNumber: next});
     })
@@ -213,9 +182,21 @@ class BtcChain extends NccChain {
   }
 }
 
-const btcChain = new BtcChain(btcConfigs[process.env.NETWORK_TYPE])
+class BtcChain extends BtcBase {
+  constructor(configs, network) {
+    super(configs, network)
+  }
+
+  getP2PKHAddress(gpk) {
+    return pkToAddress(gpk, this.network)
+  }
+}
+
+const btcChain = new BtcChain(btcConfigs, process.env.NETWORK_TYPE)
 
 module.exports = {
   pkToAddress,
+  BtcBase,
   btcChain,
+  BtcChain,
 }

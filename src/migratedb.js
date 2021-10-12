@@ -21,7 +21,7 @@ async function v0Tov1() {
       create table debt (
         groupId char(66) NOT NULL,
         chainType char(20) NOT NULL,
-        isDebtClean boolean,
+        isDebtClean int,
         totalSupply char(80),
         totalReceive char(80),
         lastReceiveTx char(128)
@@ -32,7 +32,7 @@ async function v0Tov1() {
     otherChains.forEach(chain => {
       db.db.prepare(`insert into scan values (@chainType, @blockNumber)`).run({
         chainType: chain,
-        blockNumber: otherChainsConfig[chain][process.env.NETWORK_TYPE].startBlockNumber
+        blockNumber: otherChainsConfig[chain][process.env.NETWORK_TYPE].startBlockNumber - 1
       });
     })
 

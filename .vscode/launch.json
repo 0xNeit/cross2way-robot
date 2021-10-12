@@ -84,12 +84,12 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "ltc testnet",
+      "name": "test ltc testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/lib/ltc.js",
+      "program": "${workspaceFolder}/test/ltc_test.js",
       "envFile": "${workspaceFolder}/.env.dev"
     },
     {

@@ -92,4 +92,38 @@ const networks = {
   },
 };
 
-module.exports = {networks};
+// getP2SH(hashVal, publicKey, networkInfo) {
+//   const p2sh = bitcoin.payments.p2sh({
+//       network: networkInfo,
+//       redeem: {
+//           output: this.getRedeemScript(hashVal, publicKey),
+//           network: networkInfo
+//       },
+//   });
+//   return p2sh.address;
+// }
+
+function getP2PKH(gpk, networkInfo) {
+  const pkBuffer = Buffer.from("04" + gpk.slice(2), 'hex')
+  const p2pkh = bitcoin.payments.p2pkh({
+    pubkey: pkBuffer,
+    network: networkInfo,
+  });
+  return p2pkh.address;
+}
+
+// function getP2PKH_2(gpk, networkName) {
+//   const litecore = require("litecore-lib");
+//   const pubkey = Buffer.from("04" + gpk.slice(2), 'hex')
+//   const network = litecore.networks[networkName]
+//   const p2pkh = litecore.payments.p2pkh({
+//     pubkey,
+//     network,
+//   });
+//   return p2pkh.address;
+// }
+
+module.exports = {
+  networks,
+  getP2PKH,
+};

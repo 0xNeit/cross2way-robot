@@ -2,41 +2,26 @@ const configs = require('./configs-ncc')
 const { getChain } = require('./web3_chains')
 // Non-contract chains : btc, ltc, xrp, dot
 class NccChain {
-  constructor(config) {
+  constructor(config, network) {
     Object.assign(this, config)
+    this.network = network
   }
 
   getBlockNumber() {
     throw new Error(`getBlockNumber not implemented`)
   }
 
-  loadStartBlockNumber() {
-    throw new Error(`loadStartBlockNumber not implemented`)
-  }
-
-  scanMessages() {
+  async scanMessages() {
     throw new Error('scanMessages not implemented')
   }
 
-  async scanEvents(sgs, db) {
-    const blockNumber = this.getBlockNumber()
+  handleMessages(msgs, sgs, db, next) {
+    throw new Error('handleMessages not implemented')
+  }
 
-    const from = this.loadStartBlockNumber()
-    const to = blockNumber - this.safeBlockCount
-
-    db.updateScan({chainType: this.chainType, blockNumber: next});
-
-    if (from > to) {
-      return []
-    }
-
-    const msgs = this.scanMessages(from, to, sgs)
-    return msgs
+  getP2PKHAddress() {
+    throw new Error(`getP2PKHAddress not implemented`)
   }
 }
-
-setTimeout(async () => {
-
-}, 0)
 
 module.exports = NccChain

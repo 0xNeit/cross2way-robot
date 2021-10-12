@@ -1,7 +1,7 @@
-// const bitcoin = require( 'bitcoinjs-lib' );
 const bitcoin = require( 'bitcoinjs-lib' );
 const bs58check = require('bs58check')
-
+const { BtcBase } = require('./btc')
+const ltcConfigs = require('./configs-ncc').LTC;
 
 // scriptHash: 0xc4, //  for segwit (start with 2)
 
@@ -23,11 +23,23 @@ function pkToAddress(gpk, network = 'mainnet') {
   const payload = Buffer.concat([v, b20])
   const address = bs58check.encode(payload)
 
-  console.log(address)
-
   return address
 }
 
+class LtcChain extends BtcBase {
+  constructor(configs, network) {
+    super(configs, network)
+  }
+
+  getP2PKHAddress(gpk) {
+    return pkToAddress(gpk, this.network)
+  }
+}
+
+const ltcChain = new LtcChain(ltcConfigs, process.env.NETWORK_TYPE)
+
 module.exports = {
-  pkToAddress
+  pkToAddress,
+  ltcChain,
+  LtcChain,
 }

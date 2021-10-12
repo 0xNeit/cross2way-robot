@@ -3,6 +3,7 @@ const log = require('../src/lib/log');
 const { getChain, getChains } = require("../src/lib/web3_chains")
 const {web3} = require('../src/lib/utils')
 const db = require('../src/lib/sqlite_db')
+const BigNumber = require('bignumber.js')
 
 const btc = require('../src/lib/btc');
 const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scan} = require('../src/robot_core');
@@ -59,19 +60,59 @@ const getStoreManConfig = async () => {
 }
 
 const checkDebtClean = async() => {
-  await syncIsDebtCleanToWanV2()
+  const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
+  const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
+  const oracleWan = chainWan.loadContract('OracleDelegate')
+  await syncIsDebtCleanToWanV2(sgaWan, oracleWan)
 }
 
 const scanBtc = async () => {
   await scan(btc.btcChain)
 }
 
-const getDebt = async () => {
-  const a = db.getDebt({
+const insertDebt = () => {
+  db.insertDebt({
+    groupId: 'aa',
+    chainType: 'btc',
+    isDebtClean: 1,
+    totalSupply: '0',
+    totalReceive: null,
+    lastReceiveTx: null,
+  })
+}
+
+const getMsgsByGroupId = () => {
+  const a = db.getMsgsByGroupId({
     groupId: '0x000000000000000000000000000000000000000000746573746e65745f303236',
     chainType: 'BTC'
   });
   console.log(`${a.length}`)
+}
+
+const dbTx = () => {
+  const insertGet = db.db.transaction((items) => {
+    for (let i = 0; i < items.length; i++) {
+      db.insertMsg({
+        groupId: 'test',
+        chainType: 'ttt',
+        receive: '100',
+        tx: 'tx',
+      })
+
+      const assets = db.getMsgsByGroupId({groupId: 'test', chainType: 'ttt'})
+      const reducer = (sum, asset) => sum.plus(BigNumber(asset.receive))
+      const totalAssets = assets.reduce(reducer, BigNumber(0))
+      console.log(`${i} total = ${totalAssets}`)
+    }
+  })
+
+  insertGet([1,2])
+}
+
+function factorial (number, result = 1) {
+  console.trace(`t ${number}`)
+  if (number === 1) return result
+  return factorial(number - 1, number * result)
 }
 
 function factorial2 (number) {
@@ -81,12 +122,6 @@ function factorial2 (number) {
   } else {
     return number * factorial2(number - 1)
   }
-}
-
-function factorial (number, result = 1) {
-  console.trace(`t ${number}`)
-  if (number === 1) return result
-  return factorial(number - 1, number * result)
 }
 
 function factorial3 (o, result = 1) {
@@ -100,19 +135,21 @@ function factorial3 (o, result = 1) {
   }, 0)
 }
 
-process.on('uncaughtException', err => {
-  log.error(`uncaughtException ${err}`)
-});
-process.on('unhandledRejection', (err) => {
-  log.error(`unhandledRejection ${err}`)
-});
-
 setTimeout(async () => {
-  // factorial(3)
+  factorial(3)
   // factorial2(3)
   // factorial3({number: 3})
 
   // await scanBtc()
   // await checkDebtClean()
-  getDebt()
+  // getMsgsByGroupId()
+  // dbTx()
+  // insertDebt()
 }, 0)
+
+process.on('uncaughtException', err => {
+  log.error(`uncaughtException test: ${err}`)
+});
+process.on('unhandledRejection', (err) => {
+  log.error(`unhandledRejection test: ${err}`)
+});

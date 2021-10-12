@@ -654,7 +654,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 // 3. 处理收到的消息, 保存到msg表
 //    handleMessages (处理完消息, 更新scan到的blockNumber到数据库)
 const doScan = async (chain, sgs, from, step, to) => {
-  console.trace(`doScan`)
+  // console.trace(`doScan`)
   let next = from + step - 1;
   if (next > to) {
     next = to
@@ -708,10 +708,8 @@ const scanAllChains = () => {
 
 // 第4步
 // 如果该storeMan的所有币债务都被清空, 则设置isDebtClean为true, (且余额为0, 这个就不用了?)
-const syncIsDebtCleanToWanV2 = async function() {
+const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
   const sgs = db.getActiveSga();
-  const allDebts = db.getAllDebt()
-  console.log(`${JSON.stringify(allDebts)}`)
   // 获取groupId的某个资产类别的debt, 在链上从endTime开始监测转移事件
   for (let i = 0; i < sgs.length; i++) {
     const sg = sgs[i];
@@ -739,8 +737,6 @@ const syncIsDebtCleanToWanV2 = async function() {
           const debt = debts[j]
           if (!debt.isDebtClean) {
             uncleanCount++
-          } else {
-            // 从msg获取总转账金额,如果大于债务,设置该币的isDebtClean
           }
           logStr += ` ${debt.chainType} ${debt.isDebtClean}`
         }
