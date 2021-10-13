@@ -7,7 +7,7 @@ function testScan() {
   setTimeout(async () => {
     const sgs = db.getAllSga();
     const blockNumber = await btcChain.getBlockNumber();
-    const from = 2063995 + 1
+    const from = btcChain.startBlockNumber
     const next = from + 3
     const msgs = await btcChain.scanMessages(from, next)
     btcChain.handleMessages(msgs, sgs, db, next)

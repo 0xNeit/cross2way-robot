@@ -314,7 +314,7 @@ const minDotAmount = new BigNumber(process.env.MIN_DOT)
 const isDotDebtClean = async function(sg) {
   if (sg.curve1 === 0 || sg.curve2 === 0) {
     const gpk = sg.curve1 === 0 ? sg.gpk1 : sg.gpk2
-    const address = dot.longPubKeyToAddress(gpk, process.env.NETWORK_TYPE)
+    const address = dot.pkToAddress(gpk, process.env.NETWORK_TYPE)
     const balanceStr = await dot.dotChain.getBalance(address)
 
     const balance = new BigNumber(balanceStr)
@@ -661,7 +661,7 @@ const doScan = async (chain, sgs, from, step, to) => {
   }
 
   // 扫描获取感兴趣的事件
-  const msgs = await chain.scanMessages(from, next)
+  const msgs = await chain.scanMessages(from, next, sgs)
   // 处理这些事件, 一次性写db
   chain.handleMessages(msgs, sgs, db, next)
 

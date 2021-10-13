@@ -2,8 +2,10 @@ const { Keyring, ApiPromise, WsProvider } = require('@polkadot/api');
 const _util = require("@polkadot/util");
 const _utilCrypto = require("@polkadot/util-crypto");
 // const { decodeAddress, encodeAddress } = require('@polkadot/keyring');
-const config = require('./configs-ncc').DOT
+const dotConfigs = require('./configs-ncc').DOT
+const NccChain = require('./ncc_chain')
 const log = require('./log')
+const crypto = require('crypto')
 
 // const provider = new WsProvider(process.env.RPC_URL_DOT);
 // let api = null
@@ -17,7 +19,7 @@ const log = require('./log')
 // 	westend = 42,
 // 	substrate = 42,
 // }
-function longPubKeyToAddress(longPubKey, network = 'mainnet') {
+function pkToAddress(longPubKey, network = 'mainnet') {
   longPubKey = '0x04'+longPubKey.slice(2);
   const tmp = _util.hexToU8a(longPubKey);
   let ss58Format = 42
@@ -41,10 +43,104 @@ function sleep(ms) {
   })
 }
 
+function sha256(hexString) {
+  let kBuf = Buffer.from(hexString.slice(2), 'hex');
+  let hash = crypto.createHash("sha256").update(kBuf);
+  return '0x' + hash.digest("hex");
+}
+
+function asciiToHex(asciiStr) {
+  return asciiStr.match(/.{1,2}/g).reduce((acc,char) => acc + String.fromCharCode(parseInt(char, 16)),"");
+}
+
+function hexTrip0x(hex) {
+  if (0 == hex.indexOf('0x')) {
+    return hex.slice(2);
+  }
+  return hex;
+}
+
+const isBatchTxFailed = (blkEvents, index, api) => {
+  let bFailed = true;
+  const eventsPerTx = blkEvents
+      .filter(({ phase }) => {
+        return phase.isApplyExtrinsic &&
+            phase.asApplyExtrinsic.eq(index)
+      })
+      .map(({ event }) => {
+
+        // for 'batchAll' call:
+        if(api.events.system.ExtrinsicSuccess.is(event)) {
+          bFailed = false;
+        }
+
+        // for 'batch' call:
+        // if(api.events.utility.BatchCompleted.is(event)) {
+        //   bFailed = false;
+        // }
+
+        return `${event.section}.${event.method}`
+      });
+
+  // console.log("xx event: ", api.events.utility.BatchInterrupted);
+  log.info(`tx events: ${eventsPerTx.join(', ') || 'no events'}`);
+  return bFailed;
+}
+
+const filerSuccessTx = async (scannedTxs, api, blkHash) => {
+  const blkEvents = await api.query.system.events.at(blkHash);
+
+  return scannedTxs.filter(tx => {
+    const bFailed = isBatchTxFailed(blkEvents, tx.indexInBlock, api);
+    if(bFailed) {
+      log.info(`Pokla scan discard failed tx: block: ${blkHash}, index: ${tx.indexInBlock}. tx detail:  ${JSON.stringify(tx)}`);
+    }
+    return !bFailed;
+  })
+}
+
+const TYPE = {
+  cross: 1,  //TODO: rename to 'UserLock'
+  smg: 2,     //TODO: rename to 'SmgRelease'
+  smgDebt: 5,
+  smgProxy:6,
+  Invalid: -1,
+}
+
+const MemoTypeLen = 2;
+const TokenPairIDLen = 4;
+const WanAccountLen = 40;
+const TimeStampLen = 16;
+const SmgIDLen = 64;
+
+function parseMemo(memoData) {
+  let result = {memoType: TYPE.Invalid};
+
+  let memoType = memoData.substring(0, MemoTypeLen);
+  memoType = parseInt(memoType);
+
+  let startIndex = MemoTypeLen;
+
+  if(memoType === TYPE.smgDebt){
+    if(memoData.length !== 66) {
+        return result
+    }
+    const srcSmg = '0x' + memoData.substr(startIndex);
+    result = {memoType, srcSmg}
+  }
+
+  return result
+}
+
 // polka
-class DotChain {
-  constructor(chainConfig) {
-    Object.assign(this, chainConfig)
+class DotChain extends NccChain {
+  constructor(configs, network) {
+    const config = configs[network]
+    super(config, network)
+
+    setTimeout(() => {
+      this.createApi()
+    }, 0)
   }
 
   async createApi() {
@@ -66,23 +162,155 @@ class DotChain {
     return blockNumber
   }
 
-  /**
-   *   filter out Tx with memo send to/from  storemanScAddr
-   *
-   * @param extrinsic
-   * @param index:  The position index of transaction/extrinsic inside a block;
-   * @param storemanScAddr:   use to match Tx's destination address
-   *
-   * @return {null} : return one transaction/extrinsic scan result object if found.
-   * @private
-   */
-   _scanMemoTx(extrinsic, index, storemanScAddr) {
-    const log = this.log;
+  async getBalance(address) {
+    await this.waitApiReady()
+
+    const api = this.api
+  
+    // Retrieve the last timestamp
+    const now = await api.query.timestamp.now()
+  
+    // Retrieve the account balance & nonce via the system module
+    const { nonce, data: balance } = await api.query.system.account(address);
+    console.log(`Now: ${now}: balance of ${balance.free} and a nonce of ${nonce}`);
+    return Number(balance.free.toString());
+  }
+  
+  getP2PKHAddress(gpk) {
+    return pkToAddress(gpk, this.network)
+  }
+
+  scanMessages = async (from, to, sgs) => {
+    if (from > to) {
+      return null
+    }
+
+    log.info(`scanMessages ${this.chainType} from = ${from} to = ${to}`);
+
+    const self = this;
+    const api = this.api;
+
+    await this.waitApiReady();
+
+    for (let i = 0; i < sgs.length; i++) {
+      sgs[i].sgAddress = this.getP2PKHAddress(sgs[i].gpk2)
+    }
+
+    const msgs = []
+
+    for(let i = from; i <= to; i++) {
+      const blockNum = i
+      const hash = (await api.rpc.chain.getBlockHash(blockNum)).toString()
+      const block = await api.rpc.chain.getBlock(hash)
+
+      let blkTimestamp = 0;
+      const resultPerBlock = {
+        timestamp: null,
+        blk_hash: hash,
+        blk_num: blockNum,
+        matchedTxs:[]
+      }
+
+      block.block.extrinsics.forEach((extrinsic, index) => {
+        const {  method: { args, method, section } } = extrinsic;
+
+        log.info('method: ', method, "args: ", JSON.stringify(args), 'section: ', section)
+
+        if(section === "timestamp" && method === "set") {
+          blkTimestamp = args[0].toString();
+          resultPerBlock.timestamp = parseInt(blkTimestamp);
+        }
+
+        const interesting_methods = ['batchAll'];
+
+        if(interesting_methods.includes(method)) {
+          let ret
+
+          if (section === 'utility' && method === 'batchAll') {
+            ret = self._scanMemoTx(extrinsic, index, sgs);
+            if (ret) {
+              if (['TransferAssetLogger'].includes(ret.event)) {
+                ret.args['xHash'] = sha256(ret.transactionHash + blockNum + index);  // do hash for string: transactionHash +  blockNum + index
+                ret.args.uniqueID = ret.args['xHash'];
+                ret.hashX = ret.args['xHash'];
+              }
+              ret.indexInBlock = index;
+              ret.blockNumber = blockNum;
+              ret.blockHash = hash;
+              resultPerBlock.matchedTxs.push(ret)
+            }
+          }
+        }
+      })
+      log.info(`block ${i} ${hash} ${block}`)
+    }
+  }
+
+
+  handleMessages = (msgs, sgs, db, next) => {
+    if (!msgs) {
+      return
+    }
+
+    const items = []
+    msgs.forEach(msg => {
+      const { msgType, fromGroupId, toAddress, tx, value } = msg
+      if (msgType === 'DebtTransfer') {
+        const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
+        const toAddress2 = this.getP2PKHAddress(toSg.gpk2)
+        if (toAddress === toAddress2) {
+          console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${value}, tx = ${tx}`)
+        
+          items.push({
+            groupId: fromGroupId,
+            toGroupId : toSg.groupId,
+            value,
+            tx : tx,
+          })
+        }
+      }
+    })
+
+    // insert to msg db
+    const insertMsgs = db.db.transaction((items) => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        item.receive = BigNumber(item.value).multipliedBy(this.coinUnit).toString()
+        db.insertMsg({
+          groupId: item.groupId,
+          chainType: this.chainType,
+          receive: item.receive,
+          tx: item.tx,
+        })
+
+        // 设置转移的资产总量, 超过债务时,设置债务clean为true
+        const assets = db.getMsgsByGroupId({groupId: item.groupId, chainType: this.chainType})
+        const reducer = (sum, asset) => sum.plus(BigNumber(asset.receive))
+        const totalAssets = assets.reduce(reducer, BigNumber(0))
+        const debt = db.getDebt({groupId: item.groupId, chainType: this.chainType})
+        if (debt) {
+          if (totalAssets.comparedTo(BigNumber(debt.totalSupply)) >= 0) {
+            debt.isDebtClean = 1
+          }
+          debt.totalReceive = totalAssets.toString()
+          debt.lastReceiveTx = item.tx
+          db.updateDebt(debt)
+        } else {
+          log.error(`debt not exist, ${item.groupId}, ${item.chainType}, ${totalAssets}`)
+        }
+      }
+      db.updateScan({chainType: this.chainType, blockNumber: next});
+    })
+    insertMsgs(items)
+
+    console.log('handleMessages finished')
+  }
+
+   _scanMemoTx(extrinsic, index, sgs) {
     const api = this.api;
     let scanResultTx = null
 
     try{
-
       const { isSigned, signer, method: { args, method, section } } = extrinsic;
       // log.info("args: ", JSON.stringify(args));
 
@@ -121,17 +349,19 @@ class DotChain {
 
           if(callInfo.section === 'balances' &&
               (callInfo.method === 'transferKeepAlive' || callInfo.method === 'transferAll') &&
-              call.args && call.args.dest && (call.args.dest.id === storemanScAddr || from === storemanScAddr)){
-
-            bMatched = true
-            dest = call.args.dest.id;
-            value = call.args.value;
+              call.args && call.args.dest) {
+            const sg = sgs.find(sg => sg.sgAddress === from)
+            if (sg) {
+              bMatched = true
+              dest = call.args.dest.id;
+              value = call.args.value;
+            } 
           }
 
           if(callInfo.section === 'system' &&
               callInfo.method === 'remark' &&
-              call.args && call.args._remark) {
-            memo = asciiToHex(hexTrip0x(call.args._remark));
+              call.args && (call.args.remark || call.args._remark)) {
+            memo = asciiToHex(hexTrip0x(call.args._remark ? call.args._remark : call.args.remark));
           }
         })
       })
@@ -146,7 +376,7 @@ class DotChain {
         scanResultTx.src_address = from;
         scanResultTx.des_address = dest;
         scanResultTx.value = value;
-        scanResultTx.storeman = storemanScAddr;
+        scanResultTx.storeman = from;
         const bValid = this._parseMemo(scanResultTx);
         if(!bValid) {
           return null;
@@ -158,43 +388,12 @@ class DotChain {
     return scanResultTx;
   }
 
-
-  /**
-   * Parse memo.
-   * If it is a valid memo, then will update `scanResultTx` object and return true;
-   * otherwise, will return false and keep `scanResultTx` unchanged.
-   * @param scanResultTx
-   * @return {boolean}
-   * @private
-   */
   _parseMemo(scanResultTx) {
-
     let memoData = scanResultTx.memo;
-    let startIndex = 0;
 
     const memoParsed = parseMemo(memoData)
 
-    if (memoParsed.memoType === MemoType.cross && scanResultTx.des_address === scanResultTx.storeman) {
-
-      scanResultTx.event = this.crossInfo.EVENT.Lock.walletRapid[0];; // 表明这个Tx 是用户在 polka上完成了对 smg 的转账
-      scanResultTx['args'] = {
-        uniqueID: scanResultTx.transactionHash,
-        value: scanResultTx.value,
-        tokenPairID: memoParsed.tokenPairID,
-        userAccount: '0x' + memoParsed.userAccount,
-        tokenAccount: "0x0000000000000000000000000000000000000000",
-        fee: memoParsed.networkFee
-      }
-    } else if (memoParsed.memoType === MemoType.smg && scanResultTx.src_address === scanResultTx.storeman) {
-      scanResultTx.event = this.crossInfo.EVENT.Release.smgRapid[0];  // 这个与 moduleConfig.js 中的 crossInfoDict 中的 EVENT[Release][smgRapid] 中的 保持一致就行
-      scanResultTx['args'] = {
-        uniqueID: memoParsed.hashX,
-        value: scanResultTx.value,
-        tokenPairID: memoParsed.tokenPairID,
-        userAccount: scanResultTx.des_address
-      }
-    } else if (memoParsed.memoType === MemoType.smgDebt  && scanResultTx.src_address === scanResultTx.storeman) {
-      // TODO： to be implemented , then test and checking if bellow code  is workable
+    if (memoParsed.memoType === TYPE.smgDebt  && scanResultTx.src_address === scanResultTx.storeman) {
       scanResultTx.event = 'TransferAssetLogger';
       scanResultTx.destSmgAddr = scanResultTx.des_address;  // to address is: next storemanGroup
       scanResultTx['args'] = {
@@ -208,89 +407,17 @@ class DotChain {
         return false
       }
 
-    }  else if (memoParsed.memoType === MemoType.smgProxy  && scanResultTx.src_address === scanResultTx.storeman) {
-      // TODO： to be implemented , then test and checking if bellow code  is workable
-      scanResultTx.isDelete = true;
-      scanResultTx.event = 'smgProxyLogger';    //TODO: 在 BaseAgent 中处理 'smgProxyLogger' 时， 对 DOT 做特殊处理（参考现有 XRP 的 ）
-      scanResultTx.destSmgAddr = scanResultTx.des_address;
-      scanResultTx['args'] = {
-        uniqueID: scanResultTx.transactionHash,
-        value: scanResultTx.value,
-        srcSmgID: memoParsed.srcSmg,
-        timestamp: memoParsed.timestamp
-      }
-
-      if(this.getLockAddressBySmgID(memoParsed.srcSmg) !== scanResultTx.src_address) { // add checking according to code review.
-        this.log.warn("[PolkaChain_MemoMode] found invalid smg proxy tx.")
-        return false
-      }
-
-    } else {
-      this.log.warn("[PolkaChain_MemoMode] parse memo invalid data")
-      return false;
     }
 
     scanResultTx.smgID = this.getMyChainSmgID(scanResultTx.storeman);
     scanResultTx.smgPublicKey = this.getMyChainStoremanPK(scanResultTx.storeman);
     return true;
   }
-
-  async scanBlock(from, to, sg) {
-    const self = this
-
-    await this.waitApiReady()
-    const api = this.api
-
-    const interesting_methods = ['batchAll'];
-    for(let i = from; i < to; i++) {
-      let blkTimestamp = 0;
-      const resultPerBlock = {
-        timestamp: null,
-        blk_hash: blk_hash,
-        blk_num: blockNum,
-        matchedTxs:[]
-      }
-      const hash = await api.rpc.chain.getBlockHash(i)
-      const block = await api.rpc.chain.getBlock(hash)
-      block.block.extrinsics.forEach((extrinsic, index) => {
-        const {  method: { args, method, section } } = extrinsic;
-        log.info('method: ', method, "args: ", JSON.stringify(args), 'section: ', section)
-
-        if(section === "timestamp" && method === "set") {
-          blkTimestamp = args[0].toString();
-          resultPerBlock.timestamp = parseInt(blkTimestamp);
-        }
-        if(interesting_methods.includes(method)) {
-        }
-        if (section === 'utility' && method === 'batchAll') {
-          ret = self._scanMemoTx(extrinsic, index, storemanScAddr);
-        }
-      })
-      log.info(`block ${i} ${hash} ${block}`)
-    }
-  }
-
-  async getBalance(address) {
-    await this.waitApiReady()
-
-    const api = this.api
-  
-    // Retrieve the last timestamp
-    const now = await api.query.timestamp.now()
-  
-    // Retrieve the account balance & nonce via the system module
-    const { nonce, data: balance } = await api.query.system.account(address);
-    console.log(`Now: ${now}: balance of ${balance.free} and a nonce of ${nonce}`);
-    return Number(balance.free.toString());
-  }
 }
 
-const dotChain = new DotChain(config[process.env.NETWORK_TYPE])
-setTimeout(async () => {
-  await dotChain.createApi()
-}, 0)
+const dotChain = new DotChain(dotConfigs, process.env.NETWORK_TYPE)
 
 module.exports = {
-  longPubKeyToAddress,
+  pkToAddress,
   dotChain,
 }

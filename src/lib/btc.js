@@ -62,7 +62,6 @@ class BtcBase extends NccChain {
       timeout: 600000,
     })
 
-    this.coinUnit = new BigNumber(10).pow(config.decimals)
   }
 
   getBlockNumber = async () => {
@@ -70,11 +69,11 @@ class BtcBase extends NccChain {
   }
 
   scanMessages = async (from, to) => {
-    const client = this.api
-    
     if (from > to) {
       return null
     }
+    
+    const client = this.api
 
     console.log(`scanMessages ${this.chainType} from = ${from} to = ${to}`)
     const msgs = []

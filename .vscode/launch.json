@@ -95,23 +95,23 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "xrp testnet",
+      "name": "test xrp testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/lib/xrp.js",
+      "program": "${workspaceFolder}/test/xrp_test.js",
       "envFile": "${workspaceFolder}/.env.dev"
     },
     {
       "type": "node",
       "request": "launch",
-      "name": "dot testnet",
+      "name": "test dot testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/lib/dot.js",
+      "program": "${workspaceFolder}/test/dot_test.js",
       "envFile": "${workspaceFolder}/.env.dev"
     },
     {

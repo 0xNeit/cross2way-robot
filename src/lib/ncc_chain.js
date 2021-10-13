@@ -1,10 +1,12 @@
 const configs = require('./configs-ncc')
 const { getChain } = require('./web3_chains')
+const { default: BigNumber } = require('bignumber.js');
 // Non-contract chains : btc, ltc, xrp, dot
 class NccChain {
   constructor(config, network) {
     Object.assign(this, config)
     this.network = network
+    this.coinUnit = new BigNumber(10).pow(config.decimals)
   }
 
   getBlockNumber() {

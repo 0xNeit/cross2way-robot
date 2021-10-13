@@ -8,7 +8,7 @@ module.exports = {
       "foundationAddr": "mpSRUeY5RWgxUyEFr7Dn1QCffZMJhPehwx",
       "bip44": 0x80000000,
       // one day 6 x 24 = 144 blocks,  one week 144 x 7 = 1008
-      "startBlockNumber": 693992,
+      "startBlockNumber": 2098861,
       "safeBlockCount": 1,
 
       "symbol": "BTC",
@@ -45,12 +45,13 @@ module.exports = {
 
   // 2.5分钟一个块
   'LTC': {
+    // 10s 一个?
     'testnet': {
       "rpc": "44.236.155.20:36894",
       "feeUrl": "https://api.blockcypher.com/v1/ltc/main",
       "foundationAddr": "mmmdNQHsWaCd6DCUS14PBnuUxWHhu7vCuL",
       "bip44": 0x80000002,
-      "startBlockNumber": 1989568,
+      "startBlockNumber": 2055338,
       "safeBlockCount": 3,
 
       "symbol": "LTC",
@@ -92,7 +93,7 @@ module.exports = {
       "rpc": "wss://nodes-testnet.wandevs.org/xrp",
       "foundationAddr": "rNWwzNesh85cVtVCSh2ipAHQQKDb3Q39o1",
       "bip44": 0x80000090,
-      "startBlockNumber": 20300261,
+      "startBlockNumber": 21809610,
       "safeBlockCount": 5,
 
       "symbol": "XRP",
@@ -127,7 +128,7 @@ module.exports = {
       "decimals": 12,
       "foundationAddr": "5DDNUHeiPWFQpjdGQaVUcvGKzLvEDkPKCJJjZTnznb2zNB9x",
       "bip44": 0x80000162,
-      "startBlockNumber": 6834365,
+      "startBlockNumber": 7776687,
       "safeBlockCount": 5,
 
       "symbol": "WND",

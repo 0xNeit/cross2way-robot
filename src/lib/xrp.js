@@ -4,9 +4,10 @@ const Secp256k1 = elliptic.ec('secp256k1');
 const keypairs = require('ripple-keypairs')
 const RippleAPI = require('ripple-lib').RippleAPI;
 const log = require('./log')
-const config = require('./configs-ncc').XRP
+const xrpConfigs = require('./configs-ncc').XRP
 const NccChain = require('./ncc_chain')
 const TimeoutPromise = require('./timeoutPromise')
+const { default: BigNumber } = require('bignumber.js');
 
 function pkToAddress(gpk) {
   const pubkey = Secp256k1.keyFromPublic("04" + gpk.slice(2), 'hex')
@@ -29,14 +30,15 @@ function sleep(ms) {
 
 // ripple
 class XrpChain extends NccChain {
-  constructor(chainConfig) {
+  constructor(configs, network) {
+    const config = configs[network]
+    super(config, network)
+
     this.api = new RippleAPI({ 
-      server: chainConfig.rpc,
+      server: this.rpc,
       timeout: 15 * 1000,
       maxFeeXRP: '' + 5 * dropsPerXrp,  // Must be of String type.
     });
-
-    Object.assign(this, chainConfig)
 
     this.isApiReady = false
     this.reconnecting = false
@@ -126,57 +128,135 @@ class XrpChain extends NccChain {
     return blockNumber
   }
 
-  scanMessages = async (from, to, sg) {
-    const self = this
-
-    const options = {
-      earliestFirst: true,
-      minLedgerVersion: Number(from),
-      maxLedgerVersion: Number(to),
-      types: ['payment', 'accountDelete'],
+  scanMessages = async (from, to, sgs) => {
+    if (from > to) {
+      return null
     }
 
-    const sgAddress = pkToAddress(sg.gpk2);
+    console.log(`scanMessages ${this.chainType} from = ${from} to = ${to}`)
 
-    await this.waitForApiReady()
-
-    const fee = await this.api.getFee()
-    const accountInfo = await this.api.getAccountInfo(sgAddress)
-
-    // txs send from storemanGroupAddress
-    // const txs = await self.api.getTransactions(sgAddress, {...options, initiated: true})
-
-    // txs send to storemanGroupAddress
-    const txs = await self.api.getTransactions(sgAddress, {...options, initiated: false})
-    txs.map(tx => {info
-      const info = tx.specification
-      if (tx.type === 'accountDelete' || (info.destination && info.memos)) {
-        if (tx.type === 'payment' && info && (info.destination.address === sgAddress || info.source.address === sgAddress) && tx.outcome && tx.outcome.result === 'tesSUCCESS') {
-          const memoAll = info.memos;
-          if (!memoAll || !memoAll[0]) {
-            return
+    const msgs = []
+    for (let i = 0; i < sgs.length; i++) {
+      const sg = sgs[i]
+      const self = this
+  
+      const options = {
+        earliestFirst: true,
+        minLedgerVersion: Number(from),
+        maxLedgerVersion: Number(to),
+        types: ['payment', 'accountDelete'],
+      }
+  
+      const sgAddress = pkToAddress(sg.gpk2);
+  
+      await this.waitForApiReady()
+  
+      // txs send from storeManGroupAddress
+      const txs = await self.api.getTransactions(sgAddress, {...options, initiated: true})
+      
+      txs.map(tx => {
+        if (tx.hasOwnProperty('type') && tx.hasOwnProperty('specification') && tx.hasOwnProperty('outcome')) {
+          const info = tx.specification
+          if (tx.type === 'accountDelete' || (info.destination && info.memos)) {
+            if (tx.type === 'payment' && info && info.source.address === sgAddress &&
+              tx.outcome && tx.outcome.result === 'tesSUCCESS') {
+              const memoAll = info.memos;
+              if (!memoAll || !memoAll[0]) {
+                return
+              }
+    
+              const memo = memoAll[0]
+              log.info("xrp chain memo found one cross-xrp Tx ... memo[0]: ", JSON.stringify(memo))
+              
+              if (!memo || memo.type !== 'CrossChainInfo' || memo.format !== 'text/plain') {
+                return
+              }
+    
+              const memoData = memo.data;
+              const memo_return_type = memoData.substring(0, 2);
+              if (parseInt(memo_return_type, 16) === memo_smgDebt_type && memoData.length === 66 &&
+                (info.source.address === sgAddress)) {
+                  const fromGroupId = '0x' + memoData.substr(2);
+                  const toAddress = info.destination.address;
+                  log.info(`from ${fromGroupId}, to ${toAddress}`)
+                  msgs.push({
+                    msgType: 'DebtTransfer',
+                    fromGroupId,
+                    toAddress,
+                    value: tx.outcome.deliveredAmount.value,
+                    tx: tx.id
+                  })
+              }
+            }
           }
+        }
+      })
+    }
 
-          const memo = memoAll[0]
-          log.info("xrp chain memo found one cross-xrp Tx ... memo[0]: ", JSON.stringify(memo))
-            
-          if (!memo || memo.type !== 'CrossChainInfo' || memo.format !== 'text/plain') {
-            return
-          }
+    return msgs
+  }
 
-          const memoData = memo.data;
-          const memo_return_type = memoData.substring(0, 2);
+  handleMessages = (msgs, sgs, db, next) => {
+    if (!msgs) {
+      return
+    }
 
-          if (parseInt(memo_return_type, 16) === memo_smgDebt_type && memoData.length === 66 &&
-            (info.source.address === storemanAddr || info.destination.address === storemanAddr)) {
-              const preGroupId = '0x' + memoData.substr(2);
-              const nextGroupId = info.destination.address;
-              log.info(`pre ${preGroupId}, next ${nextGroupId}`)
-          }
+    const items = []
+    msgs.forEach(msg => {
+      const { msgType, fromGroupId, toAddress, tx, value } = msg
+      if (msgType === 'DebtTransfer') {
+        const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
+        const toAddress2 = this.getP2PKHAddress(toSg.gpk2)
+        if (toAddress === toAddress2) {
+          console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${value}, tx = ${tx}`)
+        
+          items.push({
+            groupId: fromGroupId,
+            toGroupId : toSg.groupId,
+            value,
+            tx : tx,
+          })
         }
       }
     })
-    
+
+    // insert to msg db
+    const insertMsgs = db.db.transaction((items) => {
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i]
+        item.receive = BigNumber(item.value).multipliedBy(this.coinUnit).toString()
+        db.insertMsg({
+          groupId: item.groupId,
+          chainType: this.chainType,
+          receive: item.receive,
+          tx: item.tx,
+        })
+
+        // 设置转移的资产总量, 超过债务时,设置债务clean为true
+        const assets = db.getMsgsByGroupId({groupId: item.groupId, chainType: this.chainType})
+        const reducer = (sum, asset) => sum.plus(BigNumber(asset.receive))
+        const totalAssets = assets.reduce(reducer, BigNumber(0))
+        const debt = db.getDebt({groupId: item.groupId, chainType: this.chainType})
+        if (debt) {
+          if (totalAssets.comparedTo(BigNumber(debt.totalSupply)) >= 0) {
+            debt.isDebtClean = 1
+          }
+          debt.totalReceive = totalAssets.toString()
+          debt.lastReceiveTx = item.tx
+          db.updateDebt(debt)
+        } else {
+          log.error(`debt not exist, ${item.groupId}, ${item.chainType}, ${totalAssets}`)
+        }
+      }
+      db.updateScan({chainType: this.chainType, blockNumber: next});
+    })
+    insertMsgs(items)
+
+    console.log('handleMessages finished')
+  }
+
+  getP2PKHAddress(gpk) {
+    return pkToAddress(gpk, this.network)
   }
 
   close() {
@@ -195,6 +275,11 @@ class XrpChain extends NccChain {
 // }, 0)
 
 // console.log(pkToAddress("0x2e9ad92f5f541b6c2ddb672a70577c252aaa8b9b8dfdff9a5381912395985d12dc18f19ecb673a3b675697ae97913fcb69598c089f6d66ae7a3f6dc179e4da56"))
+
+const xrpChain = new XrpChain(xrpConfigs, process.env.NETWORK_TYPE)
+
 module.exports = {
-  pkToAddress
+  pkToAddress,
+  xrpChain,
+  XrpChain
 }
