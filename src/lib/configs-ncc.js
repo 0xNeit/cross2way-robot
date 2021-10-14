@@ -90,7 +90,8 @@ module.exports = {
   // 3秒一个块
   'XRP': {
     'testnet': {
-      "rpc": "wss://nodes-testnet.wandevs.org/xrp",
+      // "rpc": "wss://nodes-testnet.wandevs.org/xrp",
+      "rpc": "wss://s.altnet.rippletest.net/",
       "foundationAddr": "rNWwzNesh85cVtVCSh2ipAHQQKDb3Q39o1",
       "bip44": 0x80000090,
       "startBlockNumber": 21809610,
@@ -105,7 +106,8 @@ module.exports = {
       "scanStep": 100,
     },
     'mainnet': {
-      "rpc": "wss://nodes.wandevs.org/xrp",
+      // "rpc": "wss://nodes.wandevs.org/xrp",
+      "rpc": "wss://xrpl.ws/",
       "foundationAddr": "r9mwbimnzePg4AwmsLb7ogdp1d1s8c69W1",
       "bip44": 0x80000090,
       "startBlockNumber": 65433345,

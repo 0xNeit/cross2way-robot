@@ -203,47 +203,56 @@ class DotChain extends NccChain {
       const hash = (await api.rpc.chain.getBlockHash(blockNum)).toString()
       const block = await api.rpc.chain.getBlock(hash)
 
-      let blkTimestamp = 0;
-      const resultPerBlock = {
-        timestamp: null,
-        blk_hash: hash,
-        blk_num: blockNum,
-        matchedTxs:[]
-      }
-
       block.block.extrinsics.forEach((extrinsic, index) => {
         const {  method: { args, method, section } } = extrinsic;
 
-        log.info('method: ', method, "args: ", JSON.stringify(args), 'section: ', section)
+        if (section === 'utility' && method === 'batchAll') {
+          const { isSigned, signer } = extrinsic
 
-        if(section === "timestamp" && method === "set") {
-          blkTimestamp = args[0].toString();
-          resultPerBlock.timestamp = parseInt(blkTimestamp);
-        }
+          if (!isSigned || !signer) {
+            return
+          }
 
-        const interesting_methods = ['batchAll'];
+          const from = signer.toString()
 
-        if(interesting_methods.includes(method)) {
-          let ret
+          const batch_Args = JSON.parse(JSON.stringify(args))
 
-          if (section === 'utility' && method === 'batchAll') {
-            ret = self._scanMemoTx(extrinsic, index, sgs);
-            if (ret) {
-              if (['TransferAssetLogger'].includes(ret.event)) {
-                ret.args['xHash'] = sha256(ret.transactionHash + blockNum + index);  // do hash for string: transactionHash +  blockNum + index
-                ret.args.uniqueID = ret.args['xHash'];
-                ret.hashX = ret.args['xHash'];
+          if(batch_Args.length !== 1 || batch_Args[0].length != 2 ) {
+            return
+          }
+
+          const msg = {}
+          
+          msg.tx = extrinsic.hash.toHex()
+
+          batch_Args[0].forEach( call => {
+            const callInfo = api.findCall(call.callIndex);
+            
+            if(callInfo.section === 'balances' && callInfo.method === 'transferKeepAlive' && call.args && call.args.dest) {
+              // TODO: check toAddress is next storeManGroup's address
+              // msg.toAddress = call.args.dest.id
+              msg.toGroupId = getStoreManGroupGpk(call.args.dest.id)
+              msg.value = call.args.value
+            } else if (callInfo.section === 'system' && callInfo.method === 'remark' && call.args && (call.args.remark || call.args._remark)) {
+              const memoData = asciiToHex(hexTrip0x(call.args._remark ? call.args._remark : call.args.remark))
+              const memoParsed = parseMemo(memoData)
+
+              // TODO: check from is current storeManGroup's address
+              if (memoParsed.memoType === TYPE.smgDebt  && getStoreManAddress(memoParsed.srcSmg) === from) {
+                msg.groupId = memoParsed.srcSmg
               }
-              ret.indexInBlock = index;
-              ret.blockNumber = blockNum;
-              ret.blockHash = hash;
-              resultPerBlock.matchedTxs.push(ret)
             }
+          })
+
+          if ( msg.tx && msg.toAddress && msg.groupId && msg.value ) {
+            msgs.push(msg)
           }
         }
       })
       log.info(`block ${i} ${hash} ${block}`)
     }
+
+    return msgs
   }
 
 
@@ -304,114 +313,6 @@ class DotChain extends NccChain {
     insertMsgs(items)
 
     console.log('handleMessages finished')
-  }
-
-   _scanMemoTx(extrinsic, index, sgs) {
-    const api = this.api;
-    let scanResultTx = null
-
-    try{
-      const { isSigned, signer, method: { args, method, section } } = extrinsic;
-      // log.info("args: ", JSON.stringify(args));
-
-      if(method !== 'batchAll') {
-        return null;
-      }
-
-      // 每处理一个 extrinsic 都会給下面的 from/to/value/memo 变量重新赋值一次
-      let from = "";
-      let dest = "";
-      let value = 0;
-      let memo = "";
-      let bMatched = false;
-
-      if(isSigned && signer) {
-        from = signer.toString();
-      }
-
-      let batch_Args = JSON.parse(JSON.stringify(args))
-
-      if(batch_Args.length !== 1) {
-        console.log("Invalid batch Tx");
-        return null;
-      }
-
-      batch_Args.forEach( args => {
-
-        if(args.length !== 2) {
-          console.log("Invalid batch Tx");
-          return;
-        }
-
-        args.forEach( call => {
-
-          const callInfo = api.findCall(call.callIndex);
-
-          if(callInfo.section === 'balances' &&
-              (callInfo.method === 'transferKeepAlive' || callInfo.method === 'transferAll') &&
-              call.args && call.args.dest) {
-            const sg = sgs.find(sg => sg.sgAddress === from)
-            if (sg) {
-              bMatched = true
-              dest = call.args.dest.id;
-              value = call.args.value;
-            } 
-          }
-
-          if(callInfo.section === 'system' &&
-              callInfo.method === 'remark' &&
-              call.args && (call.args.remark || call.args._remark)) {
-            memo = asciiToHex(hexTrip0x(call.args._remark ? call.args._remark : call.args.remark));
-          }
-        })
-      })
-
-      if(bMatched) {
-        scanResultTx = {}
-        scanResultTx['args'] = {}
-
-        scanResultTx.isBridge = true;
-        scanResultTx.transactionHash = extrinsic.hash.toHex();
-        scanResultTx.memo = memo;
-        scanResultTx.src_address = from;
-        scanResultTx.des_address = dest;
-        scanResultTx.value = value;
-        scanResultTx.storeman = from;
-        const bValid = this._parseMemo(scanResultTx);
-        if(!bValid) {
-          return null;
-        }
-      }
-    }catch (e) {
-      log.error('Polka parsing memo type transaction got error: ', e)
-    }
-    return scanResultTx;
-  }
-
-  _parseMemo(scanResultTx) {
-    let memoData = scanResultTx.memo;
-
-    const memoParsed = parseMemo(memoData)
-
-    if (memoParsed.memoType === TYPE.smgDebt  && scanResultTx.src_address === scanResultTx.storeman) {
-      scanResultTx.event = 'TransferAssetLogger';
-      scanResultTx.destSmgAddr = scanResultTx.des_address;  // to address is: next storemanGroup
-      scanResultTx['args'] = {
-        uniqueID: scanResultTx.transactionHash,
-        value: scanResultTx.value,
-        srcSmgID: memoParsed.srcSmg
-      }
-
-      if(this.getLockAddressBySmgID(memoParsed.srcSmg) !== scanResultTx.src_address) { // add checking according to code review.
-        this.log.warn("[PolkaChain_MemoMode] found invalid smg debt tx.")
-        return false
-      }
-
-    }
-
-    scanResultTx.smgID = this.getMyChainSmgID(scanResultTx.storeman);
-    scanResultTx.smgPublicKey = this.getMyChainStoremanPK(scanResultTx.storeman);
-    return true;
   }
 }
 

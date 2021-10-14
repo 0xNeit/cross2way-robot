@@ -78,6 +78,7 @@ class BtcBase extends NccChain {
     console.log(`scanMessages ${this.chainType} from = ${from} to = ${to}`)
     const msgs = []
 
+    const coinUnit = this.coinUnit
     for (let curIndex = from; curIndex <= to; curIndex++) {
       const bHash = await client.getBlockHash(curIndex)
       const block = await client.getBlock(bHash, 2)
@@ -94,24 +95,29 @@ class BtcBase extends NccChain {
         vOut.forEach(async (out) => {
           const scriptPubKey = out.scriptPubKey
           if (scriptPubKey && scriptPubKey.hex && scriptPubKey.hex.length > 6 && scriptPubKey.hex.startsWith('6a')) {
-            const op_return = format_cross_op_return(scriptPubKey.asm);
-            const op_return_type = parseInt(op_return.substring(0, 2), 16);
-            if (op_return_type >= op_return_begin && op_return_type <= op_return_end) {
-              console.log(`blockNumber = ${curIndex}, op = ${op_return_type} len = ${op_return.length}`)
-              if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
-                const fromGroupId = '0x' + op_return.substr(2);
-                for (let j = 0; j < vOut.length; j++) {
-                  if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses) {
-                    // const toHash160 = vOut[j].scriptPubKey.hex.match(/^76a914(.{40})88ac$/)[1]
-                    msgs.push({
-                      msgType: 'DebtTransfer',
-                      vOut: vOut[j],
-                      fromGroupId,
-                      tx
-                    })
+            try {
+              const op_return = format_cross_op_return(scriptPubKey.asm);
+              const op_return_type = parseInt(op_return.substring(0, 2), 16);
+              if (op_return_type >= op_return_begin && op_return_type <= op_return_end) {
+                console.log(`blockNumber = ${curIndex}, op = ${op_return_type} len = ${op_return.length}`)
+                if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
+                  const fromGroupId = '0x' + op_return.substr(2);
+                  for (let j = 0; j < vOut.length; j++) {
+                    if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses && vOut.scriptPubKey.addresses.length === 1) {
+                      // const toHash160 = vOut[j].scriptPubKey.hex.match(/^76a914(.{40})88ac$/)[1]
+                      msgs.push({
+                        msgType: 'DebtTransfer',
+                        fromGroupId,
+                        toAddress: vOut[j].scriptPubKey.addresses[0],
+                        value: BigNumber(vOut[j].value).multipliedBy(coinUnit).toString(),
+                        tx: tx.txid,
+                      })
+                    }
                   }
                 }
               }
+            } catch(e) {
+              log.warn(`${this.chainType} scanMessages op_return parse failed ${scriptPubKey.hex} ${e}`)
             }
           }
         })
@@ -128,20 +134,24 @@ class BtcBase extends NccChain {
 
     const items = []
     msgs.forEach(msg => {
-      const { msgType, vOut, fromGroupId, tx } = msg
+      const { msgType, fromGroupId, toAddress, value, tx } = msg
       if (msgType === 'DebtTransfer') {
+        // 多一步验证, 验证fromGroupId是否在数据库里
+        const sg = sgs.find(sg => (sg.groupId === fromGroupId))
         const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
-        const toAddress = this.getP2PKHAddress(toSg.gpk2)
-        if (vOut.scriptPubKey.addresses.length === 1 && vOut.scriptPubKey.addresses[0] === toAddress) {
-          console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${vOut.value}, tx = ${tx.txid}`)
-        
-          items.push({
-            groupId: fromGroupId,
-            toGroupId : toSg.groupId,
-            value: vOut.value,
-            tx : tx.txid,
-          })
-        }
+        if (sg && toSg && toSg.gpk2) {
+          const toSgAddress = this.getP2PKHAddress(toSg.gpk2)
+          if (toAddress === toSgAddress) {
+            console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${value}, tx = ${tx.txid}`)
+          
+            items.push({
+              groupId: fromGroupId,
+              toGroupId : toSg.groupId,
+              value,
+              tx,
+            })
+          }
+        } 
       }
     })
 
@@ -149,11 +159,10 @@ class BtcBase extends NccChain {
     const insertMsgs = db.db.transaction((items) => {
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
-        item.receive = BigNumber(item.value).multipliedBy(this.coinUnit).toString()
         db.insertMsg({
           groupId: item.groupId,
           chainType: this.chainType,
-          receive: item.receive,
+          receive: item.value,
           tx: item.tx,
         })
 

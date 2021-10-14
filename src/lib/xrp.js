@@ -12,7 +12,6 @@ const { default: BigNumber } = require('bignumber.js');
 function pkToAddress(gpk) {
   const pubkey = Secp256k1.keyFromPublic("04" + gpk.slice(2), 'hex')
   const compressed = pubkey.getPublic(true, 'hex')
-  console.log("pubkey compressed:", compressed)
   
   const addr = keypairs.deriveAddress(compressed.toUpperCase())
   return addr
@@ -135,6 +134,8 @@ class XrpChain extends NccChain {
 
     console.log(`scanMessages ${this.chainType} from = ${from} to = ${to}`)
 
+    const coinUnit = this.coinUnit
+
     const msgs = []
     for (let i = 0; i < sgs.length; i++) {
       const sg = sgs[i]
@@ -155,11 +156,10 @@ class XrpChain extends NccChain {
       const txs = await self.api.getTransactions(sgAddress, {...options, initiated: true})
       
       txs.map(tx => {
-        if (tx.hasOwnProperty('type') && tx.hasOwnProperty('specification') && tx.hasOwnProperty('outcome')) {
+        if (tx.type && tx.specification && tx.outcome) {
           const info = tx.specification
-          if (tx.type === 'accountDelete' || (info.destination && info.memos)) {
-            if (tx.type === 'payment' && info && info.source.address === sgAddress &&
-              tx.outcome && tx.outcome.result === 'tesSUCCESS') {
+          if (info.destination && info.memos) {
+            if (tx.type === 'payment' && info.source.address === sgAddress && tx.outcome.result === 'tesSUCCESS') {
               const memoAll = info.memos;
               if (!memoAll || !memoAll[0]) {
                 return
@@ -174,18 +174,17 @@ class XrpChain extends NccChain {
     
               const memoData = memo.data;
               const memo_return_type = memoData.substring(0, 2);
-              if (parseInt(memo_return_type, 16) === memo_smgDebt_type && memoData.length === 66 &&
-                (info.source.address === sgAddress)) {
-                  const fromGroupId = '0x' + memoData.substr(2);
-                  const toAddress = info.destination.address;
-                  log.info(`from ${fromGroupId}, to ${toAddress}`)
-                  msgs.push({
-                    msgType: 'DebtTransfer',
-                    fromGroupId,
-                    toAddress,
-                    value: tx.outcome.deliveredAmount.value,
-                    tx: tx.id
-                  })
+              if (parseInt(memo_return_type, 16) === memo_smgDebt_type && memoData.length === 66 && (info.source.address === sgAddress)) {
+                const fromGroupId = '0x' + memoData.substr(2);
+                const toAddress = info.destination.address;
+                log.info(`from ${fromGroupId}, to ${toAddress}`)
+                msgs.push({
+                  msgType: 'DebtTransfer',
+                  fromGroupId,
+                  toAddress,
+                  value: BigNumber(tx.outcome.deliveredAmount.value).multipliedBy(coinUnit).toString(),
+                  tx: tx.id,
+                })
               }
             }
           }
@@ -196,6 +195,7 @@ class XrpChain extends NccChain {
     return msgs
   }
 
+  // TODO: 检查提到scanMessage处, handle功能提出成公共模块
   handleMessages = (msgs, sgs, db, next) => {
     if (!msgs) {
       return
@@ -203,32 +203,37 @@ class XrpChain extends NccChain {
 
     const items = []
     msgs.forEach(msg => {
-      const { msgType, fromGroupId, toAddress, tx, value } = msg
+      const { msgType, fromGroupId, toAddress, value, tx } = msg
       if (msgType === 'DebtTransfer') {
         const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
-        const toAddress2 = this.getP2PKHAddress(toSg.gpk2)
-        if (toAddress === toAddress2) {
-          console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${value}, tx = ${tx}`)
-        
-          items.push({
-            groupId: fromGroupId,
-            toGroupId : toSg.groupId,
-            value,
-            tx : tx,
-          })
+        if (toSg) {
+          if (!toSg.gpk2) {
+            log.error(`${toSg.groupId} gpk2 not exist`)
+          } else {
+            const toAddress2 = this.getP2PKHAddress(toSg.gpk2)
+            if (toAddress === toAddress2) {
+              console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${value}, tx = ${tx}`)
+            
+              items.push({
+                groupId: fromGroupId,
+                toGroupId : toSg.groupId,
+                value,
+                tx : tx,
+              })
+            }
+          }
         }
       }
     })
 
     // insert to msg db
-    const insertMsgs = db.db.transaction((items) => {
+    const insertMsgs = db.db.transaction((items, next) => {
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
-        item.receive = BigNumber(item.value).multipliedBy(this.coinUnit).toString()
         db.insertMsg({
           groupId: item.groupId,
           chainType: this.chainType,
-          receive: item.receive,
+          receive: item.value,
           tx: item.tx,
         })
 
@@ -250,7 +255,7 @@ class XrpChain extends NccChain {
       }
       db.updateScan({chainType: this.chainType, blockNumber: next});
     })
-    insertMsgs(items)
+    insertMsgs(items, next)
 
     console.log('handleMessages finished')
   }
