@@ -24,6 +24,14 @@ class NccChain {
   getP2PKHAddress() {
     throw new Error(`getP2PKHAddress not implemented`)
   }
+
+  getAddressFromSmgId(groupId, sgs) {
+    throw new Error(`getAddressFromSmg not implemented`)
+  }
+
+  getSmgIdFromAddress(address, sgs) {
+    throw new Error(`getSmgFromAddress not implemented`)
+  }
 }
 
 module.exports = NccChain
