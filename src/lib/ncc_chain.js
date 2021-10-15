@@ -153,24 +153,31 @@ class NccChain {
   }
 
   scan = async (db) => {
-    const sgs = db.getActiveSga();
-    const blockNumber = await this.getBlockNumber()
-
-    const from = db.getScan(this.chainType).blockNumber + 1
-    const step = this.scanStep
-    const to = blockNumber - this.safeBlockCount
-    // const to = from + 10 - this.safeBlockCount
-
-    if (from > to) {
+    try {
+      const sgs = db.getActiveSga();
+      const blockNumber = await this.getBlockNumber()
+  
+      const from = db.getScan(this.chainType).blockNumber + 1
+      const step = this.scanStep
+      const to = blockNumber - this.safeBlockCount
+      // const to = from + 10 - this.safeBlockCount
+  
+      if (from > to) {
+        setTimeout(async () => {
+          await this.scan(db)
+        }, this.scanInterval * 1000)
+        return
+      }
+  
+      log.info(`scan chain=${this.chainType}, from=${from}, to=${to}`);
+  
+      await this._doScan(db, sgs, from, step, to)
+    } catch (e) {
+      log.error(`scan ${this.chainType} exception: ${e}`)
       setTimeout(async () => {
         await this.scan(db)
       }, this.scanInterval * 1000)
-      return
     }
-
-    log.info(`scan chain=${this.chainType}, from=${from}, to=${to}`);
-
-    await this._doScan(db, sgs, from, step, to)
   }
 }
 
