@@ -62,7 +62,18 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "robot_core test",
+      "name": "test ncc_chains testnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/test/ncc_chains_test.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "test robot_core testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],

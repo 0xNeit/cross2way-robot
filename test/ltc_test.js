@@ -1,4 +1,4 @@
-const { pkToAddress, ltcChain,  LtcChain} = require('../src/lib/ltc')
+const { pkToAddress, chain,  LtcChain} = require('../src/lib/ltc')
 const db = require('../src/lib/sqlite_db');
 const ltcConfigs = require('../src/lib/configs-ncc').LTC;
 const { getP2PKH, networks } = require('../src/lib/networks')
@@ -6,11 +6,11 @@ const { getP2PKH, networks } = require('../src/lib/networks')
 function testScan() {
   setTimeout(async () => {
     const sgs = db.getAllSga();
-    const blockNumber = await ltcChain.getBlockNumber();
-    const from = ltcChain.startBlockNumber
+    const blockNumber = await chain.getBlockNumber();
+    const from = chain.startBlockNumber
     const next = from + 3
-    const msgs = await ltcChain.scanMessages(from, next)
-    ltcChain.handleMessages(msgs, sgs, db, next)
+    const msgs = await chain.scanMessages(from, next, sgs)
+    chain.handleMessages(msgs, db, next)
   }, 0)
 }
 

@@ -68,7 +68,7 @@ class BtcBase extends NccChain {
     return await this.api.getBlockCount();
   }
 
-  scanMessages = async (from, to) => {
+  scanMessages = async (from, to, sgs) => {
     if (from > to) {
       return null
     }
@@ -104,14 +104,27 @@ class BtcBase extends NccChain {
                   const fromGroupId = '0x' + op_return.substr(2);
                   for (let j = 0; j < vOut.length; j++) {
                     if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses && vOut.scriptPubKey.addresses.length === 1) {
-                      // const toHash160 = vOut[j].scriptPubKey.hex.match(/^76a914(.{40})88ac$/)[1]
-                      msgs.push({
-                        msgType: 'DebtTransfer',
-                        fromGroupId,
-                        toAddress: vOut[j].scriptPubKey.addresses[0],
+                      // 验证fromGroupId, 是某一个storeManGroup的; 验证toAddress,是nextStoreMan的地址
+                      const toAddress = vOut[j].scriptPubKey.addresses[0]
+                      const toSmgInfo = this.getSmgInfoFromPreSmgId(fromGroupId, sgs)
+                      if (!toSmgInfo) {
+                        return
+                      }
+
+                      if (toSmgInfo.address != toAddress) {
+                        log.info(`from = ${fromGroupId} to = ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
+                        return
+                      }
+
+                      const msg = {
+                        groupId: fromGroupId,
+                        chainType: this.chainType,
                         value: BigNumber(vOut[j].value).multipliedBy(coinUnit).toString(),
                         tx: tx.txid,
-                      })
+                      }
+                      msgs.push(msg)
+
+                      log.info(`from = ${fromGroupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.receive}, tx = ${msg.tx}`)
                     }
                   }
                 }
@@ -126,68 +139,6 @@ class BtcBase extends NccChain {
 
     return msgs
   }
-
-  handleMessages = (msgs, sgs, db, next) => {
-    if (!msgs) {
-      return
-    }
-
-    const items = []
-    msgs.forEach(msg => {
-      const { msgType, fromGroupId, toAddress, value, tx } = msg
-      if (msgType === 'DebtTransfer') {
-        // 多一步验证, 验证fromGroupId是否在数据库里
-        const sg = sgs.find(sg => (sg.groupId === fromGroupId))
-        const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
-        if (sg && toSg && toSg.gpk2) {
-          const toSgAddress = this.getP2PKHAddress(toSg.gpk2)
-          if (toAddress === toSgAddress) {
-            console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${value}, tx = ${tx.txid}`)
-          
-            items.push({
-              groupId: fromGroupId,
-              toGroupId : toSg.groupId,
-              value,
-              tx,
-            })
-          }
-        } 
-      }
-    })
-
-    // insert to msg db
-    const insertMsgs = db.db.transaction((items) => {
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i]
-        db.insertMsg({
-          groupId: item.groupId,
-          chainType: this.chainType,
-          receive: item.value,
-          tx: item.tx,
-        })
-
-        // 设置转移的资产总量, 超过债务时,设置债务clean为true
-        const assets = db.getMsgsByGroupId({groupId: item.groupId, chainType: this.chainType})
-        const reducer = (sum, asset) => sum.plus(BigNumber(asset.receive))
-        const totalAssets = assets.reduce(reducer, BigNumber(0))
-        const debt = db.getDebt({groupId: item.groupId, chainType: this.chainType})
-        if (debt) {
-          if (totalAssets.comparedTo(BigNumber(debt.totalSupply)) >= 0) {
-            debt.isDebtClean = 1
-          }
-          debt.totalReceive = totalAssets.toString()
-          debt.lastReceiveTx = item.tx
-          db.updateDebt(debt)
-        } else {
-          log.error(`debt not exist, ${item.groupId}, ${item.chainType}, ${totalAssets}`)
-        }
-      }
-      db.updateScan({chainType: this.chainType, blockNumber: next});
-    })
-    insertMsgs(items)
-
-    console.log('handleMessages finished')
-  }
 }
 
 class BtcChain extends BtcBase {
@@ -200,11 +151,11 @@ class BtcChain extends BtcBase {
   }
 }
 
-const btcChain = new BtcChain(btcConfigs, process.env.NETWORK_TYPE)
+const chain = new BtcChain(btcConfigs, process.env.NETWORK_TYPE)
 
 module.exports = {
   pkToAddress,
   BtcBase,
-  btcChain,
+  chain,
   BtcChain,
 }

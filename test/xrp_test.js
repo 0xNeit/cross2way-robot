@@ -1,4 +1,4 @@
-const { pkToAddress, xrpChain} = require('../src/lib/xrp')
+const { pkToAddress, chain} = require('../src/lib/xrp')
 const db = require('../src/lib/sqlite_db');
 
 function testScan() {
@@ -6,11 +6,11 @@ function testScan() {
     const sg = db.getSga('0x000000000000000000000000000000000000000000000000006465765f303430');
     const sg2 = db.getSga('0x000000000000000000000000000000000000000000000000006465765f303431');
     const sgs = [sg, sg2]
-    const blockNumber = await xrpChain.getBlockNumber();
-    const from = xrpChain.startBlockNumber
+    const blockNumber = await chain.getBlockNumber();
+    const from = chain.startBlockNumber
     const next = blockNumber
-    const msgs = await xrpChain.scanMessages(from, next, sgs)
-    xrpChain.handleMessages(msgs, sgs, db, next)
+    const msgs = await chain.scanMessages(from, next, sgs)
+    chain.handleMessages(msgs, db, next)
   }, 0)
 }
 

@@ -6,7 +6,7 @@ const db = require('../src/lib/sqlite_db')
 const BigNumber = require('bignumber.js')
 
 const btc = require('../src/lib/btc');
-const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scan} = require('../src/robot_core');
+const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scan, getNccChainTypeSymbolMap} = require('../src/robot_core');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
 
@@ -67,7 +67,7 @@ const checkDebtClean = async() => {
 }
 
 const scanBtc = async () => {
-  await scan(btc.btcChain)
+  await scan(btc.chain)
 }
 
 const insertDebt = () => {
@@ -136,7 +136,7 @@ function factorial3 (o, result = 1) {
 }
 
 setTimeout(async () => {
-  factorial(3)
+  // factorial(3)
   // factorial2(3)
   // factorial3({number: 3})
 
@@ -145,6 +145,7 @@ setTimeout(async () => {
   // getMsgsByGroupId()
   // dbTx()
   // insertDebt()
+  getNccChainTypeSymbolMap()
 }, 0)
 
 process.on('uncaughtException', err => {

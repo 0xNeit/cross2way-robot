@@ -36,10 +36,10 @@ class LtcChain extends BtcBase {
   }
 }
 
-const ltcChain = new LtcChain(ltcConfigs, process.env.NETWORK_TYPE)
+const chain = new LtcChain(ltcConfigs, process.env.NETWORK_TYPE)
 
 module.exports = {
   pkToAddress,
-  ltcChain,
+  chain,
   LtcChain,
 }

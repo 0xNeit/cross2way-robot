@@ -1,4 +1,4 @@
-const { btcChain, pkToAddress, BtcChain } = require('../src/lib/btc')
+const { chain, pkToAddress, BtcChain } = require('../src/lib/btc')
 const db = require('../src/lib/sqlite_db');
 const btcConfigs = require('../src/lib/configs-ncc').BTC;
 const { getP2PKH, networks } = require('../src/lib/networks')
@@ -6,11 +6,11 @@ const { getP2PKH, networks } = require('../src/lib/networks')
 function testScan() {
   setTimeout(async () => {
     const sgs = db.getAllSga();
-    const blockNumber = await btcChain.getBlockNumber();
-    const from = btcChain.startBlockNumber
+    const blockNumber = await chain.getBlockNumber();
+    const from = chain.startBlockNumber
     const next = from + 3
-    const msgs = await btcChain.scanMessages(from, next)
-    btcChain.handleMessages(msgs, sgs, db, next)
+    const msgs = await chain.scanMessages(from, next)
+    chain.handleMessages(msgs, db, next)
   }, 0)
 }
 

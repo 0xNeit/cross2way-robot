@@ -1,7 +1,7 @@
 const db = require('./lib/sqlite_db')
 const ScanEvent = require('./scan_event');
 const { getChain } = require('./lib/web3_chains')
-const otherChainsConfig = require('./lib/configs-ncc')
+const { gNccChains } = require('./lib/ncc_chains')
 
 async function v0Tov1() {
   try {
@@ -27,14 +27,23 @@ async function v0Tov1() {
         lastReceiveTx char(128)
       );
     `)
+
     // add btc, ltc, xrp, dot, scan start position
-    const otherChains = Object.keys(otherChainsConfig)
-    otherChains.forEach(chain => {
+    const chainTypes = Object.keys(gNccChains)
+    for (let i = 0; i < chainTypes.length; i++) {
+      const chainType = chainTypes[i]
+      const chain = gNccChains[chainType].chain
+      let blockNumber = chain.startBlockNumber
+      if ( !blockNumber ) {
+        blockNumber = await chain.getBlockNumber() - chain.safeBlockCount
+      }
+
+      blockNumber = blockNumber - 1
       db.db.prepare(`insert into scan values (@chainType, @blockNumber)`).run({
-        chainType: chain,
-        blockNumber: otherChainsConfig[chain][process.env.NETWORK_TYPE].startBlockNumber - 1
+        chainType,
+        blockNumber
       });
-    })
+    }
 
     // add preGroupId for old records in table sga
     db.db.exec(`alter table sga add column preGroupId char(66);`)

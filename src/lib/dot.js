@@ -221,104 +221,48 @@ class DotChain extends NccChain {
             return
           }
 
-          const msg = {}
+          const msg = {
+            chainType: this.chainType,
+            tx: extrinsic.hash.toHex()
+          }
           
-          msg.tx = extrinsic.hash.toHex()
+          let toAddress = null
 
           batch_Args[0].forEach( call => {
             const callInfo = api.findCall(call.callIndex);
             
             if(callInfo.section === 'balances' && callInfo.method === 'transferKeepAlive' && call.args && call.args.dest) {
-              // TODO: check toAddress is next storeManGroup's address
-              // msg.toAddress = call.args.dest.id
-              msg.toGroupId = getStoreManGroupGpk(call.args.dest.id)
+              toAddress = call.args.dest.id
               msg.value = call.args.value
             } else if (callInfo.section === 'system' && callInfo.method === 'remark' && call.args && (call.args.remark || call.args._remark)) {
               const memoData = asciiToHex(hexTrip0x(call.args._remark ? call.args._remark : call.args.remark))
               const memoParsed = parseMemo(memoData)
 
-              // TODO: check from is current storeManGroup's address
-              if (memoParsed.memoType === TYPE.smgDebt  && getStoreManAddress(memoParsed.srcSmg) === from) {
+              const groupId = memoParsed.srcSmg
+              const fromAddress = this.getAddressFromSmgId(groupId, sgs)
+              if (memoParsed.memoType === TYPE.smgDebt  && fromAddress && fromAddress === from) {
                 msg.groupId = memoParsed.srcSmg
               }
             }
           })
 
-          if ( msg.tx && msg.toAddress && msg.groupId && msg.value ) {
-            msgs.push(msg)
+          if (msg.groupId && msg.value && toAddress) {
+            const toSmgInfo = this.getSmgInfoFromPreSmgId(msg.groupId, sgs)
+            if (toSmgInfo && toSmgInfo.address === toAddress) {
+              msgs.push(msg)
+            }
           }
         }
       })
-      log.info(`block ${i} ${hash} ${block}`)
     }
 
     return msgs
   }
-
-
-  handleMessages = (msgs, sgs, db, next) => {
-    if (!msgs) {
-      return
-    }
-
-    const items = []
-    msgs.forEach(msg => {
-      const { msgType, fromGroupId, toAddress, tx, value } = msg
-      if (msgType === 'DebtTransfer') {
-        const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
-        const toAddress2 = this.getP2PKHAddress(toSg.gpk2)
-        if (toAddress === toAddress2) {
-          console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${value}, tx = ${tx}`)
-        
-          items.push({
-            groupId: fromGroupId,
-            toGroupId : toSg.groupId,
-            value,
-            tx : tx,
-          })
-        }
-      }
-    })
-
-    // insert to msg db
-    const insertMsgs = db.db.transaction((items) => {
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i]
-        item.receive = BigNumber(item.value).multipliedBy(this.coinUnit).toString()
-        db.insertMsg({
-          groupId: item.groupId,
-          chainType: this.chainType,
-          receive: item.receive,
-          tx: item.tx,
-        })
-
-        // 设置转移的资产总量, 超过债务时,设置债务clean为true
-        const assets = db.getMsgsByGroupId({groupId: item.groupId, chainType: this.chainType})
-        const reducer = (sum, asset) => sum.plus(BigNumber(asset.receive))
-        const totalAssets = assets.reduce(reducer, BigNumber(0))
-        const debt = db.getDebt({groupId: item.groupId, chainType: this.chainType})
-        if (debt) {
-          if (totalAssets.comparedTo(BigNumber(debt.totalSupply)) >= 0) {
-            debt.isDebtClean = 1
-          }
-          debt.totalReceive = totalAssets.toString()
-          debt.lastReceiveTx = item.tx
-          db.updateDebt(debt)
-        } else {
-          log.error(`debt not exist, ${item.groupId}, ${item.chainType}, ${totalAssets}`)
-        }
-      }
-      db.updateScan({chainType: this.chainType, blockNumber: next});
-    })
-    insertMsgs(items)
-
-    console.log('handleMessages finished')
-  }
 }
 
-const dotChain = new DotChain(dotConfigs, process.env.NETWORK_TYPE)
+const chain = new DotChain(dotConfigs, process.env.NETWORK_TYPE)
 
 module.exports = {
   pkToAddress,
-  dotChain,
+  chain,
 }

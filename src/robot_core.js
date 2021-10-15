@@ -4,10 +4,15 @@ const { sleep, web3 } = require('./lib/utils');
 const logAndSendMail = require('./lib/email');
 const ScanEvent = require('./scan_event');
 const db = require('./lib/sqlite_db');
-const xrp = require('./lib/xrp');
-const dot = require('./lib/dot');
-const btc = require('./lib/btc');
-const ltc = require('./lib/ltc');
+// const xrp = require('./lib/xrp');
+// const dot = require('./lib/dot');
+// const btc = require('./lib/btc');
+// const ltc = require('./lib/ltc');
+const { gNccChains, gNccChainTypes } = require('./lib/ncc_chains')
+const xrp = gNccChains['XRP']
+const dot = gNccChains['DOT']
+const btc = gNccChains['BTC']
+const ltc = gNccChains['LTC']
 const { default: BigNumber } = require('bignumber.js');
 const { aggregate } = require('@makerdao/multicall');
 const getCryptPrices = require('./lib/crypto_compare')
@@ -315,7 +320,7 @@ const isDotDebtClean = async function(sg) {
   if (sg.curve1 === 0 || sg.curve2 === 0) {
     const gpk = sg.curve1 === 0 ? sg.gpk1 : sg.gpk2
     const address = dot.pkToAddress(gpk, process.env.NETWORK_TYPE)
-    const balanceStr = await dot.dotChain.getBalance(address)
+    const balanceStr = await dot.chain.getBalance(address)
 
     const balance = new BigNumber(balanceStr)
     if (balance.lt(minDotAmount)) {
@@ -432,9 +437,20 @@ async function getAggregate(tm, total, _step, buildCall, work) {
 }
 
 // btc => chains
+const getNccChainTypeSymbolMap = () => {
+  const symbolChainType = {}
+  const chainTypes = Object.keys(nonContractChainConfigs)
+  chainTypes.forEach(chainType => {
+    const symbol = nonContractChainConfigs[chainType][process.env.NETWORK_TYPE].symbol
+    symbolChainType[symbol] = chainType
+  })
+
+  return symbolChainType
+}
 let gTokenPairs = {}
 let gSymbolChainTokenMap = {}
 let gTotalTokenPairs = 0
+let gNccSymbolChainTypeMap = getNccChainTypeSymbolMap()
 async function getTokenPairsAndSymbolTms(tm, total, web3Tms) {
   const tokenPairs = {}
   const symbolChainTokenMap = {}
@@ -445,7 +461,7 @@ async function getTokenPairsAndSymbolTms(tm, total, web3Tms) {
     }
   }
 
-  process.env.SYMBOLS_NONCONTRACT.split(',').forEach(symbol => {symbolChainTokenMap[symbol] = {}})
+  Object.keys(gNccSymbolChainTypeMap).forEach(symbol => {symbolChainTokenMap[symbol] = {}})
 
   if (tm.chain.multiCall) {
     const ids = {}
@@ -632,11 +648,11 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   
           if (debtToSave[groupId]) {
             const insertOneGroup = db.db.transaction((gId, debtMap) => {
-              for (const chainType in debtMap) {
+              for (const symbol in debtMap) {
                 db.insertDebt({
                   groupId: gId,
-                  chainType,
-                  ...debtMap[chainType]
+                  chainType: gNccSymbolChainTypeMap[symbol],
+                  ...debtMap[symbol]
                 });
               }
             })
@@ -653,55 +669,13 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 //    scanMessages: [ ReceiveMessage ]
 // 3. 处理收到的消息, 保存到msg表
 //    handleMessages (处理完消息, 更新scan到的blockNumber到数据库)
-const doScan = async (chain, sgs, from, step, to) => {
-  // console.trace(`doScan`)
-  let next = from + step - 1;
-  if (next > to) {
-    next = to
-  }
-
-  // 扫描获取感兴趣的事件
-  const msgs = await chain.scanMessages(from, next, sgs)
-  // 处理这些事件, 一次性写db
-  chain.handleMessages(msgs, sgs, db, next)
-
-  if (next < to) {
-    return setTimeout( async () => {
-      await doScan(chain, sgs, next + 1, step, to)
-    }, 0)
-  } else {
-    // doScan finished? try again scanInterval seconds later
-    return setTimeout(async () => {
-      await scan(chain)
-    }, chain.scanInterval * 1000)
-  }
-}
-
-const scan = async (chain) => {
-  const sgs = db.getActiveSga();
-  const blockNumber = await chain.getBlockNumber()
-
-  const from = db.getScan(chain.chainType).blockNumber + 1
-  const step = chain.scanStep
-  // const to = blockNumber - chain.safeBlockCount
-  const to = from + 10 - chain.safeBlockCount
-
-  if (from > to) {
-    return
-  }
-
-  log.info(`scan chain=${chain.chainType}, from=${from}, to=${to}`);
-
-  await doScan(chain, sgs, from, step, to)
-}
-
 const scanAllChains = () => {
-  const chains = [btc, ltc, xrp, dot]
+  const chains = gNccChains
 
   // 并发扫链
   for (let i = 0; i < chains.length; i++) {
     setTimeout(async () => {
-      await scan(chains[i])
+      await chains[i].chain.scan(db)
     }, 0)
   }
 }
@@ -765,5 +739,5 @@ module.exports = {
   syncDebt,
   syncIsDebtCleanToWanV2,
   scanAllChains,
-  scan,
+  getNccChainTypeSymbolMap,
 }

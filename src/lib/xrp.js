@@ -177,14 +177,25 @@ class XrpChain extends NccChain {
               if (parseInt(memo_return_type, 16) === memo_smgDebt_type && memoData.length === 66 && (info.source.address === sgAddress)) {
                 const fromGroupId = '0x' + memoData.substr(2);
                 const toAddress = info.destination.address;
-                log.info(`from ${fromGroupId}, to ${toAddress}`)
-                msgs.push({
-                  msgType: 'DebtTransfer',
-                  fromGroupId,
-                  toAddress,
+                const toSmgInfo = this.getSmgInfoFromPreSmgId(fromGroupId, sgs)
+                if (!toSmgInfo) {
+                  return
+                }
+
+                if (toSmgInfo.address != toAddress) {
+                  log.info(`pre smgId ${fromGroupId} toSmg ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
+                  return
+                }
+
+                const msg = {
+                  groupId: fromGroupId,
+                  chainType: this.chainType,
                   value: BigNumber(tx.outcome.deliveredAmount.value).multipliedBy(coinUnit).toString(),
                   tx: tx.id,
-                })
+                }
+                msgs.push(msg)
+
+                log.info(`from = ${fromGroupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.receive}, tx = ${msg.tx}`)
               }
             }
           }
@@ -193,71 +204,6 @@ class XrpChain extends NccChain {
     }
 
     return msgs
-  }
-
-  // TODO: 检查提到scanMessage处, handle功能提出成公共模块
-  handleMessages = (msgs, sgs, db, next) => {
-    if (!msgs) {
-      return
-    }
-
-    const items = []
-    msgs.forEach(msg => {
-      const { msgType, fromGroupId, toAddress, value, tx } = msg
-      if (msgType === 'DebtTransfer') {
-        const toSg = sgs.find(sg => (sg.preGroupId === fromGroupId))
-        if (toSg) {
-          if (!toSg.gpk2) {
-            log.error(`${toSg.groupId} gpk2 not exist`)
-          } else {
-            const toAddress2 = this.getP2PKHAddress(toSg.gpk2)
-            if (toAddress === toAddress2) {
-              console.log(`from = ${fromGroupId}, to = ${toSg.groupId}, value = ${value}, tx = ${tx}`)
-            
-              items.push({
-                groupId: fromGroupId,
-                toGroupId : toSg.groupId,
-                value,
-                tx : tx,
-              })
-            }
-          }
-        }
-      }
-    })
-
-    // insert to msg db
-    const insertMsgs = db.db.transaction((items, next) => {
-      for (let i = 0; i < items.length; i++) {
-        const item = items[i]
-        db.insertMsg({
-          groupId: item.groupId,
-          chainType: this.chainType,
-          receive: item.value,
-          tx: item.tx,
-        })
-
-        // 设置转移的资产总量, 超过债务时,设置债务clean为true
-        const assets = db.getMsgsByGroupId({groupId: item.groupId, chainType: this.chainType})
-        const reducer = (sum, asset) => sum.plus(BigNumber(asset.receive))
-        const totalAssets = assets.reduce(reducer, BigNumber(0))
-        const debt = db.getDebt({groupId: item.groupId, chainType: this.chainType})
-        if (debt) {
-          if (totalAssets.comparedTo(BigNumber(debt.totalSupply)) >= 0) {
-            debt.isDebtClean = 1
-          }
-          debt.totalReceive = totalAssets.toString()
-          debt.lastReceiveTx = item.tx
-          db.updateDebt(debt)
-        } else {
-          log.error(`debt not exist, ${item.groupId}, ${item.chainType}, ${totalAssets}`)
-        }
-      }
-      db.updateScan({chainType: this.chainType, blockNumber: next});
-    })
-    insertMsgs(items, next)
-
-    console.log('handleMessages finished')
   }
 
   getP2PKHAddress(gpk) {
@@ -281,10 +227,10 @@ class XrpChain extends NccChain {
 
 // console.log(pkToAddress("0x2e9ad92f5f541b6c2ddb672a70577c252aaa8b9b8dfdff9a5381912395985d12dc18f19ecb673a3b675697ae97913fcb69598c089f6d66ae7a3f6dc179e4da56"))
 
-const xrpChain = new XrpChain(xrpConfigs, process.env.NETWORK_TYPE)
+const chain = new XrpChain(xrpConfigs, process.env.NETWORK_TYPE)
 
 module.exports = {
   pkToAddress,
-  xrpChain,
+  chain,
   XrpChain
 }

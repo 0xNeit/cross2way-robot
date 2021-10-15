@@ -13,7 +13,7 @@ const { cryptoWaitReady, mnemonicGenerate, signatureVerify, decodeAddress } = re
 //     PolkadotSS58Format,
 // } = require("@substrate/txwrapper-polkadot");
 
-// const { pkToAddress, dotChain } = require('../src/lib/dot')
+// const { pkToAddress, chain } = require('../src/lib/dot')
 
 // /**
 //  * 与polkadot库的实现是一样。这里提出来是为了方便添加自己的动作。
@@ -260,20 +260,20 @@ setTimeout(async () => {
 
 // setTimeout(async () => {
 //   let address = await pkToAddress("0x16cb9aeb5627c8ceb03e434167baf66212b76d03e580a34b5516981e238138fe04b83cfd5c6c1e438241f9c18946ddb8a65e9e0ad844536bfbc8652d5017ee26", "mainnet")
-//   let balance = await dotChain.getBalance(address)
+//   let balance = await chain.getBalance(address)
 //   console.log(`mainnet ${address} balance ${balance}`)
 //   address = await pkToAddress("0x16cb9aeb5627c8ceb03e434167baf66212b76d03e580a34b5516981e238138fe04b83cfd5c6c1e438241f9c18946ddb8a65e9e0ad844536bfbc8652d5017ee26", "testnet")
-//   balance = await dotChain.getBalance(address)
+//   balance = await chain.getBalance(address)
 //   console.log(`testnet ${address} balance ${balance}`)
 // }, 0);
 
 // setTimeout(async () => {
 //   // Retrieve the latest header
-//   const num = await dotChain.getBlockNumber()
-//   // await dotChain.scanBlock(6845266, 6845267)
+//   const num = await chain.getBlockNumber()
+//   // await chain.scanBlock(6845266, 6845267)
 //   // https://westend.subscan.io/extrinsic/5651853-2
 //   // https://westend.subscan.io/extrinsic/0x97dbdf6775ba025981d58078a226df979651dc2d69732f7a10f11e6b001f58ce
-//   await dotChain.scanBlock(6845337, 6845338)
+//   await chain.scanBlock(6845337, 6845338)
 
 //   console.log(` last block #${num} `)
 // }, 0)
