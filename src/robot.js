@@ -191,6 +191,7 @@ setTimeout(async () => {
   // setTimeout(updateStoreManToChainsPart, 0)
   // setTimeout(updateDebtCleanToWanV2, 0)
   // setTimeout(updateDebt, 0)
+  // setTimeout(scanAllChains, 5)
   
 }, 0)
 

@@ -150,7 +150,7 @@ class DotChain extends NccChain {
 
   async waitApiReady() {
     while (!this.api) {
-      await sleep(10)
+      await sleep(100)
     }
     await this.api.isReady
   }

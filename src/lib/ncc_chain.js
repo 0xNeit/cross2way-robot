@@ -110,7 +110,10 @@ class NccChain {
         const totalAssets = assets.reduce(reducer, BigNumber(0))
         const debt = db.getDebt({groupId: item.groupId, chainType: this.chainType})
         if (debt) {
+          // 测试网, 不检查这个了, 只在主网检查这个
           if (totalAssets.comparedTo(BigNumber(debt.totalSupply)) >= 0) {
+            debt.isDebtClean = 1
+          } else if (process.env.NETWORK_TYPE === 'testnet') {
             debt.isDebtClean = 1
           }
           debt.totalReceive = totalAssets.toString()
