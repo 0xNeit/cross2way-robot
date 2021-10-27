@@ -9,7 +9,7 @@ module.exports = {
       "foundationAddr": "mpSRUeY5RWgxUyEFr7Dn1QCffZMJhPehwx",
       "bip44": 0x80000000,
       // one day 6 x 24 = 144 blocks,  one week 144 x 7 = 1008
-      "startBlockNumber": 2098861,
+      // "startBlockNumber": 2098861,
       "safeBlockCount": 1,
 
       "symbol": "BTC",
@@ -29,7 +29,7 @@ module.exports = {
       "feeUrl": "https://api.blockcypher.com/v1/btc/main",
       "foundationAddr": "bc1q8ak3pfl9r3julum2s9763tvt8rmcxtzqll8s2l",
       "bip44": 0x80000000,
-      "startBlockNumber": 2062740,
+      // "startBlockNumber": 2062740,
       "safeBlockCount": 2,
 
       "symbol": "BTC",
@@ -54,7 +54,7 @@ module.exports = {
       "feeUrl": "https://api.blockcypher.com/v1/ltc/main",
       "foundationAddr": "mmmdNQHsWaCd6DCUS14PBnuUxWHhu7vCuL",
       "bip44": 0x80000002,
-      "startBlockNumber": 2055338,
+      // "startBlockNumber": 2055338,
       "safeBlockCount": 1,
 
       "symbol": "LTC",
@@ -75,7 +75,7 @@ module.exports = {
       "feeUrl": "https://api.blockcypher.com/v1/ltc/main",
       "foundationAddr": "ltc1qnlzurwcz26suh30hxnr5ndrkr2jhnsc6s5zfjh",
       "bip44": 0x80000002,
-      "startBlockNumber": 2100295,
+      // "startBlockNumber": 2100295,
       "safeBlockCount": 4,
 
       "symbol": "LTC",
@@ -99,7 +99,7 @@ module.exports = {
       "rpc": "wss://s.altnet.rippletest.net/",
       "foundationAddr": "rNWwzNesh85cVtVCSh2ipAHQQKDb3Q39o1",
       "bip44": 0x80000090,
-      "startBlockNumber": 21809610,
+      // "startBlockNumber": 21809610,
       "safeBlockCount": 1,
 
       "symbol": "XRP",
@@ -116,7 +116,7 @@ module.exports = {
       "rpc": "wss://xrpl.ws/",
       "foundationAddr": "r9mwbimnzePg4AwmsLb7ogdp1d1s8c69W1",
       "bip44": 0x80000090,
-      "startBlockNumber": 65433345,
+      // "startBlockNumber": 65433345,
       "safeBlockCount": 2,
 
       "symbol": "XRP",
@@ -137,7 +137,7 @@ module.exports = {
       "decimals": 12,
       "foundationAddr": "5DDNUHeiPWFQpjdGQaVUcvGKzLvEDkPKCJJjZTnznb2zNB9x",
       "bip44": 0x80000162,
-      "startBlockNumber": 7776687,
+      // "startBlockNumber": 7776687,
       "safeBlockCount": 2,
 
       "symbol": "WND",
@@ -154,7 +154,7 @@ module.exports = {
       "decimals": 10,
       "foundationAddr": "139BQqPhyUh6QkvvHcdcDvEteXD55SaDeS8pTdeCeHWCSALX",
       "bip44": 0x80000162,
-      "startBlockNumber": 6293248,
+      // "startBlockNumber": 6293248,
       "safeBlockCount": 2,
 
       "symbol": "DOT",

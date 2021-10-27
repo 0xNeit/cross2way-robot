@@ -12,7 +12,7 @@ async function v0Tov1() {
         groupId char(66) NOT NULL,
         chainType char(20) NOT NULL,
         receive char(80) NOT NULL,
-        tx char(128) NOT NULL,
+        tx char(128) NOT NULL
       );
     `)
     // create debt table
@@ -51,6 +51,7 @@ async function v0Tov1() {
     db.db.exec(`alter table sga add column workDuration integer;`)
     db.db.exec(`alter table sga add column registerDuration integer;`)
   
+    // update sga fields (preGroupId, workStart, workDuration, registerDuration) info 
     const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
     const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
     const scanInst = new ScanEvent(
