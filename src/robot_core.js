@@ -683,6 +683,7 @@ const scanAllChains = () => {
 // 第4步
 // 如果该storeMan的所有币债务都被清空, 则设置isDebtClean为true, (且余额为0, 这个就不用了?)
 const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
+  const time = parseInt(new Date().getTime() / 1000);
   const sgs = db.getActiveSga();
   // 获取groupId的某个资产类别的debt, 在链上从endTime开始监测转移事件
   for (let i = 0; i < sgs.length; i++) {

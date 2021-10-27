@@ -159,7 +159,7 @@ const robotSchedules = function() {
   schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWanV2);
 
   // save debt
-  schedule.scheduleJob('5 0 */12 * * *', updateDebt);
+  schedule.scheduleJob('5 5 */12 * * *', updateDebt);
 };
 
 // helper functions
