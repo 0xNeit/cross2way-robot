@@ -183,7 +183,7 @@ setTimeout(async () => {
 
   setTimeout(updatePriceToWAN, 0);
   setTimeout(scanNewStoreMan, 0);
-  setTimeout(scanAllChains, 5)
+  setTimeout(scanAllChains, 10000)
 
   robotSchedules();
 
@@ -191,7 +191,7 @@ setTimeout(async () => {
   // setTimeout(updateStoreManToChainsPart, 0)
   // setTimeout(updateDebtCleanToWanV2, 0)
   // setTimeout(updateDebt, 0)
-  // setTimeout(scanAllChains, 5)
+  // setTimeout(scanAllChains, 10000)
   
 }, 0)
 
