@@ -134,7 +134,6 @@ module.exports = {
   'DOT': {
     'testnet': {
       "rpc": "wss://westend-rpc.polkadot.io",
-      "decimals": 12,
       "foundationAddr": "5DDNUHeiPWFQpjdGQaVUcvGKzLvEDkPKCJJjZTnznb2zNB9x",
       "bip44": 0x80000162,
       // "startBlockNumber": 7776687,
@@ -151,11 +150,10 @@ module.exports = {
     },
     'mainnet': {
       "rpc": "wss://rpc.polkadot.io",
-      "decimals": 10,
       "foundationAddr": "139BQqPhyUh6QkvvHcdcDvEteXD55SaDeS8pTdeCeHWCSALX",
       "bip44": 0x80000162,
       // "startBlockNumber": 6293248,
-      "safeBlockCount": 2,
+      "safeBlockCount": 19,
 
       "symbol": "DOT",
       "decimals": 10,
@@ -166,5 +164,40 @@ module.exports = {
       "scanStep": 100,
       "curveType": 0,
     }
-  }
+  },
+  // doge 
+  'DOGE': {
+    'testnet': {
+      "rpc": "nodes-testnet.wandevs.org:36895",
+      "foundationAddr": "ncQ5sjMBn3UxfX8SEEo5oybhieTufmR2e2",
+      "bip44": 0x80000003,
+      // "startBlockNumber": 7776687,
+      "safeBlockCount": 1,
+
+      "symbol": "DOGE",
+      "decimals": 8,
+
+      "chainType": 'DOGE',
+      // scan every 30 sec ?
+      "scanInterval": 60,
+      "scanStep": 100,
+      "curveType": 0,
+    },
+    // 'mainnet': {
+    //   "rpc": "nodes.wandevs.org:26895",
+    //   "foundationAddr": "DNoUJBrcREZj3KM5pfQbTKZXdYNHASvnXh",
+    //   "bip44": 0x80000003,
+    //   // "startBlockNumber": 6293248,
+    //   "safeBlockCount": 9,
+
+    //   "symbol": "DOGE",
+    //   "decimals": 8,
+
+    //   "chainType": 'DOGE',
+    //   // scan every 30 set ?
+    //   "scanInterval": 60,
+    //   "scanStep": 100,
+    //   "curveType": 0,
+    // }
+  },
 }
