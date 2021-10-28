@@ -145,11 +145,32 @@ class DotChain extends NccChain {
 
   async createApi() {
     const provider = new WsProvider(this.rpc)
-    this.api = await ApiPromise.create({ provider })
+    const api = await ApiPromise.create({ provider })
+
+    api.on('connected', () => {
+        console.log(' Polka API has been connected to the endpoint');
+    });
+
+    api.on('ready', () => {
+        console.log(' Polka API ready...');
+    });
+
+    api.on('disconnected', () => {
+        console.log(' Polka API has been disconnected from the endpoint');
+    });
+
+    api.on('error', (error) => {
+        console.log(' Polka API got an error: ', error);
+    });
+
+    this.api = await api.isReady;
+
+
+    this.api.isTestNet = () => RPC_URL === TEST_NET
   }
 
   async waitApiReady() {
-    while (!this.api) {
+    while (!this.api ) {
       await sleep(100)
     }
     await this.api.isReady
