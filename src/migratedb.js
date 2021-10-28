@@ -28,7 +28,7 @@ async function v0Tov1() {
       );
     `)
 
-    // add btc, ltc, xrp, dot, scan start position
+    // add btc, ltc, xrp, dot, doge, scan start position
     const chainTypes = Object.keys(gNccChains)
     for (let i = 0; i < chainTypes.length; i++) {
       const chainType = chainTypes[i]

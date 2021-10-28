@@ -24,7 +24,7 @@ class DogeChain extends BtcBase {
   }
 }
 
-const chain = new DogeChain(ltcConfigs, process.env.NETWORK_TYPE)
+const chain = new DogeChain(dogeConfigs, process.env.NETWORK_TYPE)
 
 module.exports = {
   pkToAddress,

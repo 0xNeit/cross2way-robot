@@ -48,8 +48,8 @@ class XrpChain extends NccChain {
 
   tryConnect(time) {
     setTimeout(()=> {
-      that.reconnecting = true;
-      that.doConnect();
+      this.reconnecting = true;
+      this.doConnect();
     }, time);
   }
 
@@ -60,7 +60,7 @@ class XrpChain extends NccChain {
 
       if (msg instanceof this.api.errors.DisconnectedError ||
         msg instanceof this.api.errors.NotConnectedError) {
-          that.isApiReady = false;
+          self.isApiReady = false;
           self.tryConnect(5 * 1000)
       }
     })

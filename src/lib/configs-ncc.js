@@ -183,21 +183,21 @@ module.exports = {
       "scanStep": 100,
       "curveType": 0,
     },
-    // 'mainnet': {
-    //   "rpc": "nodes.wandevs.org:26895",
-    //   "foundationAddr": "DNoUJBrcREZj3KM5pfQbTKZXdYNHASvnXh",
-    //   "bip44": 0x80000003,
-    //   // "startBlockNumber": 6293248,
-    //   "safeBlockCount": 9,
+    'mainnet': {
+      "rpc": "nodes.wandevs.org:26895",
+      "foundationAddr": "DNoUJBrcREZj3KM5pfQbTKZXdYNHASvnXh",
+      "bip44": 0x80000003,
+      // "startBlockNumber": 6293248,
+      "safeBlockCount": 9,
 
-    //   "symbol": "DOGE",
-    //   "decimals": 8,
+      "symbol": "DOGE",
+      "decimals": 8,
 
-    //   "chainType": 'DOGE',
-    //   // scan every 30 set ?
-    //   "scanInterval": 60,
-    //   "scanStep": 100,
-    //   "curveType": 0,
-    // }
+      "chainType": 'DOGE',
+      // scan every 30 set ?
+      "scanInterval": 60,
+      "scanStep": 100,
+      "curveType": 0,
+    }
   },
 }
