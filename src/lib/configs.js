@@ -79,7 +79,7 @@ module.exports = {
   'bsc': {
     'testnet': {
       chainType: 'BSC',
-      rpc: 'https://data-seed-prebsc-2-s1.binance.org:8545/',
+      rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
       gasPrice: 0xe8d4a51000,
       gasLimit: 0x7a1200,
       chainId: 97,
