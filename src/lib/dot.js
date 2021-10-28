@@ -193,7 +193,9 @@ class DotChain extends NccChain {
     await this.waitApiReady();
 
     for (let i = 0; i < sgs.length; i++) {
-      sgs[i].sgAddress = this.getP2PKHAddress(sgs[i].gpk2)
+      if (sgs[i].gpk2) {
+        sgs[i].sgAddress = this.getP2PKHAddress(sgs[i].gpk2)
+      }
     }
 
     const msgs = []

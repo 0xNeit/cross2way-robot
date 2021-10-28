@@ -148,6 +148,9 @@ class XrpChain extends NccChain {
         types: ['payment', 'accountDelete'],
       }
   
+      if (!sg.gpk2) {
+        continue
+      }
       const sgAddress = pkToAddress(sg.gpk2);
   
       await this.waitForApiReady()
