@@ -125,7 +125,7 @@ class DB {
 
   getActiveSga() {
     // return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
-    return this.db.prepare(`select * from sga where status != 7`).all();
+    return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
   }
 
   insertSga(item) {
