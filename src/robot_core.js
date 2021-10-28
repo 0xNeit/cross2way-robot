@@ -674,8 +674,9 @@ const scanAllChains = () => {
 
   // 并发扫链
   for (let i = 0; i < gNccChainTypes.length; i++) {
+    const num = i
     setTimeout(async () => {
-      await chains[gNccChainTypes[i]].chain.scan(db)
+      await chains[gNccChainTypes[num]].chain.scan(db)
     }, 0)
   }
 }
