@@ -182,6 +182,9 @@ module.exports = {
       "scanInterval": 60,
       "scanStep": 100,
       "curveType": 0,
+
+      "rpcUser": "wanglu",
+      "rpcPassword": "Wanchain888",
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26895",
@@ -198,6 +201,9 @@ module.exports = {
       "scanInterval": 60,
       "scanStep": 100,
       "curveType": 0,
+
+      "rpcUser": "wanglu",
+      "rpcPassword": "Wanchain888",
     }
   },
 }

@@ -672,11 +672,13 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 const scanAllChains = () => {
   const chains = gNccChains
 
+  const chainTypes = gNccChainTypes
+  // const chainTypes = ['DOGE']
   // 并发扫链
-  for (let i = 0; i < gNccChainTypes.length; i++) {
+  for (let i = 0; i < chainTypes.length; i++) {
     const num = i
     setTimeout(async () => {
-      await chains[gNccChainTypes[num]].chain.scan(db)
+      await chains[chainTypes[num]].chain.scan(db)
     }, 0)
   }
 }

@@ -81,7 +81,11 @@ class BtcBase extends NccChain {
     const coinUnit = this.coinUnit
     for (let curIndex = from; curIndex <= to; curIndex++) {
       const bHash = await client.getBlockHash(curIndex)
-      const block = await client.getBlock(bHash, 2)
+      // const block = await client.getBlock(bHash, 2)
+      const block = await client.getBlockByHash(bHash, {
+        summary : false,
+        extension : 'json'
+      })
 
       if (!block || !block.tx) {
         continue
