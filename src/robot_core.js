@@ -596,7 +596,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   for (let i = 0; i<sgs.length; i++) {
     const sg = sgs[i];
     const groupId = sg.groupId;
-    if (sg.status === 7) {
+    if (sg.status === 3 || sg.status === 7) {
       continue;
     }
     const config = await sgaWan.getStoremanGroupConfig(groupId);

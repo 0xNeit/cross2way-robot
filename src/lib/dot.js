@@ -194,7 +194,7 @@ class DotChain extends NccChain {
     // Retrieve the account balance & nonce via the system module
     const { nonce, data: balance } = await api.query.system.account(address);
     console.log(`Now: ${now}: balance of ${balance.free} and a nonce of ${nonce}`);
-    return Number(balance.free.toString());
+    return balance.free.toString()
   }
   
   getP2PKHAddress(gpk) {

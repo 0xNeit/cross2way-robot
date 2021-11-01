@@ -68,6 +68,16 @@ class BtcBase extends NccChain {
     return await this.api.getBlockCount();
   }
 
+  async getBalance(address) {
+    const utxoArray = await this.api.listUnspent(1, 0xffffff, [address])
+    let balance = new BigNumber(0)
+    utxoArray.forEach((v) => {
+      balance = balance.plus(new BigNumber(v.amount))
+    })
+    
+    return balance.toString(10)
+  }
+
   scanMessages = async (from, to, sgs) => {
     if (from > to) {
       return null

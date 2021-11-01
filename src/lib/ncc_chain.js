@@ -17,6 +17,10 @@ class NccChain {
     throw new Error(`getBlockNumber not implemented`)
   }
 
+  async getBalance(address) {
+    throw new Error('getBalance not implemented')
+  }
+
   async scanMessages() {
     throw new Error('scanMessages not implemented')
   }

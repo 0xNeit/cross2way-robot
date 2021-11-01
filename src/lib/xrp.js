@@ -127,6 +127,10 @@ class XrpChain extends NccChain {
     return blockNumber
   }
 
+  async getBalances(address) {
+    return this.api.getBalances(address)
+  }
+
   scanMessages = async (from, to, sgs) => {
     if (from > to) {
       return null
