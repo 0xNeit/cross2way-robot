@@ -608,7 +608,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 
     const groupName = web3.utils.hexToString(groupId)
     // 测试网, 只关注dev_开头的storeMan
-    if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
+    // if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
       if (config.status >= 5) {
         if (time > config.endTime) {
           log.info("isDebtClean2 time > endTime smgId", groupId)
@@ -660,7 +660,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
           }
         }
       }
-    }
+    // }
   }
 }
 
