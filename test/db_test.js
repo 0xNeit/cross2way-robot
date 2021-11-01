@@ -125,3 +125,6 @@ describe("sqlite3 test", function () {
   });
 });
 
+discribe("debt", function() {
+  
+})
