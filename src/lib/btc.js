@@ -106,10 +106,12 @@ class BtcBase extends NccChain {
                 console.log(`blockNumber = ${curIndex}, op = ${op_return_type} len = ${op_return.length}`)
                 if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
                   const fromGroupId = '0x' + op_return.substr(2);
+                  const scriptPK = vOut[j].scriptPubKey
                   for (let j = 0; j < vOut.length; j++) {
-                    if (vOut[j].scriptPubKey && vOut[j].scriptPubKey.addresses && vOut[j].scriptPubKey.addresses.length === 1) {
+                    if (scriptPK && 
+                      ((scriptPK.addresses && scriptPK.addresses.length === 1) || scriptPK.address )) {
                       // 验证fromGroupId, 是某一个storeManGroup的; 验证toAddress,是nextStoreMan的地址
-                      const toAddress = vOut[j].scriptPubKey.addresses[0]
+                      const toAddress = scriptPK.addresses ? scriptPK.addresses[0] : scriptPK.address
                       const toSmgInfo = this.getSmgInfoFromPreSmgId(fromGroupId, sgs)
                       if (!toSmgInfo) {
                         return

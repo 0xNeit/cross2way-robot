@@ -253,25 +253,25 @@ module.exports = {
 
       explorer: 'https://testnet.ftmscan.com/',
     },
-    // 'mainnet': {
-    //   chainType: 'FTM',
-    //   rpc: 'https://rpc.ftm.tools',
-    //   gasPrice: 0x6553f100,
-    //   gasLimit: 0x7a1200,
-    //   chainId: 250,
-    //   curveType: '1',
-    //   deployedFile: 'ftmMainnet.json',
-    //   bip44: 0x800003ef,
-    //   ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
-    //   chainKind: 'eth',
+    'mainnet': {
+      chainType: 'FTM',
+      rpc: 'https://rpc.fantom.network',
+      gasPrice: 0xd18c2e2800,
+      gasLimit: 0x7a1200,
+      chainId: 250,
+      curveType: '1',
+      deployedFile: 'ftmMainnet.json',
+      bip44: 0x800003ef,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
 
-    //   symbol: 'FTM',
-    //   decimals: 18,
-    //   chainName: 'fontom',
+      symbol: 'FTM',
+      decimals: 18,
+      chainName: 'fontom',
 
-    //   multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
+      multiCall: '0x5f4870D51d2629D7493970B9d4526377Da98e95e'.toLowerCase(),
 
-    //   explorer: 'https://www.ftmscan.com/',
-    // },
+      explorer: 'https://www.ftmscan.com/',
+    },
   }
 }

@@ -28,6 +28,7 @@ async function v0Tov1() {
       );
     `)
 
+    // insert scan table
     // add btc, ltc, xrp, dot, doge, scan start position
     const chainTypes = Object.keys(gNccChains)
     for (let i = 0; i < chainTypes.length; i++) {
@@ -45,13 +46,14 @@ async function v0Tov1() {
       });
     }
 
+    // add fields to sga table
     // add preGroupId for old records in table sga
     db.db.exec(`alter table sga add column preGroupId char(66);`)
     db.db.exec(`alter table sga add column workStart integer;`)
     db.db.exec(`alter table sga add column workDuration integer;`)
     db.db.exec(`alter table sga add column registerDuration integer;`)
   
-    // update sga fields (preGroupId, workStart, workDuration, registerDuration) info 
+    // update fields (preGroupId, workStart, workDuration, registerDuration) to sga table
     const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
     const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
     const scanInst = new ScanEvent(
