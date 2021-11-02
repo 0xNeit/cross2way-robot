@@ -127,8 +127,10 @@ class XrpChain extends NccChain {
     return blockNumber
   }
 
-  async getBalances(address) {
-    return this.api.getBalances(address)
+  async getBalance(address) {
+    const balances = await this.api.getBalances(address)
+    const balance = balances.find(b => b.currency === this.chainType)
+    return this.toWei(balance.value)
   }
 
   scanMessages = async (from, to, sgs) => {

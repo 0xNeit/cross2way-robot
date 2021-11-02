@@ -6,7 +6,7 @@ const db = require('../src/lib/sqlite_db')
 const BigNumber = require('bignumber.js')
 
 const btc = require('../src/lib/btc');
-const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccChainTypeSymbolMap} = require('../src/robot_core');
+const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccTokenChainTypeMap} = require('../src/robot_core');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
 
@@ -145,7 +145,7 @@ setTimeout(async () => {
   // getMsgsByGroupId()
   // dbTx()
   // insertDebt()
-  // getNccChainTypeSymbolMap()
+  // getNccTokenChainTypeMap()
   testScanAllChains()
 }, 0)
 

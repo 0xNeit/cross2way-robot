@@ -91,6 +91,43 @@ class DB {
     this.db.prepare(`update debt set isDebtClean = @isDebtClean, totalSupply = @totalSupply, totalReceive = @totalReceive, lastReceiveTx = @lastReceiveTx where groupId = @groupId and chainType=@chainType`).run(item);
   }
 
+  modifyDebt(groupId, chainType, item) {
+    const oldDebt = db.getDebt({groupId, chainType})
+    const coinDebt = oldDebt ? {...oldDebt} : {
+      groupId,
+      chainType,
+      isDebtClean: 0,
+      totalSupply: '',
+      totalReceive: '',
+      lastReceiveTx: '',
+    }
+    if (item.totalSupply !== '') {
+      coinDebt.totalSupply = item.totalSupply
+    }
+    if (item.totalReceive !== '') {
+      coinDebt.totalReceive = item.totalReceive
+    }
+    if (item.lastReceiveTx !== '') {
+      coinDebt.lastReceiveTx = item.lastReceiveTx
+    }
+    if (coinDebt.isDebtClean !== item.isDebtClean) {
+      coinDebt.isDebtClean = item.isDebtClean
+    }
+
+    if (coinDebt.totalReceive !== '' && coinDebt.totalSupply !== '') {
+      if (coinDebt.totalReceive.comparedTo(BigNumber(coinDebt.totalSupply)) >= 0) {
+        coinDebt.isDebtClean = 1
+      }
+    }
+    // if not in db
+    if (!oldDebt) {
+      db.insertDebt(coinDebt);
+    } else {
+      db.updateDebt(coinDebt);
+    }
+    return coinDebt
+  }
+
   getDebt(item) {
     return this.db.prepare(`select * from debt where groupId = @groupId and chainType=@chainType`).get(item);
   }

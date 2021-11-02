@@ -75,7 +75,7 @@ class BtcBase extends NccChain {
       balance = balance.plus(new BigNumber(v.amount))
     })
     
-    return balance.toString(10)
+    return this.toWei(balance.toString(10))
   }
 
   scanMessages = async (from, to, sgs) => {

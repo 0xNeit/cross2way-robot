@@ -1,6 +1,7 @@
 const Web3 = require('web3');
 const web3 = new Web3();
 const wanUtil = require('wanchainjs-util');
+const { aggregate } = require('@makerdao/multicall');
 
 // TODO: delete chainIds
 const chainIds = {
@@ -29,7 +30,9 @@ function sleep(ms) {
 	})
 };
 
-// const sleep = (ms) => { return new Promise(resolve => setTimeout(resolve, ms)) };
+function isPromise(p) {
+    return p && Object.prototype.toString.call(p) === "[object Promise]";
+}
 
 function promisify(func, paras=[], obj=null){
   return new Promise(function(success, fail){
@@ -92,6 +95,200 @@ function formatToFraction(oldDecimalString) {
     return padPrice.substr(0, padPrice.length - 18)+ '.'+ padPrice.substr(padPrice.length - 18, 18);
 }
 
+const getAggregate = async (rpcUrl, multicallAddress, total, _step, buildCall, cb) => {
+  const config = {
+    rpcUrl,
+    multicallAddress
+  }
+
+  let step = _step
+  let loopNum = Math.floor((total + step - 1) / step)
+  step = Math.floor((total + loopNum - 1) / loopNum)
+  let j = 0
+  let calls = []
+  for (let i = 0; i < total; i++) {
+    calls.push(
+      ...buildCall(i)
+    )
+
+    if ((j === step - 1) || (i === total - 1)) {
+      // send
+      try {
+        const ret = await aggregate(calls, config);
+        // record
+        cb(ret, i - j, i)
+      } catch(e) {
+        throw e
+      }
+
+      // reset
+      j = 0
+      calls = []
+    } else {
+      j++
+    }
+  }
+}
+const getSmgConfigs = async (oracle, sgAll, configs, isDebtCleans) => {
+  await getAggregate(oracle.chain.rpc, oracle.chain.multiCall, sgAll.length, 10,
+    (i) => {
+      const sg = sgAll[i];
+      const groupId = sg.groupId;
+      return [{
+        target: oracle.address,
+        // bytes gpk1, bytes gpk2, uint startTime, uint endTime
+        call: ['getStoremanGroupConfig(bytes32)(bytes32,uint8,uint256,uint256,uint256,uint256,uint256,bytes,bytes,uint256,uint256)', groupId],
+        returns: [
+          [`groupId-${i}`, val => val],
+          [`status-${i}`, val => val],
+          [`deposit-${i}`, val => val],
+          [`chain1-${i}`, val => val],
+          [`chain2-${i}`, val => val],
+          [`curve1-${i}`, val => val],
+          [`curve2-${i}`, val => val],
+          [`gpk1-${i}`, val => val],
+          [`gpk2-${i}`, val => val],
+          [`startTime-${i}`, val => val],
+          [`endTime-${i}`, val => val],
+        ],
+      }]
+    },
+    (ret, start, end) => {
+      for (let i = start; i <= end; i++) {
+        const groupId = sgAll[i].groupId
+        const config = {}
+        config.groupId = ret.results.transformed[`groupId-${i}`] + ' / ' + web3.utils.hexToString(ret.results.transformed[`groupId-${i}`])
+        config.status = ret.results.transformed[`status-${i}`].toString(10)
+        config.deposit = ret.results.transformed[`deposit-${i}`].toString(10)
+        config.chain1 = ret.results.transformed[`chain1-${i}`] + ' / ' + web3.utils.toHex(ret.results.transformed[`chain1-${i}`])
+        config.chain2 = ret.results.transformed[`chain2-${i}`] + ' / ' + web3.utils.toHex(ret.results.transformed[`chain2-${i}`])
+        config.curve1 = ret.results.transformed[`curve1-${i}`].toString(10)
+        config.curve2 = ret.results.transformed[`curve2-${i}`].toString(10)
+        config.gpk1 = ret.results.transformed[`gpk1-${i}`]
+        config.gpk2 = ret.results.transformed[`gpk2-${i}`]
+        config.startTime = ret.results.transformed[`startTime-${i}`].toString(10)
+        config.endTime = ret.results.transformed[`endTime-${i}`].toString(10)
+        if (isDebtCleans) {
+          config.isDebtClean = isDebtCleans[groupId].toString()
+        }
+
+        configs[groupId] = config
+      }
+    }
+  )
+}
+
+const getSmgIsDebtCleans = async (oracle, sgAll, isDebtCleans) => {
+  await getAggregate(oracle.chain.rpc, oracle.chain.multiCall, sgAll.length, 100,
+    (i) => {
+      const sg = sgAll[i];
+      const groupId = sg.groupId;
+      return [{
+        target: oracle.address,
+        call: ['isDebtClean(bytes32)(bool)', groupId],
+        returns: [
+          [`isDebtClean-${i}`, val => val]
+        ]
+      }]
+    },
+    (ret, start, end) => {
+      for (let i = start; i <= end; i++) {
+        const groupId = sgAll[i].groupId
+        isDebtCleans[groupId] = ret.results.transformed[`isDebtClean-${i}`]
+      }
+    }
+  )
+}
+
+const getTokenPairIds = async (tm, total, ids, tokenPairs) => {
+  await getAggregate(tm.chain.rpc, tm.chain.multiCall, total, 100,
+    (i) => ([{
+      target: tm.address,
+      call: ['mapTokenPairIndex(uint256)(uint256)', i],
+      returns: [
+        [`id-${i}`, val => val],
+      ],
+    }]),
+    (ret, start, end) => {
+      for (let k = start; k <= end; k++) {
+        const id = parseInt(ret.results.transformed[`id-${k}`].toString(10))
+        ids[k] = id
+        tokenPairs[id] = {id}
+      }
+    }
+  )
+}
+const getTokenPairDetails = async (tm, total, ids, tokenPairs, cb) => {
+  await getAggregate(tm.chain.rpc, tm.chain.multiCall, total, 10,
+    (i) => ([{
+      target: tm.address,
+      call: ['getTokenPairInfo(uint256)(uint256,bytes,uint256,bytes)', ids[i]],
+      returns: [
+        [`fromChainID-${i}`, val => val],
+        [`fromAccount-${i}`, val => val],
+        [`toChainID-${i}`, val => val],
+        [`toAccount-${i}`, val => val],
+      ],
+    }, {
+      target: tm.address,
+      call: ['getAncestorInfo(uint256)(bytes,string,string,uint8,uint256)', ids[i]],
+      returns: [
+        [`account-${i}`, val => val],
+        [`name-${i}`, val => val],
+        [`symbol-${i}`, val => val],
+        [`decimals-${i}`, val => val],
+        [`chainId-${i}`, val => val],
+      ],
+    }]),
+    (ret, start, end) => {
+      for (let i = start; i <= end; i++) {
+        const id = ids[i]
+        const tokenPair = tokenPairs[id]
+        tokenPair.account = ret.results.transformed[`account-${i}`]
+        tokenPair.name = ret.results.transformed[`name-${i}`]
+        tokenPair.symbol = ret.results.transformed[`symbol-${i}`]
+        tokenPair.decimals = ret.results.transformed[`decimals-${i}`].toString(10)
+        tokenPair.chainId = ret.results.transformed[`chainId-${i}`].toString(10)
+        tokenPair.fromChainID = ret.results.transformed[`fromChainID-${i}`].toString(10)
+        tokenPair.fromAccount = ret.results.transformed[`fromAccount-${i}`]
+        tokenPair.toChainID = ret.results.transformed[`toChainID-${i}`].toString(10)
+        tokenPair.toAccount = ret.results.transformed[`toAccount-${i}`]
+
+        if (cb) {
+          cb(tokenPair)
+        }
+      }
+    }
+  )
+}
+
+const getTokenInfos = async (tm, ids, tokenPairs) => {
+  await getAggregate(tm.chain.rpc, tm.chain.multiCall, ids.length, 30,
+    (i) => {
+      const id = parseInt(ids[i])
+      return [{
+        target: tm.address,
+        call: ['getTokenInfo(uint256)(address,string,string,uint8)', id],
+        returns: [
+          [`addr-${i}`, val => val],
+          [`name-${i}`, val => val],
+          [`symbol-${i}`, val => val],
+          [`decimals-${i}`, val => val],
+        ],
+      }]
+    },
+    (ret, start, end) => {
+      for (let i = start; i <= end; i++) {
+        const id = parseInt(ids[i])
+        tokenPairs[id].mapAddr = ret.results.transformed[`addr-${i}`]
+        tokenPairs[id].mapName = ret.results.transformed[`name-${i}`]
+        tokenPairs[id].mapSymbol = ret.results.transformed[`symbol-${i}`]
+        tokenPairs[id].mapDecimals = ret.results.transformed[`decimals-${i}`].toString(10)
+      }
+    }
+  )
+}
+
 module.exports = {
   sleep,
   promisify,
@@ -101,5 +298,11 @@ module.exports = {
   web3,
   chainIds,
   privateToAddress,
-  formatToFraction
+  formatToFraction,
+  getAggregate,
+  getSmgIsDebtCleans,
+  getSmgConfigs,
+  getTokenPairIds,
+  getTokenPairDetails,
+  getTokenInfos,
 }

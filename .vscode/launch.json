@@ -128,12 +128,23 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "reg testnet",
+      "name": "test reg testnet",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "cwd": "${workspaceRoot}",
       "program": "${workspaceFolder}/test/_regtest.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "test db 2 testnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/test/db_2_test.js",
       "envFile": "${workspaceFolder}/.env.dev"
     },
     {

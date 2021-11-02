@@ -1,6 +1,6 @@
 "use strict"
 const log = require('./lib/log');
-const { sleep, web3 } = require('./lib/utils');
+const { sleep, web3, promisify, getSmgIsDebtCleans, getSmgConfigs, getTokenPairIds, getTokenPairDetails,  } = require('./lib/utils');
 const logAndSendMail = require('./lib/email');
 const ScanEvent = require('./scan_event');
 const db = require('./lib/sqlite_db');
@@ -16,7 +16,7 @@ const ltc = gNccChains['LTC']
 const { default: BigNumber } = require('bignumber.js');
 const { aggregate } = require('@makerdao/multicall');
 const getCryptPrices = require('./lib/crypto_compare')
-const nonContractChainConfigs = require('./lib/configs-ncc')
+const nccConfigs = require('./lib/configs-ncc')
 
 const thresholdTimes = web3.utils.toBN(process.env.THRESHOLD_TIMES);
 const zero = web3.utils.toBN(0);
@@ -47,6 +47,26 @@ async function doSchedule(func, tryTimes = process.env.SCHEDULE_RETRY_TIMES, ...
       }
       log.warn(`${func.name} exception : ${e instanceof Error ? e.stack : e}`);
       await sleep(parseInt(process.env.SCHEDULE_RETRY_INTERVAL));
+    }
+  }
+}
+
+const batchGetSmgConfigs = async (oracleWan, sgaWan, sgs, smgConfigs, isDebtCleans) => {
+  if (sgaWan.chain.multiCall) {
+    if (isDebtCleans) {
+      await getSmgIsDebtCleans(oracleWan, sgs, isDebtCleans)
+    }
+    await getSmgConfigs(sgaWan, sgs, smgConfigs, isDebtCleans)
+  } else {
+    for (let i = 0; i<sgs.length; i++) {
+      const sg = sgs[i];
+      const groupId = sg.groupId;
+      const config = await sgaWan.getStoremanGroupConfig(groupId);
+      if (isDebtCleans) {
+        const isDebtClean = await oracleWan.isDebtClean(groupId)
+        isDebtCleans[groupId] = isDebtClean
+      }
+      smgConfigs[groupId] = config
     }
   }
 }
@@ -171,17 +191,36 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       throw e
     }
   }
-  // const curTimestamp = Math.floor(Date.now() / 1000)
-  // end
+  const sgs = db.getActiveSga()
+  
+  const smgConfigs = {}
+  await batchGetSmgConfigs(null, sgaContract, sgs, smgConfigs)
 
-  const sgs = db.getAllSga();
+  const sgsValid = sgs.filter(sg => {
+    const config = smgConfigs[sg.groupId]
+    if (!config.gpk1 || !config.gpk2) {
+      return false
+    }
+    return true
+  })
+
+  const promises = []
+  const chainSmgConfigs = {}
+  for(let j = 0; j<oracles.length; j++) {
+    const index = j
+    const o = oracles[index]
+    chainSmgConfigs[o.chain.chainType] = {}
+    promises.push(batchGetSmgConfigs(o, o, sgsValid, chainSmgConfigs[o.chain.chainType]))
+  }
+  await Promise.all(promises)
+
   for (let i = 0; i<sgs.length; i++) {
     const sg = sgs[i];
     if (sg.status === 7) {
       continue;
     }
     const groupId = sg.groupId;
-    const config = await sgaContract.getStoremanGroupConfig(groupId);
+    const config = smgConfigs[groupId];
 
     // is a current group
     const groupName = web3.utils.hexToString(groupId)
@@ -196,7 +235,7 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
     
     if (config) {
       // ignore empty gpk
-      if (!config.gpk1 || !config.gpk2) {
+      if (config.status < 5) {
         if (sg.status !== parseInt(config.status)) {
           writeToDB(config)
         }
@@ -212,7 +251,8 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
           }
         }
         // end
-        const config_eth = await oracle.getStoremanGroupConfig(groupId);
+        // const config_eth = await oracle.getStoremanGroupConfig(groupId);
+        const config_eth = chainSmgConfigs[oracle.chain.chainType][groupId];
         // curve1 -> chain curve type
         const curve1 = !!oracle.chain.curveType ? oracle.chain.curveType : process.env[oracle.chain.core.chainType + '_CURVETYPE']
         // curve2 -> another curve type
@@ -399,133 +439,45 @@ function getMapTm(web3Tms, toChainId) {
   return tm;
 }
 
-async function getAggregate(tm, total, _step, buildCall, work) {
-  const config = {
-    rpcUrl: tm.chain.rpc,
-    multicallAddress: tm.chain.multiCall
-  }
-
-  let step = _step
-  let loopNum = Math.floor((total + step - 1) / step)
-  step = Math.floor((total + loopNum - 1) / loopNum)
-  let j = 0
-  let calls = []
-  let result = {}
-  for (let i = 0; i < total; i++) {
-    calls.push(
-      ...buildCall(i)
-    )
-
-    if ((j === step - 1) || (i === total - 1)) {
-      // send
-      try {
-        const ret = await aggregate(calls, config);
-        // record
-        work(ret, i - j, i)
-      } catch(e) {
-        log.error(e)
-        throw e
-      }
-
-      // reset
-      j = 0
-      calls = []
-    } else {
-      j++
-    }
-  }
-}
-
 // btc => chains
-const getNccChainTypeSymbolMap = () => {
-  const symbolChainType = {}
-  const chainTypes = Object.keys(nonContractChainConfigs)
+const getNccTokenChainTypeMap = () => {
+  const tokenChainMap = {}
+  const chainTypes = Object.keys(nccConfigs)
   chainTypes.forEach(chainType => {
-    const symbol = nonContractChainConfigs[chainType][process.env.NETWORK_TYPE].symbol
-    symbolChainType[symbol] = chainType
+    const symbol = nccConfigs[chainType][process.env.NETWORK_TYPE].symbol
+    tokenChainMap[symbol] = chainType
   })
 
-  return symbolChainType
+  return tokenChainMap
 }
 let gTokenPairs = {}
-let gSymbolChainTokenMap = {}
+let gMappingTokenMap = {}
 let gTotalTokenPairs = 0
-let gNccSymbolChainTypeMap = getNccChainTypeSymbolMap()
-async function getTokenPairsAndSymbolTms(tm, total, web3Tms) {
+let gNccTokenChainTypeMap = getNccTokenChainTypeMap()
+async function getTokenPairsInfo(tm, total, web3Tms) {
   const tokenPairs = {}
-  const symbolChainTokenMap = {}
+  const mappingTokenMap = {}
   if (gTotalTokenPairs === total) {
     return {
       tokenPairs: gTokenPairs,
-      symbolChainTokenMap: gSymbolChainTokenMap,
+      mappingTokenMap: gMappingTokenMap,
     }
   }
 
-  Object.keys(gNccSymbolChainTypeMap).forEach(symbol => {symbolChainTokenMap[symbol] = {}})
+  Object.keys(gNccTokenChainTypeMap).forEach(symbol => {mappingTokenMap[symbol] = {}})
 
   if (tm.chain.multiCall) {
     const ids = {}
     // get ids
-    await getAggregate(tm, total, 100,
-      (i) => ([{
-        target: tm.address,
-        call: ['mapTokenPairIndex(uint256)(uint256)', i],
-        returns: [
-          [`id-${i}`, val => val],
-        ],
-      }]),
-      (ret, start, end) => {
-        for (let k = start; k <= end; k++) {
-          const id = parseInt(ret.results.transformed[`id-${k}`].toString(10))
-          ids[k] = id
-          tokenPairs[id] = {id}
-        }
-      }
-    )
+    await getTokenPairIds(tm, total, ids, tokenPairs)
 
-    await getAggregate(tm, total, 10,
-      (i) => ([{
-        target: tm.address,
-        call: ['getTokenPairInfo(uint256)(uint256,bytes,uint256,bytes)', ids[i]],
-        returns: [
-          [`fromChainID-${i}`, val => val],
-          [`fromAccount-${i}`, val => val],
-          [`toChainID-${i}`, val => val],
-          [`toAccount-${i}`, val => val],
-        ],
-      }, {
-        target: tm.address,
-        call: ['getAncestorInfo(uint256)(bytes,string,string,uint8,uint256)', ids[i]],
-        returns: [
-          [`account-${i}`, val => val],
-          [`name-${i}`, val => val],
-          [`symbol-${i}`, val => val],
-          [`decimals-${i}`, val => val],
-          [`chainId-${i}`, val => val],
-        ],
-      }]),
-      (ret, start, end) => {
-        for (let i = start; i <= end; i++) {
-          const id = ids[i]
-          const tokenPair = tokenPairs[id]
-          tokenPair.account = ret.results.transformed[`account-${i}`]
-          tokenPair.name = ret.results.transformed[`name-${i}`]
-          tokenPair.symbol = ret.results.transformed[`symbol-${i}`]
-          tokenPair.decimals = ret.results.transformed[`decimals-${i}`].toString(10)
-          tokenPair.chainId = ret.results.transformed[`chainId-${i}`].toString(10)
-          tokenPair.fromChainID = ret.results.transformed[`fromChainID-${i}`].toString(10)
-          tokenPair.fromAccount = ret.results.transformed[`fromAccount-${i}`]
-          tokenPair.toChainID = ret.results.transformed[`toChainID-${i}`].toString(10)
-          tokenPair.toAccount = ret.results.transformed[`toAccount-${i}`]
-
-          if (symbolChainTokenMap[tokenPair.symbol]) {
-            const toChainID = tokenPair.toChainID
-            const tm = getMapTm(web3Tms, parseInt(toChainID))
-            symbolChainTokenMap[tokenPair.symbol][tm.chain.chainType] = tm.chain.loadContractAt('MappingToken', tokenPair.toAccount.toLowerCase())
-          }
-        }
+    await getTokenPairDetails(tm, total, ids, tokenPairs, (tokenPair) => {
+      if (mappingTokenMap[tokenPair.symbol]) {
+        const toChainID = tokenPair.toChainID
+        const tm2 = getMapTm(web3Tms, parseInt(toChainID))
+        mappingTokenMap[tokenPair.symbol][tm2.chain.chainType] = tm2.chain.loadContractAt('MappingToken', tokenPair.toAccount.toLowerCase())
       }
-    )
+    })
   } else {
     for(let i=0; i<total; i++) {
       const id = parseInt(await tm.mapTokenPairIndex(i));
@@ -538,20 +490,20 @@ async function getTokenPairsAndSymbolTms(tm, total, web3Tms) {
         {mapName: tokenInfo.name, mapSymbol: tokenInfo.symbol, mapDecimals: tokenInfo.decimals});
       tokenPairs[id] = tokenPair;
 
-      if (symbolChainTokenMap[tokenPair.symbol]) {
+      if (mappingTokenMap[tokenPair.symbol]) {
         const toChainID = tokenPair.toChainID
-        const tm = getMapTm(web3Tms, parseInt(toChainID))
-        symbolChainTokenMap[tokenPair.symbol][tm.chain.chainType] = tm.chain.loadContractAt('MappingToken', tokenPairInfo.toAccount.toLowerCase())
+        const tm2 = getMapTm(web3Tms, parseInt(toChainID))
+        mappingTokenMap[tokenPair.symbol][tm2.chain.chainType] = tm2.chain.loadContractAt('MappingToken', tokenPairInfo.toAccount.toLowerCase())
       }
     }
   }
 
   gTokenPairs = tokenPairs
-  gSymbolChainTokenMap = symbolChainTokenMap
+  gMappingTokenMap = mappingTokenMap
   gTotalTokenPairs = total
   return {
     tokenPairs,
-    symbolChainTokenMap,
+    mappingTokenMap,
   }
 }
 
@@ -589,75 +541,70 @@ const getDebts = () => {
 
 // 第1步, 同步债务, 如果storeMan到了endTime, 我们获取原生币的所有各个mapToken的totalSupply之和作为该原生币的总债务
 const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
+  const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
+  const total = parseInt(await tmWan.totalTokenPairs())
+  // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
+  const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
+
   const time = parseInt(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
-  const sgs = db.getAllSga();
+  const sgs = db.getActiveSga();
   const debts = getDebts()
+  const isDebtCleans = {}
+  const smgConfigs = {}
+  await batchGetSmgConfigs(oracleWan, sgaWan, sgs, smgConfigs, isDebtCleans)
+
   for (let i = 0; i<sgs.length; i++) {
     const sg = sgs[i];
     const groupId = sg.groupId;
-    if (sg.status === 3 || sg.status === 7) {
-      continue;
-    }
-    const config = await sgaWan.getStoremanGroupConfig(groupId);
-
-    const isDebtClean = await oracleWan.isDebtClean(groupId)
+    const config = smgConfigs[groupId];
+    const isDebtClean = isDebtCleans[groupId]
     if (isDebtClean) {
       continue
     }
 
-    const groupName = web3.utils.hexToString(groupId)
     // 测试网, 只关注dev_开头的storeMan
+    // const groupName = web3.utils.hexToString(groupId)
     // if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
       if (config.status >= 5) {
         if (time > config.endTime) {
           log.info("isDebtClean2 time > endTime smgId", groupId)
           const debtToSave = {}
-          if (debts[groupId]) {
-            continue
-          }
-
-          debts[groupId] = {}
           debtToSave[groupId] = {}
-  
-          const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
-          const total = parseInt(await tmWan.totalTokenPairs())
-          // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
-          const { symbolChainTokenMap } = await getTokenPairsAndSymbolTms(tmWan, total, web3Tms)
+          if (!debts[groupId]) {
+            debts[groupId] = {}
+          }
   
           // storeMan的所有支持的token
-          for (let symbol in symbolChainTokenMap) {
-            const chainTokenMap = symbolChainTokenMap[symbol]
-            if (!debts[groupId][symbol]) {
-              debts[groupId][symbol] = {
-                isDebtClean: 0,
-                totalSupply: "0",
-                totalReceive: "",
-                lastReceiveTx: "",
-              }
-              debtToSave[groupId][symbol] = debts[groupId][symbol]
+          for (let symbol in mappingTokenMap) {
+            const oldDebt = debts[groupId][symbol]
+            // if total debt is already exist in db, pass
+            if (oldDebt && oldDebt.totalSupply !== '') {
+              continue
             }
+
+            const chainTokenMap = mappingTokenMap[symbol]
+
+            let totalDebt = BigNumber(0)
             // 每个支持的token,对应很多个mapToken, 累加起来这些mapToken的totalSupply,为总的债务
             for (let chainSymbol in chainTokenMap) {
               const totalSupply = await chainTokenMap[chainSymbol].getFun('totalSupply')
-              log.info(`token ${symbol} in chain ${chainSymbol} totalSupply = ${totalSupply}`)
-              debts[groupId][symbol].totalSupply = new BigNumber(totalSupply).plus(debts[groupId][symbol].totalSupply).toString(10)
-              debtToSave[groupId][symbol].totalSupply = debts[groupId][symbol].totalSupply
+              log.info(`${symbol} token in chain ${chainSymbol} totalSupply = ${totalSupply}`)
+              totalDebt = totalDebt.plus(totalSupply)
             }
+            debtToSave[groupId][symbol] = totalDebt.toString(10)
           }
+
+          // TODO: 减去属于别人的mapToken, 即获取别人的lockAccount金额
   
-          if (debtToSave[groupId]) {
-            const insertOneGroup = db.db.transaction((gId, debtMap) => {
-              for (const symbol in debtMap) {
-                db.insertDebt({
-                  groupId: gId,
-                  chainType: gNccSymbolChainTypeMap[symbol],
-                  ...debtMap[symbol]
-                });
-              }
-            })
-            insertOneGroup(groupId, debtToSave[groupId])
-          }
+          const insertOneGroup = db.db.transaction((groupId, debtMap) => {
+            for (const symbol in debtMap) {
+              const chainType = gNccTokenChainTypeMap[symbol]
+              const newDebt = db.modifyDebt(groupId, chainType, {totalSupply: debtMap[symbol]})
+              debts[groupId][symbol] = newDebt
+            }
+          })
+          insertOneGroup(groupId, debtToSave[groupId])
         }
       }
     // }
@@ -688,13 +635,16 @@ const scanAllChains = () => {
 const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
   const time = parseInt(new Date().getTime() / 1000);
   const sgs = db.getActiveSga();
+  const isDebtCleans = {}
+  const smgConfigs = {}
+  await batchGetSmgConfigs(oracleWan, sgaWan, sgs, smgConfigs, isDebtCleans)
+
   // 获取groupId的某个资产类别的debt, 在链上从endTime开始监测转移事件
   for (let i = 0; i < sgs.length; i++) {
     const sg = sgs[i];
     const groupId = sg.groupId;
-    const config = await sgaWan.getStoremanGroupConfig(groupId);
-
-    const isDebtClean = await oracleWan.isDebtClean(groupId)
+    const config = smgConfigs[groupId];
+    const isDebtClean = isDebtCleans[groupId]
     if (isDebtClean) {
       continue
     }
@@ -743,5 +693,5 @@ module.exports = {
   syncDebt,
   syncIsDebtCleanToWanV2,
   scanAllChains,
-  getNccChainTypeSymbolMap,
+  getNccTokenChainTypeMap,
 }

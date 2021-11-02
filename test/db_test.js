@@ -124,7 +124,3 @@ describe("sqlite3 test", function () {
     // assert.deepEqual(config, sga_config_new2);
   });
 });
-
-discribe("debt", function() {
-  
-})

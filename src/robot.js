@@ -140,7 +140,7 @@ const updateDebtCleanToWanV2 = async function() {
 const updateDebt = async function() {
   log.info("updateDebt")
   await doSchedule(async () => {
-    await syncDebt(sgaWan, oracleWan, web3Tms, chainBtc, chainXrp, chainLtc)
+    await syncDebt(sgaWan, oracleWan, web3Tms)
   })
 }
 
@@ -164,31 +164,31 @@ const robotSchedules = function() {
 
 // helper functions
 setTimeout(async () => {
-  if (process.env.USE_KEYSTORE === 'true') {
-    for (let i = 0; i < web3Oracles.length; i++) {
-      const oracle = web3Oracles[i]
-      const adminAddress = await oracle.admin()
+  // if (process.env.USE_KEYSTORE === 'true') {
+  //   for (let i = 0; i < web3Oracles.length; i++) {
+  //     const oracle = web3Oracles[i]
+  //     const adminAddress = await oracle.admin()
       
-      let address = adminAddress.toLowerCase() 
-      let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
-      if (sk === null) {
-        process.exit(0);
-      }
-      oracle.setAdminSk(sk)
-    }
-  }
-  if (process.env.ORACLE_ADMIN_WANCHAIN){
-    oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
-  }
+  //     let address = adminAddress.toLowerCase() 
+  //     let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
+  //     if (sk === null) {
+  //       process.exit(0);
+  //     }
+  //     oracle.setAdminSk(sk)
+  //   }
+  // }
+  // if (process.env.ORACLE_ADMIN_WANCHAIN){
+  //   oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
+  // }
 
-  setTimeout(updatePriceToWAN, 0);
-  setTimeout(scanNewStoreMan, 0);
-  setTimeout(scanAllChains, 10000)
+  // setTimeout(updatePriceToWAN, 0);
+  // setTimeout(scanNewStoreMan, 0);
+  // setTimeout(scanAllChains, 10000)
 
-  robotSchedules();
+  // robotSchedules();
 
   // setTimeout(scanNewStoreMan, 0);
-  // setTimeout(updateStoreManToChainsPart, 0)
+  setTimeout(updateStoreManToChainsPart, 0)
   // setTimeout(updateDebtCleanToWanV2, 0)
   // setTimeout(updateDebt, 0)
   // setTimeout(scanAllChains, 10000)

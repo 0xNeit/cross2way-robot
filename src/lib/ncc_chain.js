@@ -25,7 +25,17 @@ class NccChain {
     throw new Error('scanMessages not implemented')
   }
 
-  getP2PKHAddress() {
+  toWei(ether) {
+    const wei = BigNumber(ether).times('1e' + this.decimals)
+    return wei.toString(10)
+  }
+
+  toEther(wei) {
+    const ether = BigNumber(wei).div('1e' + this.decimals)
+    return ether.toString(10)
+  }
+
+  getP2PKHAddress(gpk) {
     throw new Error(`getP2PKHAddress not implemented`)
   }
 
@@ -102,36 +112,24 @@ class NccChain {
     const insertMsgs = db.db.transaction((items, next) => {
       for (let i = 0; i < items.length; i++) {
         const item = items[i]
+        const {groupId, chainType} = item
         db.insertMsg({
-          groupId: item.groupId,
-          chainType: item.chainType,
+          groupId,
+          chainType,
           receive: item.value,
           tx: item.tx,
         })
 
-        const assets = db.getMsgsByGroupId({groupId: item.groupId, chainType: this.chainType})
+        const assets = db.getMsgsByGroupId(item)
         const reducer = (sum, asset) => sum.plus(BigNumber(asset.receive))
         const totalAssets = assets.reduce(reducer, BigNumber(0))
-        const debt = db.getDebt({groupId: item.groupId, chainType: this.chainType})
-        if (debt) {
-          // 测试网, 不检查这个了, 只在主网检查这个
-          if (totalAssets.comparedTo(BigNumber(debt.totalSupply)) >= 0) {
-            debt.isDebtClean = 1
-          } else if (process.env.NETWORK_TYPE === 'testnet') {
-            debt.isDebtClean = 1
-          }
-          debt.totalReceive = totalAssets.toString()
-          debt.lastReceiveTx = item.tx
-          db.updateDebt(debt)
-        } else {
-          log.error(`debt not exist, ${item.groupId}, ${item.chainType}, ${totalAssets}`)
-        }
+        db.modifyDebt(groupId, chainType, {totalReceive: totalAssets.toString(10), lastReceiveTx: item.tx})
       }
       db.updateScan({chainType: this.chainType, blockNumber: next});
     })
     insertMsgs(msgs, next)
 
-    console.log('handleMessages finished')
+    console.log(`${this.chainType} handleMessages finished`)
   }
 
 

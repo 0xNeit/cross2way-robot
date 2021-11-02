@@ -1,6 +1,6 @@
 "use strict"
 const express = require('express')
-const { aggregate } = require('@makerdao/multicall');
+const { getSmgIsDebtCleans, getSmgConfigs, getTokenPairIds, getTokenPairDetails, getTokenInfos } = require('./lib/utils');
 const app = express()
 const port = parseInt(process.env.SERVER_PORT)
 
@@ -116,43 +116,6 @@ function itemFieldToHex(tokenPairs) {
   }
 }
 
-//
-async function getAggregate(tm, total, _step, buildCall, work) {
-  const config = {
-    rpcUrl: tm.chain.rpc,
-    multicallAddress: tm.chain.multiCall
-  }
-
-  let step = _step
-  let loopNum = Math.floor((total + step - 1) / step)
-  step = Math.floor((total + loopNum - 1) / loopNum)
-  let j = 0
-  let calls = []
-  let result = {}
-  for (let i = 0; i < total; i++) {
-    calls.push(
-      ...buildCall(i)
-    )
-
-    if ((j === step - 1) || (i === total - 1)) {
-      // send
-      try {
-        const ret = await aggregate(calls, config);
-        // record
-        work(ret, i - j, i)
-      } catch(e) {
-        log.error(e)
-        throw e
-      }
-
-      // reset
-      j = 0
-      calls = []
-    } else {
-      j++
-    }
-  }
-}
 async function getTokenPairs(tm, _total) {
   const tokenPairs = {}
   const toChainPairIds = {}
@@ -161,95 +124,21 @@ async function getTokenPairs(tm, _total) {
   if (tm.chain.multiCall) {
     const ids = {}
     // get ids
-    await getAggregate(tm, total, 100,
-      (i) => ([{
-        target: tm.address,
-        call: ['mapTokenPairIndex(uint256)(uint256)', i],
-        returns: [
-          [`id-${i}`, val => val],
-        ],
-      }]),
-      (ret, start, end) => {
-        for (let k = start; k <= end; k++) {
-          const id = parseInt(ret.results.transformed[`id-${k}`].toString(10))
-          ids[k] = id
-          tokenPairs[id] = {id}
-        }
+    await getTokenPairIds(tm, total, ids, tokenPairs)
+
+    await getTokenPairDetails(tm, total, ids, tokenPairs, (tokenPair) => {
+      if (!toChainPairIds[tokenPair.toChainID]) {
+        toChainPairIds[tokenPair.toChainID] = {}
       }
-    )
-
-    await getAggregate(tm, total, 10,
-      (i) => ([{
-        target: tm.address,
-        call: ['getTokenPairInfo(uint256)(uint256,bytes,uint256,bytes)', ids[i]],
-        returns: [
-          [`fromChainID-${i}`, val => val],
-          [`fromAccount-${i}`, val => val],
-          [`toChainID-${i}`, val => val],
-          [`toAccount-${i}`, val => val],
-        ],
-      }, {
-        target: tm.address,
-        call: ['getAncestorInfo(uint256)(bytes,string,string,uint8,uint256)', ids[i]],
-        returns: [
-          [`account-${i}`, val => val],
-          [`name-${i}`, val => val],
-          [`symbol-${i}`, val => val],
-          [`decimals-${i}`, val => val],
-          [`chainId-${i}`, val => val],
-        ],
-      }]),
-      (ret, start, end) => {
-        for (let i = start; i <= end; i++) {
-          const id = ids[i]
-          tokenPairs[id].account = ret.results.transformed[`account-${i}`]
-          tokenPairs[id].name = ret.results.transformed[`name-${i}`]
-          tokenPairs[id].symbol = ret.results.transformed[`symbol-${i}`]
-          tokenPairs[id].decimals = ret.results.transformed[`decimals-${i}`].toString(10)
-          tokenPairs[id].chainId = ret.results.transformed[`chainId-${i}`].toString(10)
-          tokenPairs[id].fromChainID = ret.results.transformed[`fromChainID-${i}`].toString(10)
-          tokenPairs[id].fromAccount = ret.results.transformed[`fromAccount-${i}`]
-          tokenPairs[id].toChainID = ret.results.transformed[`toChainID-${i}`].toString(10)
-          tokenPairs[id].toAccount = ret.results.transformed[`toAccount-${i}`]
-
-          if (!toChainPairIds[tokenPairs[id].toChainID]) {
-            toChainPairIds[tokenPairs[id].toChainID] = {}
-          }
-
-          toChainPairIds[tokenPairs[id].toChainID][id] = true
-        }
-      }
-    )
+      toChainPairIds[tokenPair.toChainID][id] = true
+    })
 
     // 每种tm上需要查的token
     const toIds = Object.keys(toChainPairIds)
     for (let index in toIds) {
-      const tm = getMapTm(parseInt(toIds[index]))
+      const tm2 = getMapTm(parseInt(toIds[index]))
       const validIds = Object.keys(toChainPairIds[toIds[index]])
-      await getAggregate(tm, validIds.length, 30,
-        (i) => {
-          const id = parseInt(validIds[i])
-          return [{
-            target: tm.address,
-            call: ['getTokenInfo(uint256)(address,string,string,uint8)', id],
-            returns: [
-              [`addr-${i}`, val => val],
-              [`name-${i}`, val => val],
-              [`symbol-${i}`, val => val],
-              [`decimals-${i}`, val => val],
-            ],
-          }]
-        },
-        (ret, start, end) => {
-          for (let i = start; i <= end; i++) {
-            const id = parseInt(validIds[i])
-            tokenPairs[id].mapAddr = ret.results.transformed[`addr-${i}`]
-            tokenPairs[id].mapName = ret.results.transformed[`name-${i}`]
-            tokenPairs[id].mapSymbol = ret.results.transformed[`symbol-${i}`]
-            tokenPairs[id].mapDecimals = ret.results.transformed[`decimals-${i}`].toString(10)
-          }
-        }
-      )
+      await getTokenInfos(tm2, validIds, tokenPairs)
     }
   } else {
     for(let i=0; i<total; i++) {
@@ -360,70 +249,8 @@ async function refreshOracles() {
     const sgAll = db.getAllSga();
     if (oracleStoreman.chain.multiCall) {
       const isDebtCleans = {}
-      await getAggregate(oracle, sgAll.length, 100,
-        (i) => {
-          const sg = sgAll[i];
-          const groupId = sg.groupId;
-          return [{
-            target: oracle.address,
-            call: ['isDebtClean(bytes32)(bool)', groupId],
-            returns: [
-              [`isDebtClean-${i}`, val => val]
-            ]
-          }]
-        },
-        (ret, start, end) => {
-          for (let i = start; i <= end; i++) {
-            const groupId = sgAll[i].groupId
-            isDebtCleans[groupId] = ret.results.transformed[`isDebtClean-${i}`]
-          }
-        }
-      )
-      await getAggregate(oracleStoreman, sgAll.length, 10,
-        (i) => {
-          const sg = sgAll[i];
-          const groupId = sg.groupId;
-          return [{
-            target: oracleStoreman.address,
-            // bytes gpk1, bytes gpk2, uint startTime, uint endTime
-            call: ['getStoremanGroupConfig(bytes32)(bytes32,uint8,uint256,uint256,uint256,uint256,uint256,bytes,bytes,uint256,uint256)', groupId],
-            returns: [
-              [`groupId-${i}`, val => val],
-              [`status-${i}`, val => val],
-              [`deposit-${i}`, val => val],
-              [`chain1-${i}`, val => val],
-              [`chain2-${i}`, val => val],
-              [`curve1-${i}`, val => val],
-              [`curve2-${i}`, val => val],
-              [`gpk1-${i}`, val => val],
-              [`gpk2-${i}`, val => val],
-              [`startTime-${i}`, val => val],
-              [`endTime-${i}`, val => val],
-            ],
-          }]
-        },
-        (ret, start, end) => {
-          for (let i = start; i <= end; i++) {
-            const groupId = sgAll[i].groupId
-            const config = {}
-            config.groupId = ret.results.transformed[`groupId-${i}`] + ' / ' + web3.utils.hexToString(ret.results.transformed[`groupId-${i}`])
-            config.status = ret.results.transformed[`status-${i}`].toString(10)
-            config.deposit = ret.results.transformed[`deposit-${i}`].toString(10)
-            config.chain1 = ret.results.transformed[`chain1-${i}`] + ' / ' + web3.utils.toHex(ret.results.transformed[`chain1-${i}`])
-            config.chain2 = ret.results.transformed[`chain2-${i}`] + ' / ' + web3.utils.toHex(ret.results.transformed[`chain2-${i}`])
-            config.curve1 = ret.results.transformed[`curve1-${i}`].toString(10)
-            config.curve2 = ret.results.transformed[`curve2-${i}`].toString(10)
-            config.gpk1 = ret.results.transformed[`gpk1-${i}`]
-            config.gpk2 = ret.results.transformed[`gpk2-${i}`]
-            config.startTime = ret.results.transformed[`startTime-${i}`].toString(10)
-            config.endTime = ret.results.transformed[`endTime-${i}`].toString(10)
-            config.isDebtClean = isDebtCleans[groupId].toString()
-  
-            web3Sgs[groupId] = config
-          }
-        }
-      )
-      // 
+      await getSmgIsDebtCleans(oracle, sgAll, isDebtCleans)
+      await getSmgConfigs(oracleStoreman, sgAll, web3Sgs, isDebtCleans)
     } else {
       for (let i = 0; i<sgAll.length; i++) {
         const sg = sgAll[i];
