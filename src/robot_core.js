@@ -45,7 +45,7 @@ async function doSchedule(func, tryTimes = process.env.SCHEDULE_RETRY_TIMES, ...
         await logAndSendMail(`${func.name} exception`, `args=${args}, tried ${tryTimes} still failed, ${e instanceof Error ? e.stack : e}`);
         return;
       }
-      log.warn(`${func.name} exception : ${e instanceof Error ? e.stack : e}`);
+      log.warn(`${func.name} exception : `, e);
       await sleep(parseInt(process.env.SCHEDULE_RETRY_INTERVAL));
     }
   }
@@ -211,7 +211,7 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       const configs = await oracles[j].getCurrentGroupIds()
       curConfigs.push(configs)
     } catch(e) {
-      log.error(`chain ${oracles[j].chain.core.chainType} failed`)
+      log.error(`chain ${oracles[j].chain.core.chainType} failed`, e)
       throw e
     }
   }
@@ -588,7 +588,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   // 获取活着的sg
   const sgsAlive = sgs.filter(sg => {
     if (sg.startTime <= time && sg.endTime >= time) {
-      if (sg.status >= 5 && sg.status <6) {
+      if (sg.status === 5) {
         return true
       }
     }
@@ -621,7 +621,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     // const groupName = web3.utils.hexToString(groupId)
     // if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
       if (config.status >= 5) {
-        if (time > config.endTime) {
+        // if (time > config.endTime) {
           log.info("isDebtClean2 time > endTime smgId", groupId)
           const debtToSave = {}
           debtToSave[groupId] = {}
@@ -632,7 +632,8 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
           const mappingTokenMap = await getMappingTokenMap()
           // storeMan的所有支持的token
           for (let symbol in mappingTokenMap) {
-            const oldDebt = debts[groupId][symbol]
+            const chainType = gNccTokenChainTypeMap[symbol]
+            const oldDebt = debts[groupId][chainType]
             // if total debt is already exist in db, pass
             if (oldDebt && oldDebt.totalSupply !== '') {
               continue
@@ -653,24 +654,23 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
               const promises = batchGetLockAssetRequest(sgsAlive, lockAssets)
               await Promise.all(promises)
             }
-            const otherDebt = getOtherLockAssets(symbol, groupId, lockAssets)
+            const otherDebt = getOtherLockAssets(chainType, groupId, lockAssets)
             let ourDebt = totalDebt.minus(otherDebt)
             if (totalDebt.comparedTo(otherDebt) < 0) {
               log.warn(`totalDebt < otherDebt! ${symbol} ${groupId} ${totalDebt.toString()} < ${otherDebt.toString()}`)
               ourDebt = BigNumber(0)
             }
-            debtToSave[groupId][symbol] = ourDebt.toString(10)
+            debtToSave[groupId][chainType] = ourDebt.toString(10)
           }
   
           const insertOneGroup = db.db.transaction((groupId, debtMap) => {
-            for (const symbol in debtMap) {
-              const chainType = gNccTokenChainTypeMap[symbol]
-              const newDebt = db.modifyDebt(groupId, chainType, {totalSupply: debtMap[symbol]})
-              debts[groupId][symbol] = newDebt
+            for (const chainType in debtMap) {
+              const newDebt = db.modifyDebt(groupId, chainType, {totalSupply: debtMap[chainType]})
+              debts[groupId][chainType] = newDebt
             }
           })
           insertOneGroup(groupId, debtToSave[groupId])
-        }
+        // }
       }
     // }
   }

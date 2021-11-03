@@ -7,10 +7,24 @@ const testInsertDebt = () => {
     chainType : 'btc',
     isDebtClean : 1,
     totalSupply : '111',
-    totalReceive : '222',
+    totalReceive : '8208947716449',
     lastReceiveTx : 'aa',
   }
   db.insertDebt(data)
+  // const data2 = {
+  //   groupId : '0x2',
+  //   chainType : 'btc',
+  // }
+  // db.insertDebt(data2)
+}
+const testInsertMsg = () => {
+  const data = {
+    groupId : '0x1',
+    chainType : 'btc',
+    receive : '8208947716449',
+    tx : 'aa',
+  }
+  db.insertMsg(data)
   // const data2 = {
   //   groupId : '0x2',
   //   chainType : 'btc',
@@ -42,7 +56,7 @@ const testBigNumber = () => {
 }
 
 setTimeout(() => {
-  // testInsertDebt()
+  testInsertMsg()
   // testUpdateDebt()
-  testBigNumber()
+  // testBigNumber()
 }, 0)

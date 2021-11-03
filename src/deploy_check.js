@@ -542,7 +542,7 @@ const check = async () => {
     // checkObjectObject(oracle.WanChain.sgs, iWanOracle.Ethereum.sgs, "iWan ethereum oracle store man group config", ObjectType.StoreMan)
     // checkObjectObject(oracle.Ethereum.sgs, iWanOracle.WanChain.sgs, "iWan ethereum oracle store man group config", ObjectType.StoreMan)
   } catch (error) {
-    writePrint(` ❌, exception: ${error}`)
+    writePrint(` ❌, exception:`, error)
   }
   
   bChecking = false

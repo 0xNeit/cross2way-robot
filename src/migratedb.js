@@ -68,7 +68,7 @@ async function v0Tov1() {
     const step = parseInt(process.env.SCAN_STEP)
     await scanInst.scanStoremanGroup(from, to, step);
   } catch (e) {
-    console.error(`migrate from v0 to v1 failed: ${e}`)
+    console.error("migrate from v0 to v1 failed:", e)
   }
 }
 

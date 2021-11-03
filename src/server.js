@@ -333,7 +333,7 @@ async function refreshChains() {
     try {
       crossChainId = await web3Cross[i].getChainId()
     } catch (e) {
-      log.error(`${chain.chainName} cross getChainId failed ${e}`)
+      log.error(`${chain.chainName} cross getChainId exception:`, e)
     }
     result[chain.chainName] = {
       blockNumber: await chain.core.getBlockNumber(),
@@ -384,7 +384,7 @@ const doRefresh = async () => {
     await refreshChains();
     gTip = false
   } catch(e) {
-    console.log(e);
+    console.log(`doRefresh exception`, e);
     gTip = false
   }
 }

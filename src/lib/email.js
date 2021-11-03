@@ -40,13 +40,13 @@ const sendMail = async (subject, content, from) => {
 };
 
 const logAndSendMail = async (subject, content, isSend = true, from = process.env.EMAIL_FROM_NAME) => {
-    log.error(subject + " : " + content);
+    log.error(subject + " : ", content);
     try {
         if (isSend) {
             await sendMail(subject, content, from);
         }
     } catch (e) {
-        log.error(`send mail failed, sub = ${subject}, content = ${content}, err=${e instanceof Error ? e.stack : e}`);
+        log.error(`send mail failed, sub = ${subject}, content = ${content}`, e);
     }
 }
 

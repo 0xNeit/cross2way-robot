@@ -16,7 +16,7 @@ function getSk(addressTip, tip) {
       const keyObject = keythereum.importFromFile(address.slice(2), process.env.KEYSTORE_PARENT_FOLD);
       sk = keythereum.recover(password, keyObject);
     } catch(e) {
-      console.error(e)
+      console.error(`getSk exception ${addressTip}`, e)
     }
   }
   return sk.toString('hex')

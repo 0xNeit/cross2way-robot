@@ -60,7 +60,7 @@ function getSk(address, tip) {
       const keyObject = keythereum.importFromFile(address.slice(2), process.env.KEYSTORE_PARENT_FOLD);
       sk = keythereum.recover(password, keyObject);
     } catch(e) {
-      log.error(e)
+      log.error(`get private key exception: ${address}`, e)
     }
   }
   return sk.toString('hex')
@@ -96,7 +96,7 @@ const updateStoreManToChains = async function() {
         const oracles = web3Oracles.filter(o => (o.chain.chainName !== 'wan' ))
         await syncConfigToOtherChain(sgaWan, oracles);
       } catch(e) {
-        log.error(e)
+        log.error(`updateStoreManToChains exception:`, e)
       } finally {
         scanInst.bScanning = false
       }
@@ -117,7 +117,7 @@ const updateStoreManToChainsPart = async function() {
         const oracles = web3Oracles.filter(o => (o.chain.chainName !== 'wan' ))
         await syncConfigToOtherChain(sgaWan, oracles, true);
       } catch(e) {
-        log.error(e)
+        log.error(`updateStoreManToChainsPart exception`, e)
       } finally {
         scanInst.bScanning = false
       }

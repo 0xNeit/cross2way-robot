@@ -8,6 +8,7 @@ const BigNumber = require('bignumber.js')
 
 const btc = require('../src/lib/btc');
 const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccTokenChainTypeMap} = require('../src/robot_core');
+const { ExceptionHandler } = require('winston');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
 
@@ -37,7 +38,7 @@ const getTotalSupply = async() => {
   }
 }
 
-const checkDebt = async () => {
+const testSyncDebt = async () => {
   const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
   const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
   const oracleWan = chainWan.loadContract('OracleDelegate')
@@ -163,7 +164,9 @@ setTimeout(async () => {
   // dbTx()
   // insertDebt()
   // getNccTokenChainTypeMap()
-  testScanAllChains()
+
+  testSyncDebt()
+  // testScanAllChains()
 }, 0)
 
 process.on('uncaughtException', err => {

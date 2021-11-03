@@ -8,11 +8,7 @@ const getData = async url => {
     const data = response.data;
     return data;
   } catch (error) {
-    if (typeof(error) === "string") {
-      log.error(error);
-    } else {
-      log.error(JSON.stringify(error));
-    }
+    log.error(`get ${url} exception:`, error)
   }
   return null;
 }

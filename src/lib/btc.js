@@ -142,13 +142,13 @@ class BtcBase extends NccChain {
                       }
                       msgs.push(msg)
 
-                      log.info(`from = ${fromGroupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.receive}, tx = ${msg.tx}`)
+                      log.info(`from = ${fromGroupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.value}, tx = ${msg.tx}`)
                     }
                   }
                 }
               }
             } catch(e) {
-              log.warn(`${this.chainType} scanMessages op_return parse failed ${scriptPubKey.hex} ${e}`)
+              log.warn(`${this.chainType} scanMessages op_return parse failed ${scriptPubKey.hex}:`, e)
             }
           }
         })

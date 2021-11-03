@@ -118,6 +118,7 @@ const getAggregate = async (rpcUrl, multicallAddress, total, _step, buildCall, c
         // record
         cb(ret, i - j, i)
       } catch(e) {
+        console.warn(`getAggregate exception ${rpcUrl} ${multicallAddress} ${JSON.stringify(calls, null, 2)}`, e)
         throw e
       }
 

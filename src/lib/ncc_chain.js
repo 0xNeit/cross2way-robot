@@ -180,8 +180,7 @@ class NccChain {
   
       await this._doScan(db, sgs, from, step, to)
     } catch (e) {
-      log.error(e)
-      log.error(`scan ${this.chainType} exception: ${e}`)
+      log.error(`scan ${this.chainType} exception:`, e)
       setTimeout(async () => {
         await this.scan(db)
       }, this.scanInterval * 1000)

@@ -71,6 +71,7 @@ class DB {
       if (e.code === "SQLITE_CONSTRAINT_PRIMARYKEY") {
         this.updateScan(item);
       } else {
+        console.log(`insertScanForce exception ${JSON.stringify(item)}`, e)
         throw e;
       }
     }
@@ -102,17 +103,14 @@ class DB {
       totalReceive: '',
       lastReceiveTx: '',
     }
-    if (item.totalSupply !== '') {
+    if (item.totalSupply) {
       coinDebt.totalSupply = item.totalSupply
     }
-    if (item.totalReceive !== '') {
+    if (item.totalReceive) {
       coinDebt.totalReceive = item.totalReceive
     }
-    if (item.lastReceiveTx !== '') {
+    if (item.lastReceiveTx) {
       coinDebt.lastReceiveTx = item.lastReceiveTx
-    }
-    if (coinDebt.isDebtClean !== item.isDebtClean) {
-      coinDebt.isDebtClean = item.isDebtClean
     }
 
     if (coinDebt.totalReceive !== '' && coinDebt.totalSupply !== '') {

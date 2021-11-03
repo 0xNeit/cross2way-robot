@@ -6,6 +6,7 @@ const dotConfigs = require('./configs-ncc').DOT
 const NccChain = require('./ncc_chain')
 const log = require('./log')
 const crypto = require('crypto')
+const BigNumber = require('bignumber.js')
 
 // const provider = new WsProvider(process.env.RPC_URL_DOT);
 // let api = null
@@ -257,7 +258,7 @@ class DotChain extends NccChain {
             
             if(callInfo.section === 'balances' && callInfo.method === 'transferKeepAlive' && call.args && call.args.dest) {
               toAddress = call.args.dest.id
-              msg.value = call.args.value
+              msg.value = BigNumber(call.args.value).toString(10)
             } else if (callInfo.section === 'system' && callInfo.method === 'remark' && call.args && (call.args.remark || call.args._remark)) {
               const memoData = asciiToHex(hexTrip0x(call.args._remark ? call.args._remark : call.args.remark))
               const memoParsed = parseMemo(memoData)
@@ -274,6 +275,8 @@ class DotChain extends NccChain {
             const toSmgInfo = this.getSmgInfoFromPreSmgId(msg.groupId, sgs)
             if (toSmgInfo && toSmgInfo.address === toAddress) {
               msgs.push(msg)
+
+              log.info(`from = ${msg.groupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.value}, tx = ${msg.tx}`)
             }
           }
         }

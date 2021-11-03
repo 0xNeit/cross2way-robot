@@ -128,6 +128,8 @@ class XrpChain extends NccChain {
   }
 
   async getBalance(address) {
+    await this.waitForApiReady()
+    console.log(`${address}`)
     const balances = await this.api.getBalances(address)
     const balance = balances.find(b => b.currency === this.chainType)
     return this.toWei(balance.value)
@@ -204,7 +206,7 @@ class XrpChain extends NccChain {
                 }
                 msgs.push(msg)
 
-                log.info(`from = ${fromGroupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.receive}, tx = ${msg.tx}`)
+                log.info(`from = ${fromGroupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.value}, tx = ${msg.tx}`)
               }
             }
           }

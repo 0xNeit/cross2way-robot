@@ -10,11 +10,7 @@ const getData = async url => {
     const response = await axios.get(url);
     return response.data;
   } catch (error) {
-    if (typeof(error) === "string") {
-      log.error(error);
-    } else {
-      log.error(JSON.stringify(error));
-    }
+    log.error(`get ${url} exception:`, error)
   }
   return null;
 }
@@ -41,7 +37,7 @@ const printIDs = async (url, symbolsStr) => {
     })
     console.log(str)
   } catch (error) {
-    console.error(error)
+    console.error(`get ${url} exception`, error)
   }
   return null
 }
@@ -83,7 +79,7 @@ const getIDs = async (url, symbolsStr) => {
 
     return symbolsMap
   } catch (error) {
-    console.error(error)
+    console.error(`get ${url} exception:`, error)
   }
   return null
 }
@@ -148,7 +144,7 @@ async function getPrices(symbolsStr3rd, symbolsStrSwap) {
     try {
       priceMap[it] = fractionToDecimalString(priceIdMap[symbolIdMap[it]].usd, process.env.PRICE_DECIMAL);
     } catch (e) {
-      log.error(`${it} ${symbolIdMap[it]} price is not exist, ${e}`)
+      log.error(`${it} ${symbolIdMap[it]} price is not exist`, e)
       throw e
     }
 

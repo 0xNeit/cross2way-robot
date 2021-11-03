@@ -104,6 +104,7 @@ class IWan {
     try {
       return await this.apiClient.getTransactionReceipt(this.chainType, txHash);
     } catch (e) {
+      console.log(`getTransactionReceipt exception`, e)
       return null;
     }
   }
