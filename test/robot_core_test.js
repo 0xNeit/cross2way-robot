@@ -2,6 +2,7 @@ process.env.LOG_ENGINE = process.env.LOG_ENGINE
 const log = require('../src/lib/log');
 const { getChain, getChains } = require("../src/lib/web3_chains")
 const {web3} = require('../src/lib/utils')
+const { gNccChains, gNccChainTypes } = require('../src/lib/ncc_chains')
 const db = require('../src/lib/sqlite_db')
 const BigNumber = require('bignumber.js')
 
@@ -67,7 +68,23 @@ const checkDebtClean = async() => {
 }
 
 const testScanAllChains = async () => {
-  await scanAllChains()
+  const chains = gNccChains
+  const chainTypes = gNccChainTypes
+  
+  const from = {
+    'BTC': 2099138,
+    'LTC': 2048641,
+    'XRP': 21695835,
+    'DOT': 7718536,
+    'DOGE': 3371105,
+  }
+  for (let i = 0; i < chainTypes.length; i++) {
+    const num = i
+    setTimeout(async () => {
+      const chainType = chainTypes[num]
+      await chains[chainType].chain.scan(db, from[chainType], from[chainType] + 1)
+    }, 0)
+  }
 }
 
 const insertDebt = () => {

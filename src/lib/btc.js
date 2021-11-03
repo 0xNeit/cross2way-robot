@@ -1,3 +1,5 @@
+'use strict'
+
 const bitcoin = require( 'bitcoinjs-lib' );
 const bs58check = require('bs58check')
 const BtcClient = require('bitcoin-core');

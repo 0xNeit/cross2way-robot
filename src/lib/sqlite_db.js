@@ -4,6 +4,7 @@ const path = require('path');
 const fs = require('fs');
 const os = require('os');
 const { promisify, sleep } = require("./utils");
+const BigNumber = require('bignumber.js')
 class DB {
   constructor() {
     this.isInit = false;
@@ -115,7 +116,7 @@ class DB {
     }
 
     if (coinDebt.totalReceive !== '' && coinDebt.totalSupply !== '') {
-      if (coinDebt.totalReceive.comparedTo(BigNumber(coinDebt.totalSupply)) >= 0) {
+      if (BigNumber(coinDebt.totalReceive).comparedTo(BigNumber(coinDebt.totalSupply)) >= 0) {
         coinDebt.isDebtClean = 1
       }
     }

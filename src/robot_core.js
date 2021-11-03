@@ -683,10 +683,8 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 //    handleMessages (处理完消息, 更新scan到的blockNumber到数据库)
 const scanAllChains = () => {
   const chains = gNccChains
-
   const chainTypes = gNccChainTypes
-  // const chainTypes = ['DOGE']
-  // 并发扫链
+  
   for (let i = 0; i < chainTypes.length; i++) {
     const num = i
     setTimeout(async () => {

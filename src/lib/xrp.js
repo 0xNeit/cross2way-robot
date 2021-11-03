@@ -154,7 +154,7 @@ class XrpChain extends NccChain {
         types: ['payment', 'accountDelete'],
       }
   
-      if (!sg.gpk2) {
+      if (!sg.gpk2 || sg.gpk2.length < 130) {
         continue
       }
       const sgAddress = pkToAddress(sg.gpk2);

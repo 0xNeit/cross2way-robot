@@ -1,3 +1,5 @@
+'use strict'
+
 const { default: BigNumber } = require('bignumber.js');
 const log = require('./log')
 // Non-contract chains : btc, ltc, xrp, dot
@@ -86,7 +88,7 @@ class NccChain {
         return null
       }
       const gpk = this.curveType === 0 ? sg.gpk2 : sg.gpk1
-      if (!gpk) {
+      if (!gpk || gpk.length < 130) {
         log.info(`getSmgInfoFromPreSmgId groupId ${sg.groupId} preGroupId ${preGroupId} gpk is empty ${gpk} `)
         return null
       }
@@ -157,14 +159,14 @@ class NccChain {
     }
   }
 
-  scan = async (db) => {
+  scan = async (db, _from, _to) => {
     try {
       const sgs = db.getActiveSga();
       const blockNumber = await this.getBlockNumber()
   
-      const from = db.getScan(this.chainType).blockNumber + 1
+      const from = _from ? _from : db.getScan(this.chainType).blockNumber + 1
       const step = this.scanStep
-      const to = blockNumber - this.safeBlockCount
+      const to = _to ? _to : blockNumber - this.safeBlockCount
       // const to = from + 10 - this.safeBlockCount
   
       if (from > to) {
@@ -178,6 +180,7 @@ class NccChain {
   
       await this._doScan(db, sgs, from, step, to)
     } catch (e) {
+      log.error(e)
       log.error(`scan ${this.chainType} exception: ${e}`)
       setTimeout(async () => {
         await this.scan(db)
