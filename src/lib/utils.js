@@ -255,7 +255,7 @@ const getTokenPairDetails = async (tm, total, ids, tokenPairs, cb) => {
         tokenPair.toAccount = ret.results.transformed[`toAccount-${i}`]
 
         if (cb) {
-          cb(tokenPair)
+          cb(tokenPair, id)
         }
       }
     }

@@ -126,7 +126,7 @@ async function getTokenPairs(tm, _total) {
     // get ids
     await getTokenPairIds(tm, total, ids, tokenPairs)
 
-    await getTokenPairDetails(tm, total, ids, tokenPairs, (tokenPair) => {
+    await getTokenPairDetails(tm, total, ids, tokenPairs, (tokenPair, id) => {
       if (!toChainPairIds[tokenPair.toChainID]) {
         toChainPairIds[tokenPair.toChainID] = {}
       }

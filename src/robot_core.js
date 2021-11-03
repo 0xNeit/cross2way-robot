@@ -71,6 +71,30 @@ const batchGetSmgConfigs = async (oracleWan, sgaWan, sgs, smgConfigs, isDebtClea
   }
 }
 
+const getBalance = async (chain, groupId, address, asset) => {
+  const balance = await chain.getBalance(address)
+  asset[groupId] = balance
+} 
+
+const batchGetLockAssetRequest = (sgs, lockAssets) => {
+  const promises = []
+  const chains = gNccChains
+  const chainTypes = gNccChainTypes
+
+  for (let i = 0; i < chainTypes.length; i++) {
+    const chainType = chainTypes[i]
+    lockAssets[chainType] = {}
+    for (let j = 0; j < sgs.length; j++) {
+      const sg = sgs[j]
+      const groupId = sg.groupId
+      const chain = chains[chainType].chain
+      const address = chain.getP2PKHAddress(sg.gpk2)
+      promises.push(getBalance(chain, groupId, address, lockAssets[chainType]))
+    }
+  }
+  return promises
+}
+
 async function updatePrice(oracle, pricesMap, symbolsStringArray) {
   log.info(`updatePrice ${oracle.core.chainType} begin`);
 
@@ -471,7 +495,7 @@ async function getTokenPairsInfo(tm, total, web3Tms) {
     // get ids
     await getTokenPairIds(tm, total, ids, tokenPairs)
 
-    await getTokenPairDetails(tm, total, ids, tokenPairs, (tokenPair) => {
+    await getTokenPairDetails(tm, total, ids, tokenPairs, (tokenPair, id) => {
       if (mappingTokenMap[tokenPair.symbol]) {
         const toChainID = tokenPair.toChainID
         const tm2 = getMapTm(web3Tms, parseInt(toChainID))
@@ -541,10 +565,17 @@ const getDebts = () => {
 
 // 第1步, 同步债务, 如果storeMan到了endTime, 我们获取原生币的所有各个mapToken的totalSupply之和作为该原生币的总债务
 const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
-  const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
-  const total = parseInt(await tmWan.totalTokenPairs())
-  // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
-  const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
+  let curMappingTokenMap = null
+  const getMappingTokenMap = async () => {
+    if (!curMappingTokenMap) {
+      const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
+      const total = parseInt(await tmWan.totalTokenPairs())
+      // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
+      const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
+      curMappingTokenMap = mappingTokenMap
+    }
+    return curMappingTokenMap
+  }
 
   const time = parseInt(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
@@ -553,6 +584,29 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   const isDebtCleans = {}
   const smgConfigs = {}
   await batchGetSmgConfigs(oracleWan, sgaWan, sgs, smgConfigs, isDebtCleans)
+
+  // 获取活着的sg
+  const sgsAlive = sgs.filter(sg => {
+    if (sg.startTime <= time && sg.endTime >= time) {
+      if (sg.status >= 5 && sg.status <6) {
+        return true
+      }
+    }
+    return false
+  })
+
+  let lockAssets = null
+  const getOtherLockAssets = (symbol, groupId, lockAssets) => {
+    const assets = lockAssets[symbol]
+    const balance = Object.keys(assets).reduce((sum, gId) => {
+      if (gId !== groupId) {
+        return sum.plus(BigNumber(assets[groupId]))
+      } else {
+        return sum
+      }
+    }, BigNumber(0))
+    return balance.toString(10)
+  }
 
   for (let i = 0; i<sgs.length; i++) {
     const sg = sgs[i];
@@ -575,6 +629,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
             debts[groupId] = {}
           }
   
+          const mappingTokenMap = await getMappingTokenMap()
           // storeMan的所有支持的token
           for (let symbol in mappingTokenMap) {
             const oldDebt = debts[groupId][symbol]
@@ -592,10 +647,20 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
               log.info(`${symbol} token in chain ${chainSymbol} totalSupply = ${totalSupply}`)
               totalDebt = totalDebt.plus(totalSupply)
             }
-            debtToSave[groupId][symbol] = totalDebt.toString(10)
+            // TODO: 减去属于别人的mapToken, 即获取别人的lockAccount金额
+            if (!lockAssets) {
+              lockAssets = {}
+              const promises = batchGetLockAssetRequest(sgsAlive, lockAssets)
+              await Promise.all(promises)
+            }
+            const otherDebt = getOtherLockAssets(symbol, groupId, lockAssets)
+            let ourDebt = totalDebt.minus(otherDebt)
+            if (totalDebt.comparedTo(otherDebt) < 0) {
+              log.warn(`totalDebt < otherDebt! ${symbol} ${groupId} ${totalDebt.toString()} < ${otherDebt.toString()}`)
+              ourDebt = BigNumber(0)
+            }
+            debtToSave[groupId][symbol] = ourDebt.toString(10)
           }
-
-          // TODO: 减去属于别人的mapToken, 即获取别人的lockAccount金额
   
           const insertOneGroup = db.db.transaction((groupId, debtMap) => {
             for (const symbol in debtMap) {

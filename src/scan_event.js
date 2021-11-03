@@ -56,7 +56,7 @@ class ScanEvent {
   }
 
   async doScan(from, step, to) {
-    console.log(`doScan this = ${this}`);
+    console.log(`doScan ${this.chainType} from  = ${from}, step = ${step}, to = ${to}`);
     let next = from + step;
     if (next > to) {
       next = to;
