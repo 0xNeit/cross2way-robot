@@ -135,7 +135,11 @@ class XrpChain extends NccChain {
       const balance = balances.find(b => b.currency === this.chainType)
       return this.toWei(balance.value)
     } catch(e) {
-      console.log(typeof(e))
+      if (e.name === 'RippledError') {
+        if (e.message === 'Account not found') {
+          return '0'
+        }
+      }
       log.warn(`xrp getBalance ${address} exception`, e)
       return '0'
     }

@@ -15,7 +15,13 @@ function testScan() {
 }
 
 async function testBalance() {
-  const balance = chain.getBalance('ryCVQhoU2BJ6hEDwgtCqbwQvkDzkiepAA')
+  let balance = await chain.getBalance('ryCVQhoU2BJ6hEDwgtCqbwQvkDzkiepAC')
+  console.log(balance)
+
+  const sg = db.getSga('0x000000000000000000000000000000000000000000746573746e65745f303033')
+  const address = chain.getP2PKHAddress(sg.gpk2)
+  console.log(address)
+  balance = await chain.getBalance(address)
   console.log(balance)
 }
 

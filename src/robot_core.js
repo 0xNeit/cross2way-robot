@@ -649,7 +649,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
               totalDebt = totalDebt.plus(totalSupply)
             }
             if (process.env.NETWORK_TYPE === 'testnet') {
-              // TODO: 减去属于别人的mapToken, 即获取别人的lockAccount金额
+              // TODO: 减去别人的lockAccount金额, 这个貌似不能用getBalance获取啊
               if (!lockAssets) {
                 lockAssets = {}
                 const promises = batchGetLockAssetRequest(sgsAlive, lockAssets)

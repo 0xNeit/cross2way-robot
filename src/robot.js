@@ -197,8 +197,8 @@ setTimeout(async () => {
 
 
 process.on('uncaughtException', err => {
-  log.error(`uncaughtException ${err}`)
+  log.error(`uncaughtException`, err)
 });
 process.on('unhandledRejection', (err) => {
-  log.error(`unhandledRejection ${err}`)
+  log.error(`unhandledRejection`, err)
 });

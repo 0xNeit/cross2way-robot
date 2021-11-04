@@ -165,13 +165,13 @@ setTimeout(async () => {
   // insertDebt()
   // getNccTokenChainTypeMap()
 
-  testSyncDebt()
-  // testScanAllChains()
+  // testSyncDebt()
+  testScanAllChains()
 }, 0)
 
 process.on('uncaughtException', err => {
-  log.error(`uncaughtException test: ${err}`)
+  log.error(`uncaughtException test:`, err)
 });
 process.on('unhandledRejection', (err) => {
-  log.error(`unhandledRejection test: ${err}`)
+  log.error(`unhandledRejection test:`, err)
 });
