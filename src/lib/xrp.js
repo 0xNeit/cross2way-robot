@@ -141,7 +141,7 @@ class XrpChain extends NccChain {
         }
       }
       log.warn(`xrp getBalance ${address} exception`, e)
-      return '0'
+      throw e
     }
   }
 
