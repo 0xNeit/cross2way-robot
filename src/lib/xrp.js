@@ -129,10 +129,16 @@ class XrpChain extends NccChain {
 
   async getBalance(address) {
     await this.waitForApiReady()
-    console.log(`${address}`)
-    const balances = await this.api.getBalances(address)
-    const balance = balances.find(b => b.currency === this.chainType)
-    return this.toWei(balance.value)
+    log.info(`${address}`)
+    try {
+      const balances = await this.api.getBalances(address)
+      const balance = balances.find(b => b.currency === this.chainType)
+      return this.toWei(balance.value)
+    } catch(e) {
+      console.log(typeof(e))
+      log.warn(`xrp getBalance ${address} exception`, e)
+      return '0'
+    }
   }
 
   scanMessages = async (from, to, sgs) => {

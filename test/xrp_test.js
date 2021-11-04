@@ -14,6 +14,11 @@ function testScan() {
   }, 0)
 }
 
+async function testBalance() {
+  const balance = chain.getBalance('ryCVQhoU2BJ6hEDwgtCqbwQvkDzkiepAA')
+  console.log(balance)
+}
+
 setTimeout(async () => {
-  await testScan()
+  await testBalance()
 }, 10)

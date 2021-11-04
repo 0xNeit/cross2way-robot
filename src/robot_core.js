@@ -600,7 +600,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     const assets = lockAssets[symbol]
     const balance = Object.keys(assets).reduce((sum, gId) => {
       if (gId !== groupId) {
-        return sum.plus(BigNumber(assets[groupId]))
+        return sum.plus(BigNumber(assets[gId]))
       } else {
         return sum
       }
@@ -621,7 +621,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     // const groupName = web3.utils.hexToString(groupId)
     // if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
       if (config.status >= 5) {
-        // if (time > config.endTime) {
+        if (time > config.endTime) {
           log.info("isDebtClean2 time > endTime smgId", groupId)
           const debtToSave = {}
           debtToSave[groupId] = {}
@@ -648,19 +648,24 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
               log.info(`${symbol} token in chain ${chainSymbol} totalSupply = ${totalSupply}`)
               totalDebt = totalDebt.plus(totalSupply)
             }
-            // TODO: 减去属于别人的mapToken, 即获取别人的lockAccount金额
-            if (!lockAssets) {
-              lockAssets = {}
-              const promises = batchGetLockAssetRequest(sgsAlive, lockAssets)
-              await Promise.all(promises)
+            if (process.env.NETWORK_TYPE === 'testnet') {
+              // TODO: 减去属于别人的mapToken, 即获取别人的lockAccount金额
+              if (!lockAssets) {
+                lockAssets = {}
+                const promises = batchGetLockAssetRequest(sgsAlive, lockAssets)
+                await Promise.all(promises)
+              }
+  
+              const otherDebt = getOtherLockAssets(chainType, groupId, lockAssets)
+              let ourDebt = totalDebt.minus(otherDebt)
+              if (totalDebt.comparedTo(otherDebt) < 0) {
+                log.warn(`totalDebt < otherDebt! ${symbol} ${groupId} ${totalDebt.toString()} < ${otherDebt.toString()}`)
+                ourDebt = BigNumber(0)
+              }
+              debtToSave[groupId][chainType] = ourDebt.toString(10)
+            } else {
+              debtToSave[groupId][chainType] = totalDebt.toString(10)
             }
-            const otherDebt = getOtherLockAssets(chainType, groupId, lockAssets)
-            let ourDebt = totalDebt.minus(otherDebt)
-            if (totalDebt.comparedTo(otherDebt) < 0) {
-              log.warn(`totalDebt < otherDebt! ${symbol} ${groupId} ${totalDebt.toString()} < ${otherDebt.toString()}`)
-              ourDebt = BigNumber(0)
-            }
-            debtToSave[groupId][chainType] = ourDebt.toString(10)
           }
   
           const insertOneGroup = db.db.transaction((groupId, debtMap) => {
@@ -670,7 +675,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
             }
           })
           insertOneGroup(groupId, debtToSave[groupId])
-        // }
+        }
       }
     // }
   }
