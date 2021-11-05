@@ -105,6 +105,7 @@ class NccChain {
   }
 
 
+  // TODO: 只考虑第一笔
   handleMessages = (msgs, db, next) => {
     if (!msgs) {
       return

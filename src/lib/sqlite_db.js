@@ -26,8 +26,8 @@ class DB {
 
     let db = null;
     if (!fs.existsSync(filePath)) {
-      db = new Sqlite3(filePath, {verbose: console.log});
-      // db = new Sqlite3(filePath);
+      // db = new Sqlite3(filePath, {verbose: console.log});
+      db = new Sqlite3(filePath);
       db.exec(`
         create table scan (
           chainType char(20) PRIMARY KEY NOT NULL,
@@ -113,10 +113,15 @@ class DB {
       coinDebt.lastReceiveTx = item.lastReceiveTx
     }
 
+    // TODO: all receive  <> totalSupply,  12点的lockAccount
     if (coinDebt.totalReceive !== '' && coinDebt.totalSupply !== '') {
       if (BigNumber(coinDebt.totalReceive).comparedTo(BigNumber(coinDebt.totalSupply)) >= 0) {
         coinDebt.isDebtClean = 1
       }
+    }
+
+    if (coinDebt.totalSupply === '0') {
+      coinDebt.isDebtClean = 1
     }
     // if not in db
     if (!oldDebt) {
@@ -160,7 +165,6 @@ class DB {
   }
 
   getActiveSga() {
-    // return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
     return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
   }
 

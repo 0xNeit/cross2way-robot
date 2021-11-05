@@ -474,19 +474,22 @@ const getNccTokenChainTypeMap = () => {
 
   return tokenChainMap
 }
+
+// 
 let gTokenPairs = {}
 let gMappingTokenMap = {}
 let gTotalTokenPairs = 0
 let gNccTokenChainTypeMap = getNccTokenChainTypeMap()
 async function getTokenPairsInfo(tm, total, web3Tms) {
-  const tokenPairs = {}
-  const mappingTokenMap = {}
   if (gTotalTokenPairs === total) {
     return {
       tokenPairs: gTokenPairs,
       mappingTokenMap: gMappingTokenMap,
     }
   }
+
+  const tokenPairs = {}
+  const mappingTokenMap = {}
 
   Object.keys(gNccTokenChainTypeMap).forEach(symbol => {mappingTokenMap[symbol] = {}})
 
@@ -568,7 +571,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   let curMappingTokenMap = null
   const getMappingTokenMap = async () => {
     if (!curMappingTokenMap) {
-      const tmWan = web3Tms.find(tm => tm.chain.chainName === 'wan')
+      const tmWan = web3Tms.find(tm => tm.chain.chainType === 'WAN')
       const total = parseInt(await tmWan.totalTokenPairs())
       // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
       const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
@@ -585,8 +588,29 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   const smgConfigs = {}
   await batchGetSmgConfigs(oracleWan, sgaWan, sgs, smgConfigs, isDebtCleans)
 
+  // 根据链上数据,获取非终结的,且状态大于5的
+  const sgsValid = []
+  Object.keys(smgConfigs).forEach(groupId => {
+    const sg = smgConfigs[groupId]
+    if (isDebtCleans[sg.groupId]) {
+      return false
+    }
+
+    const status = parseInt(sg.status)
+    if (status >= 5 && status <= 6) {
+      if (sg.gpk2.length !== 130) {
+        log.error(`sg ${sg.groupId} gpk2 length !== 130`)
+        return false
+      }
+      sgsValid.push(sg)
+      return true
+    }
+
+    return false
+  })
+
   // 获取活着的sg
-  const sgsAlive = sgs.filter(sg => {
+  const sgsAlive = sgsValid.filter(sg => {
     if (sg.startTime <= time && sg.endTime >= time) {
       if (sg.status === 5) {
         return true
@@ -594,6 +618,41 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     }
     return false
   })
+
+  // 获取处于清算中的
+  const liquidSgs = sgsValid.filter(sg => {
+    if (time > sg.endTime) {
+      if (sg.status >= 5 && sg.status <= 6) {
+        return true
+      }
+    }
+    return false
+  })
+
+  // 获取处于清算中的 儿子们
+  const liquidSgsSon = smgConfigs.filter(sg => {
+    if (liquidSgs.find(lsg => lsg.preGroupId === sg.groupId)) {
+      return true
+    }
+    return false
+  })
+
+  // 处于清算中的 按支持的链, 将其初始化进debt表里
+  const saveLiquidSgs = db.db.transaction((sgs) => {
+    for (sg in sgs) {
+      const groupId = sg.groupId
+      for (const chainType in gNccChainTypes) {
+        if ( !debts[groupId] || !debts[groupId][chainType] ) {
+          const newDebt = db.modifyDebt(groupId, chainType)
+          debts[groupId][chainType] = newDebt
+        }
+      }
+    }
+  })
+  saveLiquidSgs(liquidSgs)
+
+  // 获取balance
+
 
   let lockAssets = null
   const getOtherLockAssets = (symbol, groupId, lockAssets) => {
@@ -648,7 +707,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
               log.info(`${symbol} token in chain ${chainSymbol} totalSupply = ${totalSupply}`)
               totalDebt = totalDebt.plus(totalSupply)
             }
-            if (process.env.NETWORK_TYPE === 'testnet') {
+            // if (process.env.NETWORK_TYPE === 'testnet') {
               // TODO: 减去别人的lockAccount金额, 这个貌似不能用getBalance获取啊
               if (!lockAssets) {
                 lockAssets = {}
@@ -663,9 +722,9 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
                 ourDebt = BigNumber(0)
               }
               debtToSave[groupId][chainType] = ourDebt.toString(10)
-            } else {
-              debtToSave[groupId][chainType] = totalDebt.toString(10)
-            }
+            // } else {
+            //   debtToSave[groupId][chainType] = totalDebt.toString(10)
+            // }
           }
   
           const insertOneGroup = db.db.transaction((groupId, debtMap) => {
@@ -729,6 +788,7 @@ const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
 
         let uncleanCount = 0
         let logStr = ''
+        // TODO: gNcc length
         for (let j = 0; j < debts.length; j++) {
           const debt = debts[j]
           if (!debt.isDebtClean) {

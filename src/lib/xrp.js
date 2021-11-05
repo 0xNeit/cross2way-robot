@@ -163,7 +163,7 @@ class XrpChain extends NccChain {
         earliestFirst: true,
         minLedgerVersion: Number(from),
         maxLedgerVersion: Number(to),
-        types: ['payment', 'accountDelete'],
+        types: ['payment'],
       }
   
       if (!sg.gpk2 || sg.gpk2.length < 130) {
@@ -204,7 +204,8 @@ class XrpChain extends NccChain {
                 }
 
                 if (toSmgInfo.address != toAddress) {
-                  log.info(`pre smgId ${fromGroupId} toSmg ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
+                  // TODO: 
+                  log.error(`pre smgId ${fromGroupId} toSmg ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
                   return
                 }
 

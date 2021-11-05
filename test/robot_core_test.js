@@ -165,8 +165,8 @@ setTimeout(async () => {
   // insertDebt()
   // getNccTokenChainTypeMap()
 
-  // testSyncDebt()
-  testScanAllChains()
+  testSyncDebt()
+  // testScanAllChains()
 }, 0)
 
 process.on('uncaughtException', err => {

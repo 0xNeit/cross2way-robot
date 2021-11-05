@@ -148,6 +148,7 @@ class DotChain extends NccChain {
     const provider = new WsProvider(this.rpc)
     const api = await ApiPromise.create({ provider })
 
+    // TODO log
     api.on('connected', () => {
         console.log(' Polka API has been connected to the endpoint');
     });
@@ -277,6 +278,8 @@ class DotChain extends NccChain {
               msgs.push(msg)
 
               log.info(`from = ${msg.groupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.value}, tx = ${msg.tx}`)
+            } else {
+              // TODO: memoParsed.memoType === TYPE.smgDebt, error
             }
           }
         }

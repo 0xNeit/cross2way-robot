@@ -118,6 +118,7 @@ class BtcBase extends NccChain {
                 console.log(`blockNumber = ${curIndex}, op = ${op_return_type} len = ${op_return.length}`)
                 if (op_return_type === op_return_smgDebt_type && op_return.length === 66 && vOut.length === 2) {
                   const fromGroupId = '0x' + op_return.substr(2);
+                  // TODO: fromGroupId
                   for (let j = 0; j < vOut.length; j++) {
                     const scriptPK = vOut[j].scriptPubKey
                     if (scriptPK && 
@@ -130,7 +131,8 @@ class BtcBase extends NccChain {
                       }
 
                       if (toSmgInfo.address != toAddress) {
-                        log.info(`from = ${fromGroupId} to = ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
+                        // TODO: more info
+                        log.error(`from = ${fromGroupId} to = ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
                         return
                       }
 
