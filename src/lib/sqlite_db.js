@@ -168,6 +168,25 @@ class DB {
     return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
   }
 
+  // TODO: 
+  smgConfigToDbObj(config) {
+    const obj = {
+      groupId: config.groupId,
+      status: parseInt(config.status),
+      deposit: config.deposit,
+      chain1: parseInt(config.chain1),
+      chain2: parseInt(config.chain2),
+      curve1: parseInt(config.curve1),
+      curve2: parseInt(config.curve2),
+      gpk1: config.gpk1,
+      gpk2: config.gpk2,
+      startTime: parseInt(config.startTime),
+      endTime: parseInt(config.endTime),
+    }
+
+    return obj
+  }
+
   insertSga(item) {
     this.db.prepare(`insert into sga values (@groupId, @status, @deposit, @chain1, @chain2, @curve1, @curve2, @gpk1, @gpk2, @startTime, @endTime, @updateTime,@preGroupId,@workStart,@workDuration,@registerDuration)`).run(item);
   }

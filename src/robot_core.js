@@ -215,14 +215,15 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       throw e
     }
   }
+
   const sgs = db.getActiveSga()
-  
   const smgConfigs = {}
   await batchGetSmgConfigs(null, sgaContract, sgs, smgConfigs)
 
   const sgsValid = sgs.filter(sg => {
     const config = smgConfigs[sg.groupId]
-    if (!config.gpk1 || !config.gpk2) {
+    const status = parseInt(config.status)
+    if (status < 5) {
       return false
     }
     return true
@@ -246,21 +247,23 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
     const groupId = sg.groupId;
     const config = smgConfigs[groupId];
 
-    // is a current group
-    const groupName = web3.utils.hexToString(groupId)
-    const groupIdUint = new BigNumber(sg.groupId).toString(10)
-    let isCurrentConfig = false
-    if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
-      if (config.status === '5') {
-        isCurrentConfig = true
-      }
-    }
-    // end
-    
     if (config) {
+      const status = parseInt(config.status)
+
+      // is a current group
+      const groupName = web3.utils.hexToString(groupId)
+      const groupIdUint = new BigNumber(sg.groupId).toString(10)
+      let isCurrentConfig = false
+      if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
+        if (status === 5) {
+          isCurrentConfig = true
+        }
+      }
+      // end
+    
       // ignore empty gpk
-      if (config.status < 5) {
-        if (sg.status !== parseInt(config.status)) {
+      if (!config.gpk1 || config.gpk1 === '0x' || !config.gpk2 || config.gpk2 === '0x') {
+        if (sg.status !== status) {
           writeToDB(config)
         }
         continue;
@@ -317,6 +320,8 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       if (needWriteToDb) {
         writeToDB(config)
       }
+    } else {
+      log.error(`can't get store man group ${groupId} config on wan chain`)
     }
   }
   log.info(`syncConfigToOtherChain end`);
@@ -403,6 +408,7 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
   for (let i = 0; i<sgs.length; i++) {
     const sg = sgs[i];
     const groupId = sg.groupId;
+    // TODO: 注意链上获取的是string, 数据库里保存的是int,以后应该统一到string
     const config = await sgaWan.getStoremanGroupConfig(groupId);
 
     const isDebtClean = await oracleWan.isDebtClean(groupId)
@@ -418,7 +424,8 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
     const isDebtCleans = []
     let totalClean = 0
     let logStr = ''
-    if (config.status === '6') {
+    const status = parseInt(config.status)
+    if (status === 6) {
       log.info('status is 6')
       for (let i = 0; i < web3Quotas.length; i++) {
         const quota = web3Quotas[i]
@@ -435,8 +442,9 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
     let isDebtClean_xrp = false
     let isDebtClean_ltc = false
     let isDebtClean_dot = false
-    if (config.status >= 5) {
-      if (time > config.endTime) {
+    if (status >= 5) {
+      const endTime = parseInt(config.endTime)
+      if (time > endTime) {
         isDebtClean_btc = await isBtcDebtClean(chainBtc, sg)
         isDebtClean_xrp = await isXrpDebtClean(chainXrp, sg)
         isDebtClean_ltc = await isLtcDebtClean(chainLtc, sg)
@@ -586,7 +594,12 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   const debts = getDebts()
   const isDebtCleans = {}
   const smgConfigs = {}
-  await batchGetSmgConfigs(oracleWan, sgaWan, sgs, smgConfigs, isDebtCleans)
+
+  const smgConfigsStr = {}
+  await batchGetSmgConfigs(oracleWan, sgaWan, sgs, smgConfigsStr, isDebtCleans)
+  for (let groupId in smgConfigsStr) {
+    smgConfigs[groupId] = db.smgConfigToDbObj(smgConfigsStr[groupId])
+  }
 
   // 根据链上数据,获取非终结的,且状态大于5的
   const sgsValid = []
@@ -630,7 +643,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   })
 
   // 获取处于清算中的 儿子们
-  const liquidSgsSon = smgConfigs.filter(sg => {
+  const liquidSgsSon = liquidSgs.filter(sg => {
     if (liquidSgs.find(lsg => lsg.preGroupId === sg.groupId)) {
       return true
     }
@@ -651,7 +664,13 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   })
   saveLiquidSgs(liquidSgs)
 
-  // 获取balance
+  // 获取活跃的(且非清算中的儿子们)的balance
+  const otherAliveSgs = sgsAlive.filter(sg => {
+    if (!liquidSgsSon.find(i => i.groupId === sg.groupId)) {
+      return true
+    }
+    return false
+  })
 
 
   let lockAssets = null
@@ -777,8 +796,9 @@ const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
     }
 
     // 测试网, 只关注dev_开头的storeMan
-    if (config.status >= 5) {
-      if (time > config.endTime) {
+    const status = parseInt(config.status)
+    if (status >= 5) {
+      if (time > parseInt(config.endTime)) {
         // 先从db里查找groupId的各项，
         const debts = db.getDebtsByGroupId(sg)
         // 如果debts信息还没被同步
@@ -789,9 +809,9 @@ const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
         let uncleanCount = 0
         let logStr = ''
         // TODO: gNcc length
-        for (let j = 0; j < debts.length; j++) {
+        for (let j = 0; j < gNccChainTypes.length; j++) {
           const debt = debts[j]
-          if (!debt.isDebtClean) {
+          if (!debt || !debt.isDebtClean) {
             uncleanCount++
           }
           logStr += ` ${debt.chainType} ${debt.isDebtClean}`

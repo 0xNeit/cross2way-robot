@@ -7,7 +7,7 @@ const db = require('../src/lib/sqlite_db')
 const BigNumber = require('bignumber.js')
 
 const btc = require('../src/lib/btc');
-const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccTokenChainTypeMap} = require('../src/robot_core');
+const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccTokenChainTypeMap, syncConfigToOtherChain} = require('../src/robot_core');
 const { ExceptionHandler } = require('winston');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
@@ -24,6 +24,55 @@ const doUpdatePrice = async() => {
   const pricesMap = {'FNX': '1000'}
 
   await updatePrice(oracleWan, pricesMap, symbols)
+}
+
+const getContracts = () => {
+  const web3Oracles = []
+  const web3Quotas = []
+  const web3Tms = []
+  let oracleWan = null
+  const web3Chains = getChains(process.env.NETWORK_TYPE)
+  web3Chains.forEach(web3Chain => {
+    if (!!web3Chain.deployedFile) {
+      const oracle = web3Chain.loadContract('OracleDelegate')
+      if (!oracle) {
+        log.error(`${web3Chain.chainType} has not deployed Oracle`)
+      }
+      if (oracle.chain.chainName === 'wan') {
+        oracleWan = oracle
+      }
+      web3Oracles.push(oracle)
+  
+      const quota = web3Chain.loadContract('QuotaDelegate')
+      if (!quota) {
+        log.error(`${web3Chain.chainType} has not deployed Quota`)
+      }
+      web3Quotas.push(quota)
+  
+      const tm = web3Chain.loadContract('TokenManagerDelegate')
+      if (!tm) {
+        log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
+      }
+      web3Tms.push(tm)
+    }
+  })
+
+  return {
+    oracleWan,
+    web3Oracles,
+    web3Quotas,
+    web3Tms,
+  }
+}
+
+async function testSyncConfigToOtherChain() {
+  const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
+  const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
+  const contracts = getContracts()
+  const oracles = contracts.web3Oracles.filter(o => (o.chain.chainType !== 'WAN' ))
+  await syncConfigToOtherChain(sgaWan, oracles)
+
+  console.log('testSyncConfigToOtherChain finished')
 }
 
 const getTotalSupply = async() => {
@@ -167,6 +216,7 @@ setTimeout(async () => {
 
   testSyncDebt()
   // testScanAllChains()
+  // await testSyncConfigToOtherChain()
 }, 0)
 
 process.on('uncaughtException', err => {
