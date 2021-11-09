@@ -622,7 +622,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     return false
   })
 
-  // 获取活着的sg
+  // 获取活着的sg A
   const sgsAlive = sgsValid.filter(sg => {
     if (sg.startTime <= time && sg.endTime >= time) {
       if (sg.status === 5) {
@@ -632,7 +632,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     return false
   })
 
-  // 获取处于清算中的
+  // 获取处于清算中的 B
   const liquidSgs = sgsValid.filter(sg => {
     if (time > sg.endTime) {
       if (sg.status >= 5 && sg.status <= 6) {
@@ -642,15 +642,23 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     return false
   })
 
-  // 获取处于清算中的 儿子们
-  const liquidSgsSon = liquidSgs.filter(sg => {
+  // 获取处于清算中的 活跃的儿子们 C
+  const liquidSgsSon = sgsAlive.filter(sg => {
     if (liquidSgs.find(lsg => lsg.preGroupId === sg.groupId)) {
       return true
     }
     return false
   })
 
-  // 处于清算中的 按支持的链, 将其初始化进debt表里
+  // 获取活跃的, 非清算中的儿子的 D
+  const otherAliveSgs = sgsAlive.filter(sg => {
+    if (liquidSgsSon.find(i => i.groupId === sg.groupId)) {
+      return false
+    }
+    return true
+  })
+
+  // 处于清算中的 按支持的链, 如果没有初始化过, 将其初始化进debt表里
   const saveLiquidSgs = db.db.transaction((sgs) => {
     for (sg in sgs) {
       const groupId = sg.groupId
@@ -664,16 +672,9 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   })
   saveLiquidSgs(liquidSgs)
 
-  // 获取活跃的(且非清算中的儿子们)的balance
-  const otherAliveSgs = sgsAlive.filter(sg => {
-    if (!liquidSgsSon.find(i => i.groupId === sg.groupId)) {
-      return true
-    }
-    return false
-  })
-
 
   let lockAssets = null
+  // 获取活跃的(且非清算中的儿子们)的balance D 的 balance
   const getOtherLockAssets = (symbol, groupId, lockAssets) => {
     const assets = lockAssets[symbol]
     const balance = Object.keys(assets).reduce((sum, gId) => {
@@ -730,7 +731,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
               // TODO: 减去别人的lockAccount金额, 这个貌似不能用getBalance获取啊
               if (!lockAssets) {
                 lockAssets = {}
-                const promises = batchGetLockAssetRequest(sgsAlive, lockAssets)
+                const promises = batchGetLockAssetRequest(otherAliveSgs, lockAssets)
                 await Promise.all(promises)
               }
   
@@ -810,16 +811,20 @@ const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
         let logStr = ''
         // TODO: gNcc length
         for (let j = 0; j < gNccChainTypes.length; j++) {
-          const debt = debts[j]
+          const debt = debts.find(d => d.chainType === gNccChainTypes[j])
+          let isDebtClean = false
           if (!debt || !debt.isDebtClean) {
             uncleanCount++
+          } else {
+            isDebtClean = true
           }
-          logStr += ` ${debt.chainType} ${debt.isDebtClean}`
+          logStr += ` ${gNccChainTypes[j].chainType} ${isDebtClean}`
         }
 
         // 如果全都isDebtClean，则设置为debtClean
         if (uncleanCount === 0) {
-          await oracleWan.setDebtClean(groupId, true);
+          // await oracleWan.setDebtClean(groupId, true);
+          log.info("isDebtClean2 smgId", groupId, " all debt clean")
         }
 
         log.info("isDebtClean2 smgId", groupId, logStr)
