@@ -251,6 +251,12 @@ async function refreshOracles() {
       const isDebtCleans = {}
       await getSmgIsDebtCleans(oracle, sgAll, isDebtCleans)
       await getSmgConfigs(oracleStoreman, sgAll, web3Sgs, isDebtCleans)
+      for (let groupId in web3Sgs) {
+        const config = web3Sgs[groupId]
+        config.groupId = groupId + ' / ' + web3.utils.hexToString(ret.results.transformed[`groupId-${i}`])
+        config.chain1 = config.chain1 + ' / ' + web3.utils.toHex(config.chain1)
+        config.chain2 = config.chain2 + ' / ' + web3.utils.toHex(config.chain2)
+      }
     } else {
       for (let i = 0; i<sgAll.length; i++) {
         const sg = sgAll[i];

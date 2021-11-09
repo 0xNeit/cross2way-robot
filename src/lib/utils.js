@@ -158,11 +158,11 @@ const getSmgConfigs = async (oracle, sgAll, configs, isDebtCleans) => {
       for (let i = start; i <= end; i++) {
         const groupId = sgAll[i].groupId
         const config = {}
-        config.groupId = ret.results.transformed[`groupId-${i}`] + ' / ' + web3.utils.hexToString(ret.results.transformed[`groupId-${i}`])
+        config.groupId = ret.results.transformed[`groupId-${i}`]
         config.status = ret.results.transformed[`status-${i}`].toString(10)
         config.deposit = ret.results.transformed[`deposit-${i}`].toString(10)
-        config.chain1 = ret.results.transformed[`chain1-${i}`] + ' / ' + web3.utils.toHex(ret.results.transformed[`chain1-${i}`])
-        config.chain2 = ret.results.transformed[`chain2-${i}`] + ' / ' + web3.utils.toHex(ret.results.transformed[`chain2-${i}`])
+        config.chain1 = ret.results.transformed[`chain1-${i}`].toString(10)
+        config.chain2 = ret.results.transformed[`chain2-${i}`].toString(10)
         config.curve1 = ret.results.transformed[`curve1-${i}`].toString(10)
         config.curve2 = ret.results.transformed[`curve2-${i}`].toString(10)
         config.gpk1 = ret.results.transformed[`gpk1-${i}`]
