@@ -79,7 +79,7 @@ module.exports = {
   'bsc': {
     'testnet': {
       chainType: 'BSC',
-      rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
+      rpc: 'https://data-seed-prebsc-2-s3.binance.org:8545/',
       gasPrice: 0xe8d4a51000,
       gasLimit: 0x7a1200,
       chainId: 97,
@@ -232,7 +232,7 @@ module.exports = {
       explorer: 'https://rinkeby-explorer.arbitrum.io/#/',
     }
   },
-  'fontom': {
+  'fantom': {
     'testnet': {
       chainType: 'FTM',
       rpc: 'https://rpc.testnet.fantom.network',
@@ -247,7 +247,7 @@ module.exports = {
 
       symbol: 'FTM',
       decimals: 18,
-      chainName: 'fontom',
+      chainName: 'fantom',
 
       multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
 
@@ -267,7 +267,7 @@ module.exports = {
 
       symbol: 'FTM',
       decimals: 18,
-      chainName: 'fontom',
+      chainName: 'fantom',
 
       multiCall: '0x5f4870D51d2629D7493970B9d4526377Da98e95e'.toLowerCase(),
 
