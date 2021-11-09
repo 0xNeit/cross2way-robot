@@ -253,7 +253,7 @@ async function refreshOracles() {
       await getSmgConfigs(oracleStoreman, sgAll, web3Sgs, isDebtCleans)
       for (let groupId in web3Sgs) {
         const config = web3Sgs[groupId]
-        config.groupId = groupId + ' / ' + web3.utils.hexToString(ret.results.transformed[`groupId-${i}`])
+        config.groupId = groupId + ' / ' + web3.utils.hexToString(groupId)
         config.chain1 = config.chain1 + ' / ' + web3.utils.toHex(config.chain1)
         config.chain2 = config.chain2 + ' / ' + web3.utils.toHex(config.chain2)
       }
