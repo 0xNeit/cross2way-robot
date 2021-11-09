@@ -267,7 +267,7 @@ async function refreshOracles() {
           const str = j.toString();
           delete config[str];
         }
-        config.groupId = web3.utils.hexToString(groupId)
+        config.groupId = groupId + ' / ' + web3.utils.hexToString(groupId)
         config.chain1 = config.chain1 + ' / ' + web3.utils.toHex(config.chain1)
         config.chain2 = config.chain2 + ' / ' + web3.utils.toHex(config.chain2)
         config.isDebtClean = (await oracle.isDebtClean(groupId)).toString()

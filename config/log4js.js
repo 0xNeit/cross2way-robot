@@ -25,7 +25,13 @@ module.exports = {
     },
     "errorFile": {
       "type": "file",
-      "filename": __dirname + "/../log/errors.log"
+      "filename": __dirname + "/../log/errors.log",
+      "maxLogSize": 10485760,
+      "backups": 5,
+      "layout": {
+        "type": "pattern",
+        "pattern": '[%d] [%p] [%f{2}:%l] - %m',
+      }
     },
     "errors": {
       "type": "logLevelFilter",
