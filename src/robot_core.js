@@ -669,7 +669,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   // 找到清算中的 数据库中的 儿子们
   const liquidSgsDb = {}
   liquidSgs.forEach(lsg => {
-    const sg = sgs.find(sg => sg.preGroupId === lsg.groupId)
+    const sg = sgs.find(item => item.preGroupId === lsg.groupId)
     if (sg) {
       liquidSgsDb[sg.groupId] = sg
     }
