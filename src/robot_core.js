@@ -854,7 +854,7 @@ const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
           } else {
             isDebtClean = true
           }
-          logStr += ` ${gNccChainTypes[j].chainType} ${isDebtClean}`
+          logStr += ` ${gNccChainTypes[j]} ${isDebtClean}`
         }
 
         // 如果全都isDebtClean，则设置为debtClean
