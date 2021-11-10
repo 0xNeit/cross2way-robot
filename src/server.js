@@ -78,12 +78,16 @@ const scanInst = createScanEvent(
 );
 
 const scanNewStoreMan = () => {
-  scanInst.scanEvent();
+  if (process.env.NETWORK_TYPE === 'mainnet') {
+    scanInst.scanEvent();
+  }
 }
 
 const robotSchedules = function() {
   // sync sga to sga database, 1 / 5min
-  schedule.scheduleJob('30 */5 * * * *', scanNewStoreMan);
+  if (process.env.NETWORK_TYPE === 'mainnet') {
+    schedule.scheduleJob('30 */5 * * * *', scanNewStoreMan);
+  }
 };
 scanNewStoreMan()
 robotSchedules()
