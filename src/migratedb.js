@@ -6,7 +6,6 @@ const { gNccChains } = require('./lib/ncc_chains')
 async function v0Tov1() {
   try {
     // create msg table
-    // storeManGroupId, token, totalSupply, totalReceive
     db.db.exec(`
       create table msg (
         groupId char(66) NOT NULL,
@@ -16,7 +15,6 @@ async function v0Tov1() {
       );
     `)
     // create debt table
-    // storeManGroupId, token, totalSupply, totalReceive
     db.db.exec(`
       create table debt (
         groupId char(66) NOT NULL,

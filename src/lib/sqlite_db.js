@@ -103,14 +103,16 @@ class DB {
       totalReceive: '',
       lastReceiveTx: '',
     }
-    if (item.totalSupply) {
-      coinDebt.totalSupply = item.totalSupply
-    }
-    if (item.totalReceive) {
-      coinDebt.totalReceive = item.totalReceive
-    }
-    if (item.lastReceiveTx) {
-      coinDebt.lastReceiveTx = item.lastReceiveTx
+    if (item) {
+      if (item.totalSupply) {
+        coinDebt.totalSupply = item.totalSupply
+      }
+      if (item.totalReceive) {
+        coinDebt.totalReceive = item.totalReceive
+      }
+      if (item.lastReceiveTx) {
+        coinDebt.lastReceiveTx = item.lastReceiveTx
+      }
     }
 
     // TODO: all receive  <> totalSupply,  12点的lockAccount

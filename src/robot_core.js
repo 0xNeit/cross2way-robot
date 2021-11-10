@@ -199,6 +199,27 @@ function writeToDB(config) {
   c.updateTime = updateTime;
   db.updateSga(c);
 }
+
+function isConfigEqual(config, config2, bStatus = false) {
+  if ((config.groupId !== config2.groupId) ||
+    (config.chain1 !== config2.chain2) ||
+    (config.chain2 !== config2.chain1) ||
+    (config.curve1 !== config2.curve1) ||
+    (config.curve2 !== config2.curve2) ||
+    (config.gpk1 !== config2.gpk1) ||
+    (config.gpk2 !== config2.gpk2) ||
+    (config.startTime !== config2.startTime) ||
+    (config.endTime !== config2.endTime)) {
+      return false
+    }
+    if (bStatus) {
+      if (config.status !== config2.status) {
+        return false
+      }
+    }
+    return true
+}
+
 async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
   log.info(`syncConfigToOtherChain begin`);
 
@@ -286,18 +307,15 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
         const curve2 = curve1 === config.curve1 ? config.curve2 : config.curve1
         const gpk1   = curve1 === config.curve1 ? config.gpk1 : config.gpk2
         const gpk2   = curve1 === config.curve1 ? config.gpk2 : config.gpk1
+        const newConfig = {
+          ...config,
+          curve1,
+          curve2,
+          gpk1,
+          gpk2
+        }
         
-        if (!config_eth ||
-          (config.groupId !== config_eth.groupId) ||
-          (config.chain1 !== config_eth.chain2) ||
-          (config.chain2 !== config_eth.chain1) ||
-          (curve1 != config_eth.curve1) ||
-          (curve2 != config_eth.curve2) ||
-          (gpk1 != config_eth.gpk1) ||
-          (gpk2 != config_eth.gpk2) ||
-          (config.startTime !== config_eth.startTime) ||
-          (config.endTime !== config_eth.endTime)
-        ) {
+        if (!config_eth || !isConfigEqual(newConfig, config_eth)) {
           // chain1 -> chain2
           await oracle.setStoremanGroupConfig(
             groupId,
@@ -314,6 +332,12 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
         } else if (config.status !== config_eth.status) {
           await setStoremanGroupStatus(oracle, groupId, config.status);
           needWriteToDb = true
+        } else {
+          // 如果wan上配置和其他链上的相等,则比较下数据库和链上
+          const status = parseInt(newConfig.status)
+          if (status !== sg.status) {
+            needWriteToDb = true
+          }
         }
       }
       
@@ -642,9 +666,18 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
     return false
   })
 
+  // 找到清算中的 数据库中的 儿子们
+  const liquidSgsDb = {}
+  liquidSgs.forEach(lsg => {
+    const sg = sgs.find(sg => sg.preGroupId === lsg.groupId)
+    if (sg) {
+      liquidSgsDb[sg.groupId] = sg
+    }
+  })
+
   // 获取处于清算中的 活跃的儿子们 C
   const liquidSgsSon = sgsAlive.filter(sg => {
-    if (liquidSgs.find(lsg => lsg.preGroupId === sg.groupId)) {
+    if (liquidSgsDb[sg.groupId]) {
       return true
     }
     return false
@@ -660,18 +693,20 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
 
   // 处于清算中的 按支持的链, 如果没有初始化过, 将其初始化进debt表里
   const saveLiquidSgs = db.db.transaction((sgs) => {
-    for (sg in sgs) {
+    sgs.forEach(sg => {
       const groupId = sg.groupId
-      for (const chainType in gNccChainTypes) {
-        if ( !debts[groupId] || !debts[groupId][chainType] ) {
+      gNccChainTypes.forEach(chainType => {
+        if ( !debts[groupId] ) {
+          debts[groupId] = {}
+        }
+        if (!debts[groupId][chainType]) {
           const newDebt = db.modifyDebt(groupId, chainType)
           debts[groupId][chainType] = newDebt
         }
-      }
-    }
+      })
+    })
   })
   saveLiquidSgs(liquidSgs)
-
 
   let lockAssets = null
   // 获取活跃的(且非清算中的儿子们)的balance D 的 balance
@@ -727,7 +762,7 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
               log.info(`${symbol} token in chain ${chainSymbol} totalSupply = ${totalSupply}`)
               totalDebt = totalDebt.plus(totalSupply)
             }
-            // if (process.env.NETWORK_TYPE === 'testnet') {
+            if (process.env.NETWORK_TYPE === 'testnet') {
               // TODO: 减去别人的lockAccount金额, 这个貌似不能用getBalance获取啊
               if (!lockAssets) {
                 lockAssets = {}
@@ -736,15 +771,16 @@ const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
               }
   
               const otherDebt = getOtherLockAssets(chainType, groupId, lockAssets)
+              // const ourAsset = lockAssets[chainType][groupId]
               let ourDebt = totalDebt.minus(otherDebt)
               if (totalDebt.comparedTo(otherDebt) < 0) {
                 log.warn(`totalDebt < otherDebt! ${symbol} ${groupId} ${totalDebt.toString()} < ${otherDebt.toString()}`)
                 ourDebt = BigNumber(0)
               }
               debtToSave[groupId][chainType] = ourDebt.toString(10)
-            // } else {
-            //   debtToSave[groupId][chainType] = totalDebt.toString(10)
-            // }
+            } else {
+              debtToSave[groupId][chainType] = totalDebt.toString(10)
+            }
           }
   
           const insertOneGroup = db.db.transaction((groupId, debtMap) => {
