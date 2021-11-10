@@ -510,10 +510,10 @@ const getNccTokenChainTypeMap = () => {
 // 
 let gTokenPairs = {}
 let gMappingTokenMap = {}
-let gTotalTokenPairs = 0
+let gTokenPairsCount = 0
 let gNccTokenChainTypeMap = getNccTokenChainTypeMap()
 async function getTokenPairsInfo(tm, total, web3Tms) {
-  if (gTotalTokenPairs === total) {
+  if (gTokenPairsCount === total) {
     return {
       tokenPairs: gTokenPairs,
       mappingTokenMap: gMappingTokenMap,
@@ -559,7 +559,7 @@ async function getTokenPairsInfo(tm, total, web3Tms) {
 
   gTokenPairs = tokenPairs
   gMappingTokenMap = mappingTokenMap
-  gTotalTokenPairs = total
+  gTokenPairsCount = total
   return {
     tokenPairs,
     mappingTokenMap,
@@ -588,6 +588,78 @@ const getDebts = () => {
   return debts
 }
 
+const getMappingTokenMap = async (web3Tms) => {
+  const tmWan = web3Tms.find(tm => tm.chain.chainType === 'WAN')
+  const total = parseInt(await tmWan.totalTokenPairs())
+  // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
+  const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
+
+  return mappingTokenMap
+}
+
+// save store man group's assets balance at the expectTime (sg.endTime)
+const syncBalance = async (balances, groupId, _expectTime) => {
+  if (!balances[groupId]) {
+    balances[groupId] = {}
+  }
+
+  const mappingTokenMap = await getMappingTokenMap()
+  const oldBalance = db.getAllBalance({groupId})
+
+  let expectTime = _expectTime
+  if (oldBalance.length > 0) {
+    expectTime = oldBalance[0].expectTime
+  }
+  balances[groupId] = {}
+
+  // storeMan的所有支持的token
+  for (let symbol in mappingTokenMap) {
+    const chainType = gNccTokenChainTypeMap[symbol]
+    const oldSmgBalance = oldBalance.find(i => i.groupId === groupId && i.chainType === chainType)
+    let smgBalance = oldSmgBalance
+    if (!oldSmgBalance) {
+      smgBalance = db.modifyBalance(groupId, chainType)
+    }
+
+    balances[groupId][chainType] = smgBalance
+  }
+  
+  return balances
+}
+
+// save one asset's all mapTokens' totalSupply at a store man group's expectTime (sg.endTime)
+const syncSupply = async (web3Tms, supplies, groupId, expectTime) => {
+  if (!supplies[groupId]) supplies[groupId] = {}
+  
+  const mappingTokenMap = await getMappingTokenMap(web3Tms)
+
+  for (let symbol in mappingTokenMap) {
+    const chainType = gNccTokenChainTypeMap[symbol]
+
+    if (!supplies[groupId][chainType]) supplies[groupId][chainType] = {}
+
+    const tokens = mappingTokenMap[symbol]
+    for (let mapChainType in tokens) {
+      
+      let info = supplies[groupId][chainType][mapChainType]
+
+      if (!info || !info.totalSupply) {
+        const token = tokens[mapChainType]
+        const address = token.address.toLowerCase()
+        setTimeout(async (groupId, chainType, mapChainType, expectTime, address, token) => {
+          const blockNumber = await token.chain.getBlockNumber()
+          const totalSupply = await token.getFun('totalSupply')
+
+          log.info(`${symbol} token in chain ${mapChainType} totalSupply = ${totalSupply}`)
+          db.modifySupply()
+        }, 0)
+      }
+    }
+  }
+
+  return supplies[groupId]
+}
+
 // 判断债务是该设置为已清空
 // 1. 每天12点记录(数据库debt表)到期的storeMan各个币种的债务, 如果已经记录过某个storeMan,就不记录了
 //    syncDebt
@@ -600,17 +672,7 @@ const getDebts = () => {
 
 // 第1步, 同步债务, 如果storeMan到了endTime, 我们获取原生币的所有各个mapToken的totalSupply之和作为该原生币的总债务
 const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
-  let curMappingTokenMap = null
-  const getMappingTokenMap = async () => {
-    if (!curMappingTokenMap) {
-      const tmWan = web3Tms.find(tm => tm.chain.chainType === 'WAN')
-      const total = parseInt(await tmWan.totalTokenPairs())
-      // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
-      const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
-      curMappingTokenMap = mappingTokenMap
-    }
-    return curMappingTokenMap
-  }
+  let curMappingTokenMap = await getMappingTokenMap(web3Tms)
 
   const time = parseInt(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
@@ -883,4 +945,5 @@ module.exports = {
   syncIsDebtCleanToWanV2,
   scanAllChains,
   getNccTokenChainTypeMap,
+  syncSupply,
 }

@@ -7,7 +7,7 @@ const db = require('../src/lib/sqlite_db')
 const BigNumber = require('bignumber.js')
 
 const btc = require('../src/lib/btc');
-const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccTokenChainTypeMap, syncConfigToOtherChain} = require('../src/robot_core');
+const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccTokenChainTypeMap, syncConfigToOtherChain, syncSupply} = require('../src/robot_core');
 const { ExceptionHandler } = require('winston');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
@@ -65,6 +65,24 @@ const getContracts = () => {
   }
 }
 
+const testSyncSupply = async () => {
+  const web3Chains = getChains(process.env.NETWORK_TYPE)
+  const web3Tms = []
+  web3Chains.forEach(web3Chain => {
+    const tm = web3Chain.loadContract('TokenManagerDelegate')
+    if (!tm) {
+      log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
+    }
+    web3Tms.push(tm)
+  })
+
+
+  const time = parseInt(new Date().getTime() / 1000);
+
+  const s = {}
+  await syncSupply(web3Tms, s, '0x000000000000000000000000000000000000000000000000006465765f303434', time)
+}
+
 async function testSyncConfigToOtherChain() {
   const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
   const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
@@ -100,6 +118,8 @@ const testSyncDebt = async () => {
     }
     web3Tms.push(tm)
   })
+
+  // 记录扫描debt的时间点, 以及该时间点各store man group的真实资产
   await syncDebt(sgaWan, oracleWan, web3Tms)
 }
 
@@ -214,9 +234,10 @@ setTimeout(async () => {
   // insertDebt()
   // getNccTokenChainTypeMap()
 
-  testSyncDebt()
+  // testSyncDebt()
   // testScanAllChains()
   // await testSyncConfigToOtherChain()
+  await testSyncSupply()
 }, 0)
 
 process.on('uncaughtException', err => {

@@ -102,6 +102,7 @@ class BtcBase extends NccChain {
       if (!block || !block.tx) {
         continue
       }
+      // block.height, block.time, block.confirmations
       block.tx.forEach((tx) => {
         const vOut = tx.vout
         if (vOut.length === 1) {

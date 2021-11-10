@@ -135,19 +135,90 @@ class DB {
   }
 
   getDebt(item) {
-    return this.db.prepare(`select * from debt where groupId = @groupId and chainType=@chainType`).get(item);
+    return this.db.prepare(`select * from debt where groupId = @groupId and chainType = @chainType`).get(item);
   }
 
   getAllDebt() {
     return this.db.prepare(`select * from debt`).all();
   }
 
+  insertBalance() {
+    this.db.prepare(`insert into balance values (@groupId, @chainType, @expectTime, @blockNumber, @balance)`).run(item);
+  }
+  getAllBalance(item) {
+    return this.db.prepare(`select * from balance where groupId = @groupId`).all(item)
+  }
+  getBalance(item) {
+    return this.db.prepare(`select * from balance where groupId = @groupId and chainType = @chainType`).get(item)
+  }
+
+  modifyBalance(groupId, chainType, item) {
+    const oldBalance = db.getBalance({groupId, chainType})
+    const coinBalance = oldBalance ? {...oldBalance} : {
+      groupId,
+      chainType,
+      expectTime: 0,
+      blockNumber: 0,
+      blockTime: 0,
+      balance: '',
+    }
+
+    if (item) {
+
+    }
+
+    // if not in db
+    if (!oldBalance) {
+      db.insertBalance(coinBalance);
+    } else {
+      db.updateBalance(coinBalance);
+    }
+    return coinBalance
+  }
+
+  insertSupply() {
+    this.db.prepare(`insert into supply values (@groupId, @chainType, @mapChainType, @expectTime, @address, @blockNumber, @blockTime, @totalSupply)`).run(item);
+  }
+  getAllSupplies(item) {
+    return this.db.prepare(`select * from supply where groupId = @groupId`).all(item)
+  }
+  // get token supplies
+  getSupply(item) {
+    return this.db.prepare(`select * from supply where groupId = @groupId and chainType = @chainType and mapChainType = @mapChainType`).get(item)
+  }
+
+  modifySupply(groupId, chainType, mapChainType, expectTime, address, item) {
+    const oldSupply = db.getSupply({groupId, chainType, mapChainType})
+    const coinSupply = oldSupply ? {...oldSupply} : {
+      groupId,
+      chainType,
+      mapChainType,
+      expectTime,
+      address,
+      blockNumber: 0,
+      blockTime: 0,
+      balance: '',
+    }
+
+    if (item) {
+
+    }
+
+    // if not in db
+    if (!oldSupply) {
+      db.insertSupply(coinSupply);
+    } else {
+      db.updateSupply(coinSupply);
+    }
+    return coinSupply
+  }
+
   insertMsg(item) {
-    this.db.prepare(`insert into msg values (@groupId, @chainType, @receive, @tx)`).run(item);
+    this.db.prepare(`insert into msg values (@groupId, @chainType, @mapChainType, @expectTime,  @blockNumber, @timestamp, @totalSupply)`).run(item);
   }
 
   getMsgsByGroupId(item) {
-    return this.db.prepare(`select * from msg where groupId = @groupId and chainType=@chainType`).all(item);
+    return this.db.prepare(`select * from msg where groupId = @groupId and chainType = @chainType`).all(item);
   }
 
   getAllUnCleanDebt() {
