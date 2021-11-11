@@ -10,6 +10,7 @@ async function v0Tov1() {
       create table balance (
         groupId char(66) NOT NULL,
         chainType char(20) NOT NULL,
+        address char(66) NOT NULL,
         expectTime int NOT NULL,
         blockNumber int,
         blockTime int,
@@ -22,8 +23,8 @@ async function v0Tov1() {
         groupId char(66) NOT NULL,
         chainType char(20) NOT NULL,
         mapChainType char(20) NOT NULL,
+        address char(66) NOT NULL,
         expectTime int NOT NULL,
-        address char(66),
         blockNumber int,
         blockTime int,
         totalSupply char(80)

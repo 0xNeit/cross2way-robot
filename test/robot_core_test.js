@@ -7,7 +7,7 @@ const db = require('../src/lib/sqlite_db')
 const BigNumber = require('bignumber.js')
 
 const btc = require('../src/lib/btc');
-const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccTokenChainTypeMap, syncConfigToOtherChain, syncSupply} = require('../src/robot_core');
+const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, getNccTokenChainTypeMap, syncConfigToOtherChain, syncSupply, getOrInitSupplies, getOrInitBalances} = require('../src/robot_core');
 const { ExceptionHandler } = require('winston');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
@@ -196,32 +196,27 @@ const dbTx = () => {
   insertGet([1,2])
 }
 
-function factorial (number, result = 1) {
-  console.trace(`t ${number}`)
-  if (number === 1) return result
-  return factorial(number - 1, number * result)
+const testGetOrInitSupplies = async () => {
+  const web3Chains = getChains(process.env.NETWORK_TYPE)
+  const web3Tms = []
+  web3Chains.forEach(web3Chain => {
+    const tm = web3Chain.loadContract('TokenManagerDelegate')
+    if (!tm) {
+      log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
+    }
+    web3Tms.push(tm)
+  })
+
+  const supplies = await getOrInitSupplies('0x000000000000000000000000000000000000000000000000006465765f303434', web3Tms)
+  console.log(`${supplies}`)
 }
 
-function factorial2 (number) {
-  console.trace(`t ${number}`)
-  if (number < 2) {
-    return 1
-  } else {
-    return number * factorial2(number - 1)
-  }
+const testGetOrInitBalances = async () => {
+  const time = parseInt(new Date().getTime() / 1000);
+  const groupId = '0x000000000000000000000000000000000000000000000000006465765f303434'
+  const sg = db.getSga(groupId)
+  const supplies = await getOrInitBalances([sg], groupId, time)
 }
-
-function factorial3 (o, result = 1) {
-  console.trace(`t ${o.number}`)
-  if (o.number === 1) {
-    console.log('result', result)
-    return result
-  }
-  setTimeout(() => {
-    factorial3({number: o.number - 1}, o.number * result)
-  }, 0)
-}
-
 setTimeout(async () => {
   // factorial(3)
   // factorial2(3)
@@ -237,7 +232,9 @@ setTimeout(async () => {
   // testSyncDebt()
   // testScanAllChains()
   // await testSyncConfigToOtherChain()
-  await testSyncSupply()
+  // await testGetSuppliesById()
+  // await testGetOrInitSupplies()
+  await testGetOrInitBalances()
 }, 0)
 
 process.on('uncaughtException', err => {

@@ -142,29 +142,43 @@ class DB {
     return this.db.prepare(`select * from debt`).all();
   }
 
-  insertBalance() {
-    this.db.prepare(`insert into balance values (@groupId, @chainType, @expectTime, @blockNumber, @balance)`).run(item);
+  insertBalance(item) {
+    this.db.prepare(`insert into balance values (@groupId, @chainType, @address, @expectTime, @blockNumber, @blockTime, @balance)`).run(item);
   }
-  getAllBalance(item) {
+
+  updateBalance(item) {
+    this.db.prepare(`update balance set blockNumber = @blockNumber, blockTime = @blockTime, balance = @balance where groupId = @groupId and chainType=@chainType`).run(item);
+  }
+
+  getBalancesByGroupId(item) {
     return this.db.prepare(`select * from balance where groupId = @groupId`).all(item)
   }
   getBalance(item) {
     return this.db.prepare(`select * from balance where groupId = @groupId and chainType = @chainType`).get(item)
   }
 
-  modifyBalance(groupId, chainType, item) {
+  modifyBalance(groupId, chainType, address, expectTime, item) {
     const oldBalance = db.getBalance({groupId, chainType})
     const coinBalance = oldBalance ? {...oldBalance} : {
       groupId,
       chainType,
-      expectTime: 0,
+      address,
+      expectTime,
       blockNumber: 0,
       blockTime: 0,
       balance: '',
     }
 
     if (item) {
-
+      if (item.blockNumber && item.blockNumber > 0) {
+        coinBalance.blockNumber = item.blockNumber
+      }
+      if (item.blockTime && item.blockTime > 0) {
+        coinBalance.blockTime = item.blockTime
+      }
+      if (item.totalSupply && item.totalSupply !== '') {
+        coinBalance.totalSupply = item.totalSupply
+      }
     }
 
     // if not in db
@@ -176,32 +190,46 @@ class DB {
     return coinBalance
   }
 
-  insertSupply() {
-    this.db.prepare(`insert into supply values (@groupId, @chainType, @mapChainType, @expectTime, @address, @blockNumber, @blockTime, @totalSupply)`).run(item);
+  insertSupply(item) {
+    this.db.prepare(`insert into supply values (@groupId, @chainType, @mapChainType, @address, @expectTime, @blockNumber, @blockTime, @totalSupply)`).run(item);
   }
-  getAllSupplies(item) {
+
+  updateSupply(item) {
+    this.db.prepare(`update supply set blockNumber = @blockNumber, blockTime = @blockTime, totalSupply = @totalSupply where groupId = @groupId and chainType=@chainType and mapChainType = @mapChainType`).run(item);
+  }
+
+  getSuppliesByGroupId(item) {
     return this.db.prepare(`select * from supply where groupId = @groupId`).all(item)
   }
+
   // get token supplies
   getSupply(item) {
     return this.db.prepare(`select * from supply where groupId = @groupId and chainType = @chainType and mapChainType = @mapChainType`).get(item)
   }
 
-  modifySupply(groupId, chainType, mapChainType, expectTime, address, item) {
+  modifySupply(groupId, chainType, mapChainType, address, expectTime, item) {
     const oldSupply = db.getSupply({groupId, chainType, mapChainType})
     const coinSupply = oldSupply ? {...oldSupply} : {
       groupId,
       chainType,
       mapChainType,
-      expectTime,
       address,
+      expectTime,
       blockNumber: 0,
       blockTime: 0,
-      balance: '',
+      totalSupply: '',
     }
 
     if (item) {
-
+      if (item.blockNumber && item.blockNumber > 0) {
+        coinSupply.blockNumber = item.blockNumber
+      }
+      if (item.blockTime && item.blockTime > 0) {
+        coinSupply.blockTime = item.blockTime
+      }
+      if (item.totalSupply && item.totalSupply !== '') {
+        coinSupply.totalSupply = item.totalSupply
+      }
     }
 
     // if not in db

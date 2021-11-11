@@ -588,6 +588,7 @@ const getDebts = () => {
   return debts
 }
 
+// chain symbol => mappingToken contract
 const getMappingTokenMap = async (web3Tms) => {
   const tmWan = web3Tms.find(tm => tm.chain.chainType === 'WAN')
   const total = parseInt(await tmWan.totalTokenPairs())
@@ -595,6 +596,85 @@ const getMappingTokenMap = async (web3Tms) => {
   const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
 
   return mappingTokenMap
+}
+
+const suppliesArrayToMap = (allSupplies) => {
+  const supplies = {}
+  allSupplies.forEach(supply => {
+    if (!supplies[supply.chainType]) {
+      supplies[supply.chainType] = {}
+    }
+    supplies[supply.chainType][supply.mapChainType] = supply
+  })
+  return supplies
+}
+
+const balancesArrayToMap = (allBalances) => {
+  const balances = {}
+  allBalances.forEach(balance => {
+    if (!balances[balance.chainType]) {
+      balances[balance.chainType] = balance
+    }
+  })
+  return balances
+}
+
+// 获取某smg的所有资产的所有mapToken的totalSupply, 如果不存在,则初始化数据库
+const getOrInitSupplies = async(groupId, tms, expectTime) => {
+  let supplies = null
+  const allSupplies = db.getSuppliesByGroupId({ groupId })
+  // 没有过? 则初始化数据库
+  if (allSupplies.length === 0) {
+    supplies = {}
+    const mappingTokenMap = await getMappingTokenMap(tms)
+
+    // 一次性插入所有的应该获取totalSupply的mapToken
+    const initSuppliesDb = db.db.transaction((supplies, groupId, expectTime, mappingTokenMap) => {
+      for (let symbol in mappingTokenMap) {
+        const chainType = gNccTokenChainTypeMap[symbol]
+        // ['BTC', 'LTC']
+        if (!gNccChainTypes.find(i => i === chainType)) {
+          // 如果还不支持, 则继续
+          continue
+        }
+        // is support this chainType
+        supplies[chainType] = {}
+        const tokens = mappingTokenMap[symbol]
+        for (let mapChainType in tokens) {
+          const token = tokens[mapChainType]
+          const address = token.address.toLowerCase()
+          console.log(`mappingTokenMap ${groupId} ${chainType} ${mapChainType} ${expectTime}`)
+          supplies[chainType][mapChainType] = db.modifySupply(groupId, chainType, mapChainType, address, expectTime)
+          console.log(`mappingTokenMap2 ${JSON.stringify(supplies[chainType][mapChainType], null, 2)}`)
+        }
+      }
+    })
+    initSuppliesDb(supplies, groupId, expectTime, mappingTokenMap)
+  } else {
+    supplies = suppliesArrayToMap(allSupplies)
+  }
+  return supplies
+}
+
+// 获取某smg的所有资产的balance
+const getOrInitBalances = async(sgs, groupId, expectTime) => {
+  let balances = null
+  const allBalances = db.getBalancesByGroupId({ groupId })
+  if (allBalances.length === 0) {
+    balances = {}
+    gNccChainTypes.forEach(chainType => {
+      balances[chainType] = {}
+      const chain = gNccChains[chainType].chain
+      const address = chain.getAddressFromSmgId(groupId, sgs)
+      console.log(`getOrInitBalances ${groupId} ${chainType} ${address} ${expectTime}`)
+      balances[chainType] = db.modifyBalance(groupId, chainType, address, expectTime)
+      console.log(`getOrInitBalances ${JSON.stringify(balances[chainType], null, 2)}`)
+    })
+    // 一次性插入所有的应该获取totalSupply的mapToken
+  } else {
+    balances = balancesArrayToMap(allBalances)
+  }
+  return balances
 }
 
 // save store man group's assets balance at the expectTime (sg.endTime)
@@ -628,12 +708,15 @@ const syncBalance = async (balances, groupId, _expectTime) => {
 }
 
 // save one asset's all mapTokens' totalSupply at a store man group's expectTime (sg.endTime)
-const syncSupply = async (web3Tms, supplies, groupId, expectTime) => {
-  if (!supplies[groupId]) supplies[groupId] = {}
-  
+const syncSupply = async (web3Tms, groupId, expectTime) => {
+  if (!supplies) { supplies = []}
+
   const mappingTokenMap = await getMappingTokenMap(web3Tms)
 
   for (let symbol in mappingTokenMap) {
+    if (!supplies[groupId]) {
+
+    }
     const chainType = gNccTokenChainTypeMap[symbol]
 
     if (!supplies[groupId][chainType]) supplies[groupId][chainType] = {}
@@ -643,9 +726,10 @@ const syncSupply = async (web3Tms, supplies, groupId, expectTime) => {
       
       let info = supplies[groupId][chainType][mapChainType]
 
-      if (!info || !info.totalSupply) {
+      if (!info) {
         const token = tokens[mapChainType]
         const address = token.address.toLowerCase()
+        
         setTimeout(async (groupId, chainType, mapChainType, expectTime, address, token) => {
           const blockNumber = await token.chain.getBlockNumber()
           const totalSupply = await token.getFun('totalSupply')
@@ -671,6 +755,16 @@ const syncSupply = async (web3Tms, supplies, groupId, expectTime) => {
 //    syncIsDebtCleanToWanV2
 
 // 第1步, 同步债务, 如果storeMan到了endTime, 我们获取原生币的所有各个mapToken的totalSupply之和作为该原生币的总债务
+
+// 方案 1.原理 当前同时结算的某资产(比如btc)的smg的共同债务为
+// btc的mapToken的总totalSupply - 状态为5的smg(除去儿子)的btc资产  - 处于结算中(状态为6)但非这个时间点结算的共同btc债务
+// 之前为了方便验证扫描到转账交易大于债务, 采取的是类似这种方案, 但情况比较复杂
+// 
+// 方案 2. 原理 当旧组发生资产转移时,
+// 验证 
+// a. 状态为 5,6的smg的总资产 > 总mapToken
+// b. 旧组的资产为 0
+// 这种的基本能保证正确, 感觉也没啥问题, 目前正把方案切到这上面
 const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
   let curMappingTokenMap = await getMappingTokenMap(web3Tms)
 
@@ -946,4 +1040,6 @@ module.exports = {
   scanAllChains,
   getNccTokenChainTypeMap,
   syncSupply,
+  getOrInitSupplies,
+  getOrInitBalances,
 }
