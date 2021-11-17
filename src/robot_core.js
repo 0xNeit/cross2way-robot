@@ -847,7 +847,7 @@ const checkDebtClean = async function(sgaWan, oracleWan, web3Tms) {
     }
     
     let assetsBalance = BigNumber(0)
-    for (let j = 0; j < sgsWorking; j++) {
+    for (let j = 0; j < sgsWorking.length; j++) {
       const s = sgsWorking[j]
       const address = s.getP2PKHAddress(s.gpk2)
       const b = await chain.getBalance(address)
