@@ -1188,7 +1188,7 @@ const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
 
         // 如果全都isDebtClean，则设置为debtClean
         if (uncleanCount === 0) {
-          // await oracleWan.setDebtClean(groupId, true);
+          await oracleWan.setDebtClean(groupId, true);
           log.info("isDebtClean2 smgId", groupId, " all debt clean")
         }
 
