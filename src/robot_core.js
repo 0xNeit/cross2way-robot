@@ -698,7 +698,7 @@ const getOrInitBalances = async(sgs, groupId, expectTime) => {
 // 获取要检查的债务
 const getOrInitDebts = async(time) => {
   const sgs = db.getActiveSga();
-  const debts = db.getAllDebt()
+  const debts = getDebts()
 
   const initDebtDb = db.db.transaction((sgs, time, debts) => {
     for (let i = 0; i < sgs.length; i++) {
@@ -709,7 +709,7 @@ const getOrInitDebts = async(time) => {
         if (time > sg.endTime) {
           if(!debts[groupId]) {
             debts[groupId] = {}
-            gNccChainTypes.forEach((groupId, chainType) => {
+            gNccChainTypes.forEach((chainType) => {
               const newDebt = db.modifyDebt(groupId, chainType)
               debts[groupId][chainType] = newDebt
             })

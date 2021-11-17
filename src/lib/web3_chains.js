@@ -36,7 +36,7 @@ const getAddressAndABI = (config, contractName) => {
 
     assert.ok(config[proxyContractName], `${contractName} has no proxy config`)
 
-    console.log(`getAddressAndABI ${JSON.stringify(proxyContractName)}`)
+    // console.log(`getAddressAndABI ${JSON.stringify(proxyContractName)}`)
     const fileName = (config[contractName] && config[contractName].abi) ? config[contractName].abi : config[proxyContractName].abi
 
     assert.equal(fileName, `abi.${contractName}.json`, `delegate file name is not abi.${contractName}.json`)
