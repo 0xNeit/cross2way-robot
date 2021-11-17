@@ -135,7 +135,7 @@ class DB {
   }
 
   getUncleanDebts() {
-    return this.db.prepare(`select * from debt where isDebtClean = 0 and totalReceive != ''`).all();
+    return this.db.prepare(`select * from debt where isDebtClean = 0`).all();
   }
 
   getDebt(item) {
