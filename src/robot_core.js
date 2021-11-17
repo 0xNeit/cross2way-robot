@@ -851,7 +851,7 @@ const checkDebtClean = async function(sgaWan, oracleWan, web3Tms) {
       const s = sgsWorking[j]
       const address = chain.getP2PKHAddress(s.gpk2)
       const b = await chain.getBalance(address)
-      log.info(`${address} asset balance is ${b.toString(10)}`)
+      log.info(`${address} ${debt.chainType} asset balance is ${b.toString(10)}`)
       assetsBalance = assetsBalance.plus(b)
     }
 

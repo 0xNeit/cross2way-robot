@@ -113,6 +113,9 @@ class DB {
       if (item.lastReceiveTx) {
         coinDebt.lastReceiveTx = item.lastReceiveTx
       }
+      if (item.isDebtClean) {
+        coinDebt.isDebtClean = item.isDebtClean
+      }
     }
 
     // // TODO: all receive  <> totalSupply,  12点的lockAccount
