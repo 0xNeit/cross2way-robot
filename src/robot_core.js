@@ -870,7 +870,7 @@ const checkDebtClean = async function(sgaWan, oracleWan, web3Tms) {
         const token = tokens[mapChainType]
         const address = token.address.toLowerCase()
         const supply = await token.getFun('totalSupply')
-        log.info(`${chainType} ${address} ${mapChainType} token supply is ${b.toString(10)}`)
+        log.info(`${chainType} ${address} ${mapChainType} token supply is ${supply.toString(10)}`)
         totalSupply = totalSupply.plus(supply)
       }
       break
