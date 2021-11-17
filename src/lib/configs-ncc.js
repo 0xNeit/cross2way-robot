@@ -23,6 +23,8 @@ module.exports = {
 
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
+
+      "minBalance": "0",
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26893",
@@ -43,6 +45,8 @@ module.exports = {
 
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
+
+      "minBalance": "0",
     }
   },
 
@@ -69,6 +73,8 @@ module.exports = {
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
 
+      "minBalance": "0",
+
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26894",
@@ -89,6 +95,8 @@ module.exports = {
 
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
+
+      "minBalance": "0",
     }
   },
 
@@ -110,6 +118,8 @@ module.exports = {
       "scanInterval": 20,
       "scanStep": 100,
       "curveType": 0,
+
+      "minBalance": "21000000",
     },
     'mainnet': {
       // "rpc": "wss://nodes.wandevs.org/xrp",
@@ -127,6 +137,8 @@ module.exports = {
       "scanInterval": 20,
       "scanStep": 100,
       "curveType": 0,
+
+      "minBalance": "21000000",
     }
   },
 
@@ -147,6 +159,8 @@ module.exports = {
       "scanInterval": 30,
       "scanStep": 100,
       "curveType": 0,
+
+      "minBalance": "150000000000",
     },
     'mainnet': {
       "rpc": "wss://rpc.polkadot.io",
@@ -163,6 +177,8 @@ module.exports = {
       "scanInterval": 60,
       "scanStep": 100,
       "curveType": 0,
+      
+      "minBalance": "15000000000",
     }
   },
   // doge 
@@ -185,6 +201,8 @@ module.exports = {
 
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
+
+      "minBalance": "0",
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26895",
@@ -204,6 +222,8 @@ module.exports = {
 
       "rpcUser": "wanglu",
       "rpcPassword": "Wanchain888",
+
+      "minBalance": "0",
     }
   },
 }

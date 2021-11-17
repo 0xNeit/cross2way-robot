@@ -9,7 +9,7 @@ const readlineSync = require('readline-sync');
 const keythereum = require("keythereum");
 const { getChain, getChains } = require("./lib/web3_chains")
 
-const { createScanEvent, doSchedule, updatePrice_WAN, syncConfigToOtherChain, syncIsDebtCleanToWan, syncIsDebtCleanToWanV2, syncDebt, scanAllChains } = require('./robot_core');
+const { createScanEvent, doSchedule, updatePrice_WAN, syncConfigToOtherChain, syncIsDebtCleanToWan, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, checkDebtClean } = require('./robot_core');
 
 const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
 const web3Chains = getChains(process.env.NETWORK_TYPE)
@@ -143,6 +143,12 @@ const updateDebt = async function() {
     await syncDebt(sgaWan, oracleWan, web3Tms)
   })
 }
+const checkDebt = async function() {
+  log.info("checkDebt")
+  await doSchedule(async () => {
+    await checkDebtClean(sgaWan, oracleWan, web3Tms)
+  })
+}
 
 const robotSchedules = function() {
   schedule.scheduleJob('20 * * * * *', updatePriceToWAN);
@@ -160,6 +166,8 @@ const robotSchedules = function() {
 
   // save debt
   schedule.scheduleJob('5 0 */4 * * *', updateDebt);
+  // check debt
+  schedule.scheduleJob('5 */10 * * * *', checkDebt);
 };
 
 // helper functions

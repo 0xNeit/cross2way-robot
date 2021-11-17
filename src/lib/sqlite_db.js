@@ -115,12 +115,12 @@ class DB {
       }
     }
 
-    // TODO: all receive  <> totalSupply,  12点的lockAccount
-    if (coinDebt.totalReceive !== '' && coinDebt.totalSupply !== '') {
-      if (BigNumber(coinDebt.totalReceive).comparedTo(BigNumber(coinDebt.totalSupply)) >= 0) {
-        coinDebt.isDebtClean = 1
-      }
-    }
+    // // TODO: all receive  <> totalSupply,  12点的lockAccount
+    // if (coinDebt.totalReceive !== '' && coinDebt.totalSupply !== '') {
+    //   if (BigNumber(coinDebt.totalReceive).comparedTo(BigNumber(coinDebt.totalSupply)) >= 0) {
+    //     coinDebt.isDebtClean = 1
+    //   }
+    // }
 
     if (coinDebt.totalSupply === '0') {
       coinDebt.isDebtClean = 1
@@ -134,12 +134,20 @@ class DB {
     return coinDebt
   }
 
+  getUncleanDebts() {
+    return this.db.prepare(`select * from debt where isDebtClean = 0 and totalReceive != ''`).all();
+  }
+
   getDebt(item) {
     return this.db.prepare(`select * from debt where groupId = @groupId and chainType = @chainType`).get(item);
   }
 
   getAllDebt() {
     return this.db.prepare(`select * from debt`).all();
+  }
+
+  getActiveDebts(time) {
+    return this.db.prepare(`select * from debt where isCleanDebt = 0`).all()
   }
 
   insertBalance(item) {
