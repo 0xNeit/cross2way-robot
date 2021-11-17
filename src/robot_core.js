@@ -698,7 +698,7 @@ const getOrInitBalances = async(sgs, groupId, expectTime) => {
 // 获取要检查的债务
 const getOrInitDebts = async(time) => {
   const sgs = db.getActiveSga();
-  const debts = db.getActiveDebts()
+  const debts = db.getAllDebt()
 
   const initDebtDb = db.db.transaction((sgs, time, debts) => {
     for (let i = 0; i < sgs.length; i++) {

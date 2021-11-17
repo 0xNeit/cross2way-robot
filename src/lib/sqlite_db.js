@@ -146,10 +146,6 @@ class DB {
     return this.db.prepare(`select * from debt`).all();
   }
 
-  getActiveDebts(time) {
-    return this.db.prepare(`select * from debt where isCleanDebt = 0`).all()
-  }
-
   insertBalance(item) {
     this.db.prepare(`insert into balance values (@groupId, @chainType, @address, @expectTime, @blockNumber, @blockTime, @balance)`).run(item);
   }
