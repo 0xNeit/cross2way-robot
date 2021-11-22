@@ -279,7 +279,7 @@ class DotChain extends NccChain {
 
               log.info(`from = ${msg.groupId}, to = ${toSmgInfo.groupId}, toAddress = ${toSmgInfo.address}, value = ${msg.value}, tx = ${msg.tx}`)
             } else {
-              // TODO: memoParsed.memoType === TYPE.smgDebt, error
+              log.error(`bad debt tx! chainType ${msg.chainType}, tx = ${msg.tx} value = ${msg.value}, from = ${msg.groupId} to = ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
             }
           }
         }

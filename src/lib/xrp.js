@@ -204,8 +204,7 @@ class XrpChain extends NccChain {
                 }
 
                 if (toSmgInfo.address != toAddress) {
-                  // TODO: 
-                  log.error(`pre smgId ${fromGroupId} toSmg ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
+                  log.error(`bad debt tx! chainType ${this.chainType}, tx = ${tx.id} value = ${tx.outcome.deliveredAmount.value}, from = ${fromGroupId} to = ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
                   return
                 }
 

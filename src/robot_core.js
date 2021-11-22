@@ -71,42 +71,42 @@ const batchGetSmgConfigs = async (oracleWan, sgaWan, sgs, smgConfigs, isDebtClea
   }
 }
 
-const batchGetSmgDebtClean = async (oracleWan, sgaWan, sgs, isDebtCleans) => {
-  if (sgaWan.chain.multiCall) {
-    await getSmgIsDebtCleans(oracleWan, sgs, isDebtCleans)
-  } else {
-    for (let i = 0; i<sgs.length; i++) {
-      const sg = sgs[i];
-      const groupId = sg.groupId;
-      const isDebtClean = await oracleWan.isDebtClean(groupId)
-      isDebtCleans[groupId] = isDebtClean
-    }
-  }
-}
+// const batchGetSmgDebtClean = async (oracleWan, sgaWan, sgs, isDebtCleans) => {
+//   if (sgaWan.chain.multiCall) {
+//     await getSmgIsDebtCleans(oracleWan, sgs, isDebtCleans)
+//   } else {
+//     for (let i = 0; i<sgs.length; i++) {
+//       const sg = sgs[i];
+//       const groupId = sg.groupId;
+//       const isDebtClean = await oracleWan.isDebtClean(groupId)
+//       isDebtCleans[groupId] = isDebtClean
+//     }
+//   }
+// }
 
-const getBalance = async (chain, groupId, address, asset) => {
-  const balance = await chain.getBalance(address)
-  asset[groupId] = balance
-} 
+// const getBalance = async (chain, groupId, address, asset) => {
+//   const balance = await chain.getBalance(address)
+//   asset[groupId] = balance
+// } 
 
-const batchGetLockAssetRequest = (sgs, lockAssets) => {
-  const promises = []
-  const chains = gNccChains
-  const chainTypes = gNccChainTypes
+// const batchGetLockAssetRequest = (sgs, lockAssets) => {
+//   const promises = []
+//   const chains = gNccChains
+//   const chainTypes = gNccChainTypes
 
-  for (let i = 0; i < chainTypes.length; i++) {
-    const chainType = chainTypes[i]
-    lockAssets[chainType] = {}
-    for (let j = 0; j < sgs.length; j++) {
-      const sg = sgs[j]
-      const groupId = sg.groupId
-      const chain = chains[chainType].chain
-      const address = chain.getP2PKHAddress(sg.gpk2)
-      promises.push(getBalance(chain, groupId, address, lockAssets[chainType]))
-    }
-  }
-  return promises
-}
+//   for (let i = 0; i < chainTypes.length; i++) {
+//     const chainType = chainTypes[i]
+//     lockAssets[chainType] = {}
+//     for (let j = 0; j < sgs.length; j++) {
+//       const sg = sgs[j]
+//       const groupId = sg.groupId
+//       const chain = chains[chainType].chain
+//       const address = chain.getP2PKHAddress(sg.gpk2)
+//       promises.push(getBalance(chain, groupId, address, lockAssets[chainType]))
+//     }
+//   }
+//   return promises
+// }
 
 async function updatePrice(oracle, pricesMap, symbolsStringArray) {
   log.info(`updatePrice ${oracle.core.chainType} begin`);
@@ -119,8 +119,8 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
     const symbols = Object.keys(pricesMap);
 
     if (symbols.length > 0) {
-      // TODO: remove
-      symbolsStringArray.push('FNX')
+      // // TODO: remove
+      // symbolsStringArray.push('FNX')
       
       const prePricesArray = await oracle.getValuesByArray(symbolsStringArray);
 
@@ -194,11 +194,11 @@ async function updatePrice_WAN(oracle, pricesMap) {
   await updatePrice(oracle, pricesMap, symbols)
 }
 
-async function updateDeposit(oracle, smgID, amount) {
-  log.info(`updateDeposit`);
-  const amountHex = "0x" + web3.utils.toBN(amount).toString('hex');
-  await oracle.updateDeposit(smgID, amountHex);
-}
+// async function updateDeposit(oracle, smgID, amount) {
+//   log.info(`updateDeposit`);
+//   const amountHex = "0x" + web3.utils.toBN(amount).toString('hex');
+//   await oracle.updateDeposit(smgID, amountHex);
+// }
 
 async function setStoremanGroupStatus(oracle, smgID, status) {
   log.info(`setStoremanGroupStatus`);
@@ -364,6 +364,7 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
   log.info(`syncConfigToOtherChain end`);
 }
 
+/*
 const bigZero = new BigNumber(0)
 const isBtcDebtClean = async function(chainBtc, sg) {
   if (sg.curve1 === 0 || sg.curve2 === 0) {
@@ -438,7 +439,7 @@ const isDotDebtClean = async function(sg) {
   return true
 }
 
-const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chainBtc, chainXrp, chainLtc) {
+const syncIsDebtCleanToWan_old = async function(sgaWan, oracleWan, web3Quotas, chainBtc, chainXrp, chainLtc) {
   const time = Math.floor(new Date().getTime() / 1000);
   // 0. 获取 wan chain 上活跃的 store man -- 记录在db里
   const sgs = db.getAllSga();
@@ -497,6 +498,7 @@ const syncIsDebtCleanToWan = async function(sgaWan, oracleWan, web3Quotas, chain
     log.info("isDebtClean smgId", groupId, "btc", isDebtClean_btc, "xrp", isDebtClean_xrp, "ltc", isDebtClean_ltc, "dot", isDebtClean_dot, logStr)
   }
 }
+*/
 
 function getMapTm(web3Tms, toChainId) {
   const tm = web3Tms.find(tm => {
@@ -579,6 +581,16 @@ async function getTokenPairsInfo(tm, total, web3Tms) {
   }
 }
 
+// chain symbol => mappingToken contract
+const getMappingTokenMap = async (web3Tms) => {
+  const tmWan = web3Tms.find(tm => tm.chain.chainType === 'WAN')
+  const total = parseInt(await tmWan.totalTokenPairs())
+  // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
+  const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
+
+  return mappingTokenMap
+}
+
 const getDebts = () => {
   const debts = {}
   const allDebts = db.getAllDebt()
@@ -601,16 +613,7 @@ const getDebts = () => {
   return debts
 }
 
-// chain symbol => mappingToken contract
-const getMappingTokenMap = async (web3Tms) => {
-  const tmWan = web3Tms.find(tm => tm.chain.chainType === 'WAN')
-  const total = parseInt(await tmWan.totalTokenPairs())
-  // 获取storeMan, 支持的所有非合约链的token, 获取token对应的多个mapToken
-  const { mappingTokenMap } = await getTokenPairsInfo(tmWan, total, web3Tms)
-
-  return mappingTokenMap
-}
-
+/*
 const suppliesArrayToMap = (allSupplies) => {
   const supplies = {}
   allSupplies.forEach(supply => {
@@ -694,9 +697,10 @@ const getOrInitBalances = async(sgs, groupId, expectTime) => {
   }
   return balances
 }
+*/
 
 // 获取要检查的债务
-const getOrInitDebts = async(time) => {
+const tryInitDebts = async(time) => {
   const sgs = db.getActiveSga();
   const debts = getDebts()
 
@@ -724,6 +728,7 @@ const getOrInitDebts = async(time) => {
   return debts
 }
 
+/*
 // save store man group's assets balance at the expectTime (sg.endTime)
 const syncBalance = async (balances, groupId, _expectTime) => {
   if (!balances[groupId]) {
@@ -790,6 +795,7 @@ const syncSupply = async (web3Tms, groupId, expectTime) => {
 
   return supplies[groupId]
 }
+*/
 
 // 判断债务是该设置为已清空
 // 1. 每天12点记录(数据库debt表)到期的storeMan各个币种的债务, 如果已经记录过某个storeMan,就不记录了
@@ -800,7 +806,7 @@ const syncSupply = async (web3Tms, groupId, expectTime) => {
 //    handleMessages (处理完消息, 更新scan到的blockNumber到数据库)
 // 4. 获取没有clean,且收到平账消息的债务项,检查余额为0,检查总资产是否大于mapToken
 // 5. 如果该storeMan的所有币债务都被清空, 且余额为0, 则设置isDebtClean为true
-//    syncIsDebtCleanToWanV2
+//    syncIsDebtCleanToWan
 
 // 第1步, 同步债务, 如果storeMan到了endTime, 我们获取原生币的所有各个mapToken的totalSupply之和作为该原生币的总债务
 
@@ -815,22 +821,19 @@ const syncSupply = async (web3Tms, groupId, expectTime) => {
 // 这种的基本能保证正确, 感觉也没啥问题, 目前正把方案切到这上面
 // 1. 每天12点记录
 
-// 第一步, 首先,到endTime后,第一时间,记录监测的smg的债务种类
-const syncDebt = async function(sgaWan, oracleWan, web3Tms) {
+// 第一步, 首先,到endTime后,第一时间,记录需要监测的smg的债务种类
+const syncDebt = async function() {
   const time = Math.floor(new Date().getTime() / 1000);
 
-  getOrInitDebts(time)
+  tryInitDebts(time)
 }
 
 // 第4步, 获取没有clean且,收到平账消息的债务项,检查balance是否为0,检查总资产是否大于mapToken
-const checkDebtClean = async function(sgaWan, oracleWan, web3Tms) {
-  const time = Math.floor(new Date().getTime() / 1000);
+// const checkDebtClean = async function(sgaWan, oracleWan, web3Tms) {
+const checkDebtClean = async function(web3Tms) {
   const debts = db.getUncleanDebts()
   const sgs = db.getActiveSga();
   const sgsWorking = sgs.filter(sg => sg.status === 5)
-
-  const chains = gNccChains
-  const chainTypes = gNccChainTypes
 
   for (let i = 0; i < debts.length; i++) {
     const debt = debts[i]
@@ -886,7 +889,8 @@ const checkDebtClean = async function(sgaWan, oracleWan, web3Tms) {
   }
 }
 
-const checkDebt2 = async function(msg, sgaWan, oracleWan, web3Tms) {
+/*
+const checkDebt2 = async function(sgaWan, oracleWan, web3Tms) {
   const time = Math.floor(new Date().getTime() / 1000);
   const isDebtCleans = {}
   const smgConfigs = {}
@@ -940,6 +944,9 @@ const checkDebt2 = async function(msg, sgaWan, oracleWan, web3Tms) {
     }
   }
 }
+*/
+
+/*
 const syncDebt_old = async function(sgaWan, oracleWan, web3Tms) {
   const time = Math.floor(new Date().getTime() / 1000);
   const sgs = db.getActiveSga();
@@ -1124,8 +1131,9 @@ const syncDebt_old = async function(sgaWan, oracleWan, web3Tms) {
     // }
   }
 }
+*/
 
-// 第2,3步
+// 第2,3步, 方案2的话,可以不用执行2,3步
 // 2. 各个币,扫链,把新storeMan所有接收钱的消息
 //    scanMessages: [ ReceiveMessage ]
 // 3. 处理收到的消息, 保存到msg表
@@ -1144,7 +1152,7 @@ const scanAllChains = () => {
 
 // 第5步
 // 如果该storeMan的所有币债务都被清空, 则设置isDebtClean为true, (且余额为0, 这个就不用了?)
-const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
+const syncIsDebtCleanToWan = async function(sgaWan, oracleWan) {
   const time = Math.floor(new Date().getTime() / 1000);
   const sgs = db.getActiveSga();
   const isDebtCleans = {}
@@ -1174,7 +1182,7 @@ const syncIsDebtCleanToWanV2 = async function(sgaWan, oracleWan) {
 
         let uncleanCount = 0
         let logStr = ''
-        // TODO: gNcc length
+        
         for (let j = 0; j < gNccChainTypes.length; j++) {
           const debt = debts.find(d => d.chainType === gNccChainTypes[j])
           let isDebtClean = false
@@ -1207,14 +1215,14 @@ module.exports = {
   doSchedule,
   syncConfigToOtherChain,
   updatePrice_WAN,
-  syncIsDebtCleanToWan,
+  // syncIsDebtCleanToWan_old,
   syncDebt,
-  syncIsDebtCleanToWanV2,
+  syncIsDebtCleanToWan,
   scanAllChains,
   getNccTokenChainTypeMap,
-  syncSupply,
-  getOrInitSupplies,
-  getOrInitBalances,
-  getOrInitDebts,
+  // syncSupply,
+  // getOrInitSupplies,
+  // getOrInitBalances,
+  tryInitDebts,
   checkDebtClean,
 }

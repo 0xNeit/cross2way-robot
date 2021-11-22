@@ -149,104 +149,104 @@ class DB {
     return this.db.prepare(`select * from debt`).all();
   }
 
-  insertBalance(item) {
-    this.db.prepare(`insert into balance values (@groupId, @chainType, @address, @expectTime, @blockNumber, @blockTime, @balance)`).run(item);
-  }
+  // insertBalance(item) {
+  //   this.db.prepare(`insert into balance values (@groupId, @chainType, @address, @expectTime, @blockNumber, @blockTime, @balance)`).run(item);
+  // }
 
-  updateBalance(item) {
-    this.db.prepare(`update balance set blockNumber = @blockNumber, blockTime = @blockTime, balance = @balance where groupId = @groupId and chainType=@chainType`).run(item);
-  }
+  // updateBalance(item) {
+  //   this.db.prepare(`update balance set blockNumber = @blockNumber, blockTime = @blockTime, balance = @balance where groupId = @groupId and chainType=@chainType`).run(item);
+  // }
 
-  getBalancesByGroupId(item) {
-    return this.db.prepare(`select * from balance where groupId = @groupId`).all(item)
-  }
-  getBalance(item) {
-    return this.db.prepare(`select * from balance where groupId = @groupId and chainType = @chainType`).get(item)
-  }
+  // getBalancesByGroupId(item) {
+  //   return this.db.prepare(`select * from balance where groupId = @groupId`).all(item)
+  // }
+  // getBalance(item) {
+  //   return this.db.prepare(`select * from balance where groupId = @groupId and chainType = @chainType`).get(item)
+  // }
 
-  modifyBalance(groupId, chainType, address, expectTime, item) {
-    const oldBalance = db.getBalance({groupId, chainType})
-    const coinBalance = oldBalance ? {...oldBalance} : {
-      groupId,
-      chainType,
-      address,
-      expectTime,
-      blockNumber: 0,
-      blockTime: 0,
-      balance: '',
-    }
+  // modifyBalance(groupId, chainType, address, expectTime, item) {
+  //   const oldBalance = db.getBalance({groupId, chainType})
+  //   const coinBalance = oldBalance ? {...oldBalance} : {
+  //     groupId,
+  //     chainType,
+  //     address,
+  //     expectTime,
+  //     blockNumber: 0,
+  //     blockTime: 0,
+  //     balance: '',
+  //   }
 
-    if (item) {
-      if (item.blockNumber && item.blockNumber > 0) {
-        coinBalance.blockNumber = item.blockNumber
-      }
-      if (item.blockTime && item.blockTime > 0) {
-        coinBalance.blockTime = item.blockTime
-      }
-      if (item.totalSupply && item.totalSupply !== '') {
-        coinBalance.totalSupply = item.totalSupply
-      }
-    }
+  //   if (item) {
+  //     if (item.blockNumber && item.blockNumber > 0) {
+  //       coinBalance.blockNumber = item.blockNumber
+  //     }
+  //     if (item.blockTime && item.blockTime > 0) {
+  //       coinBalance.blockTime = item.blockTime
+  //     }
+  //     if (item.totalSupply && item.totalSupply !== '') {
+  //       coinBalance.totalSupply = item.totalSupply
+  //     }
+  //   }
 
-    // if not in db
-    if (!oldBalance) {
-      db.insertBalance(coinBalance);
-    } else {
-      db.updateBalance(coinBalance);
-    }
-    return coinBalance
-  }
+  //   // if not in db
+  //   if (!oldBalance) {
+  //     db.insertBalance(coinBalance);
+  //   } else {
+  //     db.updateBalance(coinBalance);
+  //   }
+  //   return coinBalance
+  // }
 
-  insertSupply(item) {
-    this.db.prepare(`insert into supply values (@groupId, @chainType, @mapChainType, @address, @expectTime, @blockNumber, @blockTime, @totalSupply)`).run(item);
-  }
+  // insertSupply(item) {
+  //   this.db.prepare(`insert into supply values (@groupId, @chainType, @mapChainType, @address, @expectTime, @blockNumber, @blockTime, @totalSupply)`).run(item);
+  // }
 
-  updateSupply(item) {
-    this.db.prepare(`update supply set blockNumber = @blockNumber, blockTime = @blockTime, totalSupply = @totalSupply where groupId = @groupId and chainType=@chainType and mapChainType = @mapChainType`).run(item);
-  }
+  // updateSupply(item) {
+  //   this.db.prepare(`update supply set blockNumber = @blockNumber, blockTime = @blockTime, totalSupply = @totalSupply where groupId = @groupId and chainType=@chainType and mapChainType = @mapChainType`).run(item);
+  // }
 
-  getSuppliesByGroupId(item) {
-    return this.db.prepare(`select * from supply where groupId = @groupId`).all(item)
-  }
+  // getSuppliesByGroupId(item) {
+  //   return this.db.prepare(`select * from supply where groupId = @groupId`).all(item)
+  // }
 
-  // get token supplies
-  getSupply(item) {
-    return this.db.prepare(`select * from supply where groupId = @groupId and chainType = @chainType and mapChainType = @mapChainType`).get(item)
-  }
+  // // get token supplies
+  // getSupply(item) {
+  //   return this.db.prepare(`select * from supply where groupId = @groupId and chainType = @chainType and mapChainType = @mapChainType`).get(item)
+  // }
 
-  modifySupply(groupId, chainType, mapChainType, address, expectTime, item) {
-    const oldSupply = db.getSupply({groupId, chainType, mapChainType})
-    const coinSupply = oldSupply ? {...oldSupply} : {
-      groupId,
-      chainType,
-      mapChainType,
-      address,
-      expectTime,
-      blockNumber: 0,
-      blockTime: 0,
-      totalSupply: '',
-    }
+  // modifySupply(groupId, chainType, mapChainType, address, expectTime, item) {
+  //   const oldSupply = db.getSupply({groupId, chainType, mapChainType})
+  //   const coinSupply = oldSupply ? {...oldSupply} : {
+  //     groupId,
+  //     chainType,
+  //     mapChainType,
+  //     address,
+  //     expectTime,
+  //     blockNumber: 0,
+  //     blockTime: 0,
+  //     totalSupply: '',
+  //   }
 
-    if (item) {
-      if (item.blockNumber && item.blockNumber > 0) {
-        coinSupply.blockNumber = item.blockNumber
-      }
-      if (item.blockTime && item.blockTime > 0) {
-        coinSupply.blockTime = item.blockTime
-      }
-      if (item.totalSupply && item.totalSupply !== '') {
-        coinSupply.totalSupply = item.totalSupply
-      }
-    }
+  //   if (item) {
+  //     if (item.blockNumber && item.blockNumber > 0) {
+  //       coinSupply.blockNumber = item.blockNumber
+  //     }
+  //     if (item.blockTime && item.blockTime > 0) {
+  //       coinSupply.blockTime = item.blockTime
+  //     }
+  //     if (item.totalSupply && item.totalSupply !== '') {
+  //       coinSupply.totalSupply = item.totalSupply
+  //     }
+  //   }
 
-    // if not in db
-    if (!oldSupply) {
-      db.insertSupply(coinSupply);
-    } else {
-      db.updateSupply(coinSupply);
-    }
-    return coinSupply
-  }
+  //   // if not in db
+  //   if (!oldSupply) {
+  //     db.insertSupply(coinSupply);
+  //   } else {
+  //     db.updateSupply(coinSupply);
+  //   }
+  //   return coinSupply
+  // }
 
   insertMsg(item) {
     this.db.prepare(`insert into msg values (@groupId, @chainType, @mapChainType, @expectTime,  @blockNumber, @timestamp, @totalSupply)`).run(item);
@@ -276,24 +276,23 @@ class DB {
     return this.db.prepare(`select * from sga where status != 7 and status != 3`).all();
   }
 
-  // TODO: 
-  smgConfigToDbObj(config) {
-    const obj = {
-      groupId: config.groupId,
-      status: parseInt(config.status),
-      deposit: config.deposit,
-      chain1: parseInt(config.chain1),
-      chain2: parseInt(config.chain2),
-      curve1: parseInt(config.curve1),
-      curve2: parseInt(config.curve2),
-      gpk1: config.gpk1,
-      gpk2: config.gpk2,
-      startTime: parseInt(config.startTime),
-      endTime: parseInt(config.endTime),
-    }
+  // smgConfigToDbObj(config) {
+  //   const obj = {
+  //     groupId: config.groupId,
+  //     status: parseInt(config.status),
+  //     deposit: config.deposit,
+  //     chain1: parseInt(config.chain1),
+  //     chain2: parseInt(config.chain2),
+  //     curve1: parseInt(config.curve1),
+  //     curve2: parseInt(config.curve2),
+  //     gpk1: config.gpk1,
+  //     gpk2: config.gpk2,
+  //     startTime: parseInt(config.startTime),
+  //     endTime: parseInt(config.endTime),
+  //   }
 
-    return obj
-  }
+  //   return obj
+  // }
 
   insertSga(item) {
     this.db.prepare(`insert into sga values (@groupId, @status, @deposit, @chain1, @chain2, @curve1, @curve2, @gpk1, @gpk2, @startTime, @endTime, @updateTime,@preGroupId,@workStart,@workDuration,@registerDuration)`).run(item);

@@ -5,31 +5,32 @@ const { gNccChains } = require('./lib/ncc_chains')
 
 async function v0Tov1() {
   try {
-    // create balance table, save store man group's assets balance at the endTime
-    db.db.exec(`
-      create table balance (
-        groupId char(66) NOT NULL,
-        chainType char(20) NOT NULL,
-        address char(66) NOT NULL,
-        expectTime int NOT NULL,
-        blockNumber int,
-        blockTime int,
-        balance char(80)
-      );
-    `)
-    // create supply table, save one asset's all mapTokens' totalSupply at a store man group's endTime
-    db.db.exec(`
-      create table supply (
-        groupId char(66) NOT NULL,
-        chainType char(20) NOT NULL,
-        mapChainType char(20) NOT NULL,
-        address char(66) NOT NULL,
-        expectTime int NOT NULL,
-        blockNumber int,
-        blockTime int,
-        totalSupply char(80)
-      );
-    `)
+    // // create balance table, save store man group's assets balance at the endTime
+    // db.db.exec(`
+    //   create table balance (
+    //     groupId char(66) NOT NULL,
+    //     chainType char(20) NOT NULL,
+    //     address char(66) NOT NULL,
+    //     expectTime int NOT NULL,
+    //     blockNumber int,
+    //     blockTime int,
+    //     balance char(80)
+    //   );
+    // `)
+
+    // // create supply table, save one asset's all mapTokens' totalSupply at a store man group's endTime
+    // db.db.exec(`
+    //   create table supply (
+    //     groupId char(66) NOT NULL,
+    //     chainType char(20) NOT NULL,
+    //     mapChainType char(20) NOT NULL,
+    //     address char(66) NOT NULL,
+    //     expectTime int NOT NULL,
+    //     blockNumber int,
+    //     blockTime int,
+    //     totalSupply char(80)
+    //   );
+    // `)
 
     // create msg table
     db.db.exec(`
@@ -40,6 +41,7 @@ async function v0Tov1() {
         tx char(128) NOT NULL
       );
     `)
+
     // create debt table
     db.db.exec(`
       create table debt (

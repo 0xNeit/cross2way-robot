@@ -9,7 +9,17 @@ const readlineSync = require('readline-sync');
 const keythereum = require("keythereum");
 const { getChain, getChains } = require("./lib/web3_chains")
 
-const { createScanEvent, doSchedule, updatePrice_WAN, syncConfigToOtherChain, syncIsDebtCleanToWan, syncIsDebtCleanToWanV2, syncDebt, scanAllChains, checkDebtClean } = require('./robot_core');
+const { 
+  createScanEvent,
+  doSchedule,
+  updatePrice_WAN,
+  syncConfigToOtherChain,
+  // syncIsDebtCleanToWan_old,
+  syncIsDebtCleanToWan,
+  syncDebt,
+  // scanAllChains,
+  checkDebtClean
+} = require('./robot_core');
 
 const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
 const web3Chains = getChains(process.env.NETWORK_TYPE)
@@ -125,28 +135,30 @@ const updateStoreManToChainsPart = async function() {
   })
 }
 
+// const updateDebtCleanToWan_old = async function() {
+//   log.info("updateDebtCleanToWan")
+//   await doSchedule(async () => {
+//     await syncIsDebtCleanToWan_old(sgaWan, oracleWan, web3Quotas, chainBtc, chainXrp, chainLtc)
+//   })
+// }
 const updateDebtCleanToWan = async function() {
   log.info("updateDebtCleanToWan")
   await doSchedule(async () => {
-    await syncIsDebtCleanToWan(sgaWan, oracleWan, web3Quotas, chainBtc, chainXrp, chainLtc)
-  })
-}
-const updateDebtCleanToWanV2 = async function() {
-  log.info("updateDebtCleanToWan")
-  await doSchedule(async () => {
-    await syncIsDebtCleanToWanV2(sgaWan, oracleWan)
+    await syncIsDebtCleanToWan(sgaWan, oracleWan)
   })
 }
 const updateDebt = async function() {
   log.info("updateDebt")
   await doSchedule(async () => {
-    await syncDebt(sgaWan, oracleWan, web3Tms)
+    // await syncDebt(sgaWan, oracleWan, web3Tms)
+    await syncDebt()
   })
 }
 const checkDebt = async function() {
   log.info("checkDebt")
   await doSchedule(async () => {
-    await checkDebtClean(sgaWan, oracleWan, web3Tms)
+    // await checkDebtClean(sgaWan, oracleWan, web3Tms)
+    await checkDebtClean(web3Tms)
   })
 }
 
@@ -161,8 +173,8 @@ const robotSchedules = function() {
 
   schedule.scheduleJob('30 */1 * * * *', updateStoreManToChainsPart);
 
-  // schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWan);
-  schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWanV2);
+  // schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWan_old);
+  schedule.scheduleJob('45 */11 * * * *', updateDebtCleanToWan);
 
   // save debt
   schedule.scheduleJob('5 0 */4 * * *', updateDebt);
@@ -191,14 +203,14 @@ setTimeout(async () => {
 
   setTimeout(updatePriceToWAN, 0);
   setTimeout(scanNewStoreMan, 0);
-  setTimeout(scanAllChains, 10000)
+  // setTimeout(scanAllChains, 10000)
   setTimeout(updateDebt, 0)
 
   robotSchedules();
 
   // setTimeout(scanNewStoreMan, 0);
   // setTimeout(updateStoreManToChainsPart, 0)
-  // setTimeout(updateDebtCleanToWanV2, 0)
+  // setTimeout(updateDebtCleanToWan, 0)
   // setTimeout(updateDebt, 0)
   // setTimeout(scanAllChains, 10000)
   

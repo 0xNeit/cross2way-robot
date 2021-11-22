@@ -132,8 +132,7 @@ class BtcBase extends NccChain {
                       }
 
                       if (toSmgInfo.address != toAddress) {
-                        // TODO: more info
-                        log.error(`from = ${fromGroupId} to = ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
+                        log.error(`bad debt tx! chainType ${this.chainType}, tx = ${tx.txid} value = ${vOut[j].value}, from = ${fromGroupId} to = ${toSmgInfo.groupId}, toSgAddress ${toSmgInfo.address} != toAddress ${toAddress}`)
                         return
                       }
 

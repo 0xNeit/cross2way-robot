@@ -7,7 +7,19 @@ const db = require('../src/lib/sqlite_db')
 const BigNumber = require('bignumber.js')
 
 const btc = require('../src/lib/btc');
-const { updatePrice, syncIsDebtCleanToWanV2, syncDebt, checkDebtClean, scanAllChains, getNccTokenChainTypeMap, syncConfigToOtherChain, syncSupply, getOrInitSupplies, getOrInitBalances, getOrInitDebts} = require('../src/robot_core');
+const { 
+  updatePrice, 
+  syncIsDebtCleanToWan, 
+  syncDebt, 
+  checkDebtClean, 
+  scanAllChains, 
+  getNccTokenChainTypeMap, 
+  syncConfigToOtherChain, 
+  // syncSupply, 
+  // getOrInitSupplies, 
+  // getOrInitBalances, 
+  tryInitDebts
+} = require('../src/robot_core');
 const { ExceptionHandler } = require('winston');
 
 // const web3Chains = getChains(process.env.NETWORK_TYPE)
@@ -80,7 +92,7 @@ const testSyncSupply = async () => {
   const time = parseInt(new Date().getTime() / 1000);
 
   const s = {}
-  await syncSupply(web3Tms, s, '0x000000000000000000000000000000000000000000000000006465765f303434', time)
+  // await syncSupply(web3Tms, s, '0x000000000000000000000000000000000000000000000000006465765f303434', time)
 }
 
 async function testSyncConfigToOtherChain() {
@@ -106,21 +118,22 @@ const getTotalSupply = async() => {
 }
 
 const testSyncDebt = async () => {
-  const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
-  const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
-  const oracleWan = chainWan.loadContract('OracleDelegate')
-  const web3Chains = getChains(process.env.NETWORK_TYPE)
-  const web3Tms = []
-  web3Chains.forEach(web3Chain => {
-    const tm = web3Chain.loadContract('TokenManagerDelegate')
-    if (!tm) {
-      log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
-    }
-    web3Tms.push(tm)
-  })
+  // const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
+  // const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
+  // const oracleWan = chainWan.loadContract('OracleDelegate')
+  // const web3Chains = getChains(process.env.NETWORK_TYPE)
+  // const web3Tms = []
+  // web3Chains.forEach(web3Chain => {
+  //   const tm = web3Chain.loadContract('TokenManagerDelegate')
+  //   if (!tm) {
+  //     log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
+  //   }
+  //   web3Tms.push(tm)
+  // })
 
   // 记录扫描debt的时间点, 以及该时间点各store man group的真实资产
-  await syncDebt(sgaWan, oracleWan, web3Tms)
+  // await syncDebt(sgaWan, oracleWan, web3Tms)
+  await syncDebt()
 }
 
 const getStoreManConfig = async () => {
@@ -134,7 +147,7 @@ const testIsDebtClean = async() => {
   const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
   const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
   const oracleWan = chainWan.loadContract('OracleDelegate')
-  await syncIsDebtCleanToWanV2(sgaWan, oracleWan)
+  await syncIsDebtCleanToWan(sgaWan, oracleWan)
 }
 
 const testCheckDebtClean = async() => {
@@ -147,10 +160,11 @@ const testCheckDebtClean = async() => {
     }
     web3Tms.push(tm)
   })
-  const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
-  const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
-  const oracleWan = chainWan.loadContract('OracleDelegate')
-  await checkDebtClean(sgaWan, oracleWan, web3Tms)
+  // const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
+  // const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
+  // const oracleWan = chainWan.loadContract('OracleDelegate')
+  // await checkDebtClean(sgaWan, oracleWan, web3Tms)
+  await checkDebtClean(web3Tms)
 }
 
 const testScanAllChains = async () => {
@@ -212,31 +226,31 @@ const dbTx = () => {
   insertGet([1,2])
 }
 
-const testGetOrInitSupplies = async () => {
-  const web3Chains = getChains(process.env.NETWORK_TYPE)
-  const web3Tms = []
-  web3Chains.forEach(web3Chain => {
-    const tm = web3Chain.loadContract('TokenManagerDelegate')
-    if (!tm) {
-      log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
-    }
-    web3Tms.push(tm)
-  })
+// const testGetOrInitSupplies = async () => {
+//   const web3Chains = getChains(process.env.NETWORK_TYPE)
+//   const web3Tms = []
+//   web3Chains.forEach(web3Chain => {
+//     const tm = web3Chain.loadContract('TokenManagerDelegate')
+//     if (!tm) {
+//       log.error(`${web3Chain.chainType} has not deployed TokenManagerDelegate`)
+//     }
+//     web3Tms.push(tm)
+//   })
 
-  const supplies = await getOrInitSupplies('0x000000000000000000000000000000000000000000000000006465765f303434', web3Tms)
-  console.log(`${supplies}`)
-}
+//   const supplies = await getOrInitSupplies('0x000000000000000000000000000000000000000000000000006465765f303434', web3Tms)
+//   console.log(`${supplies}`)
+// }
 
-const testGetOrInitBalances = async () => {
-  const time = parseInt(new Date().getTime() / 1000);
-  const groupId = '0x000000000000000000000000000000000000000000000000006465765f303434'
-  const sg = db.getSga(groupId)
-  const supplies = await getOrInitBalances([sg], groupId, time)
-}
+// const testGetOrInitBalances = async () => {
+//   const time = parseInt(new Date().getTime() / 1000);
+//   const groupId = '0x000000000000000000000000000000000000000000000000006465765f303434'
+//   const sg = db.getSga(groupId)
+//   const supplies = await getOrInitBalances([sg], groupId, time)
+// }
 
-const testGetOrInitDebts = async () => {
+const testTryInitDebts = async () => {
   const time = Math.floor(new Date().getTime() / 1000);
-  getOrInitDebts()
+  tryInitDebts()
 }
 setTimeout(async () => {
   // factorial(3)
