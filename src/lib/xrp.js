@@ -131,6 +131,7 @@ class XrpChain extends NccChain {
     await this.waitForApiReady()
     log.info(`${address}`)
     try {
+      // TODO:　有没有判断账户存在的接口
       const balances = await this.api.getBalances(address)
       const balance = balances.find(b => b.currency === this.chainType)
       return this.toWei(balance.value)

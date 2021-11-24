@@ -839,6 +839,7 @@ const checkDebtClean = async function(web3Tms) {
     const debt = debts[i]
     const chain = gNccChains[debt.chainType].chain
     const sg = sgs.find(s => s.groupId === debt.groupId)
+    // TODO: curveType === 0 时, 用gpk2, 
     const address = chain.getP2PKHAddress(sg.gpk2)
     const balance = BigNumber(await chain.getBalance(address))
     const minBalance = BigNumber(chain.minBalance)
@@ -873,7 +874,7 @@ const checkDebtClean = async function(web3Tms) {
         const token = tokens[mapChainType]
         const address = token.address.toLowerCase()
         const supply = await token.getFun('totalSupply')
-        log.info(`${chainType} ${address} ${mapChainType} token supply is ${supply.toString(10)}`)
+        log.info(`${chainType} ${address} ${mapChainType} token supply is ${supply}`)
         totalSupply = totalSupply.plus(supply)
       }
       break
@@ -881,6 +882,7 @@ const checkDebtClean = async function(web3Tms) {
     if (assetsBalance.gte(totalSupply)) {
       debt.isDebtClean = 1
       debt.totalSupply = totalSupply.toString(10)
+      debt.totalReceive = assetsBalance.toString(10)
       db.modifyDebt(debt.groupId, debt.chainType, debt)
       log.info(`debt is good ${debt.groupId} ${debt.chainType} debt = ${totalSupply.toString(10)}, asset = ${assetsBalance.toString(10)}`)
     } else {
