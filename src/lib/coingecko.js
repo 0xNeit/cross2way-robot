@@ -110,7 +110,7 @@ const getMaps = (symbolsStr3rd) => {
     DOT: 'polkadot',
     MATIC: 'matic-network',
     DOGE: 'dogecoin',
-    // MOVR: 'moonriver',
+    MOVR: 'moonriver',
   }
 
   const symbols = symbolsStr3rd.replace(/\s+/g,"").split(',')

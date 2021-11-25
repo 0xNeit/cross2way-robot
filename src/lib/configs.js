@@ -208,7 +208,25 @@ module.exports = {
       chainName: 'polygon',
 
       multiCall: '0x905B3237B2367B2DdEBdF54D4F5320429710850a'.toLowerCase(),
-    }
+    },
+    'mainnet': {
+      chainType: 'MATIC',
+      rpc: 'https://polygon-rpc.com',
+      gasPrice: 0xdf8475800,
+      gasLimit: 0x4c4b40,
+      chainId: 137,
+      curveType: '1',
+      deployedFile: 'maticMainnet.json',
+      bip44: 0x800003c6,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
+
+      symbol: 'MATIC',
+      decimals: 8,
+      chainName: 'polygon',
+
+      multiCall: '0x1bbc16260d5d052f1493b8f2aeee7888fed1e9ab'.toLowerCase(),
+    },
   },
   'arbitrum': {
     'testnet': {
@@ -230,7 +248,27 @@ module.exports = {
       multiCall: '0x06c6b65A8d5F52FA1E6d90bDB3Bdd4CB85F4587f'.toLowerCase(),
 
       explorer: 'https://rinkeby-explorer.arbitrum.io/#/',
-    }
+    },
+    'mainnet': {
+      chainType: 'ARB',
+      rpc: 'https://arb1.arbitrum.io/rpc',
+      gasPrice: 0xb2d05e00,
+      gasLimit: 0x4c4b40,
+      chainId: 42161,
+      curveType: '1',
+      deployedFile: 'arbMainnet.json',
+      bip44: 0x40000002,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
+
+      symbol: 'ETH',
+      decimals: 18,
+      chainName: 'arbitrum',
+
+      multiCall: '0xb66f96e30d6a0ae64d24e392bb2dbd25155cb3a6'.toLowerCase(),
+
+      explorer: 'https://rinkeby-explorer.arbitrum.io/#/',
+    },
   },
   'fantom': {
     'testnet': {
