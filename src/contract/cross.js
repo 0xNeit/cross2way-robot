@@ -24,7 +24,9 @@ class CrossDelegate extends Contract {
   // 
   async getChainId() {
     // web3.utils.toHex("current"), web3.utils.toHex("chainID")
-    return await this.getFun('getUintValue', '0x63757272656e74', '0x636861696e4944')
+    // return await this.getFun('getUintValue', '0x63757272656e74', '0x636861696e4944')
+    // web3.utils.toHex("currentChainID")
+    return await this.getFun('currentChainID')
   }
 
   // smgFeeReceiverTimeout time uint256
