@@ -142,6 +142,7 @@ async function getTokenPairs(tm, _total) {
     for (let index in toIds) {
       const tm2 = getMapTm(parseInt(toIds[index]))
       const validIds = Object.keys(toChainPairIds[toIds[index]])
+      log.info(`${tm2.chain.chainType}, getTokenInfos`)
       await getTokenInfos(tm2, validIds, tokenPairs)
     }
   } else {
