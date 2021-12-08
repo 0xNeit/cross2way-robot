@@ -840,6 +840,7 @@ const checkDebtClean = async function(web3Tms) {
     const chain = gNccChains[debt.chainType].chain
     const sg = sgs.find(s => s.groupId === debt.groupId)
     // TODO: curveType === 0 时, 用gpk2, 
+    log.info(`${chain.chainType} will get ${sg.gpk2} balance`)
     const address = chain.getP2PKHAddress(sg.gpk2)
     const balance = BigNumber(await chain.getBalance(address))
     const minBalance = BigNumber(chain.minBalance)
