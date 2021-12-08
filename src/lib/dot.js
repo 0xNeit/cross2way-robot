@@ -194,12 +194,17 @@ class DotChain extends NccChain {
     const now = await api.query.timestamp.now()
   
     // Retrieve the account balance & nonce via the system module
-    const { nonce, data: balance } = await api.query.system.account(address);
-    console.log(`Now: ${now}: balance of ${balance.free} and a nonce of ${nonce}`);
-
-    // TODO:　有没有判断账户存在的接口
-    // TODO: 删除账户
-    return balance.free.toString(10)
+    try {
+      const { nonce, data: balance } = await api.query.system.account(address);
+      console.log(`Now: ${now}: balance of ${balance.free} and a nonce of ${nonce}`);
+  
+      // TODO:　有没有判断账户存在的接口
+      // TODO: 删除账户
+      return balance.free.toString(10)
+    } catch (error) {
+      log.error(error)
+      throw error
+    }
   }
   
   getP2PKHAddress(gpk) {
