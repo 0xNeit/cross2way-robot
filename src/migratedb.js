@@ -92,7 +92,17 @@ async function v0Tov1() {
     const from = parseInt(process.env.SCAN_WAN_FROM) - 1
     const to = blockNumber - parseInt(process.env.SCAN_UNCERTAIN_BLOCK)
     const step = parseInt(process.env.SCAN_STEP)
+    scanInst.bScanning = true
     await scanInst.scanStoremanGroup(from, to, step);
+
+    const waitEnd = () => {
+      if (!scanInst.bScanning) {
+        process.exit(0)
+      } else {
+        setTimeout(waitEnd, 5000)
+      }
+    }
+    waitEnd()
   } catch (e) {
     console.error("migrate from v0 to v1 failed:", e)
   }

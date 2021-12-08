@@ -263,20 +263,33 @@ const getTokenPairDetails = async (tm, total, ids, tokenPairs, cb) => {
   )
 }
 
+const nftTokens = {108: true}
 const getTokenInfos = async (tm, ids, tokenPairs) => {
   await getAggregate(tm.chain.rpc, tm.chain.multiCall, ids.length, 30,
     (i) => {
       const id = parseInt(ids[i])
-      return [{
-        target: tm.address,
-        call: ['getTokenInfo(uint256)(address,string,string,uint8)', id],
-        returns: [
-          [`addr-${i}`, val => val],
-          [`name-${i}`, val => val],
-          [`symbol-${i}`, val => val],
-          [`decimals-${i}`, val => val],
-        ],
-      }]
+      if (nftTokens[id]) {
+        return [{
+          target: tm.address,
+          call: ['getNftInfo(uint256)(address,string,string)', id],
+          returns: [
+            [`addr-${i}`, val => val],
+            [`name-${i}`, val => val],
+            [`symbol-${i}`, val => val],
+          ],
+        }]
+      } else {
+        return [{
+          target: tm.address,
+          call: ['getTokenInfo(uint256)(address,string,string,uint8)', id],
+          returns: [
+            [`addr-${i}`, val => val],
+            [`name-${i}`, val => val],
+            [`symbol-${i}`, val => val],
+            [`decimals-${i}`, val => val],
+          ],
+        }]
+      }
     },
     (ret, start, end) => {
       for (let i = start; i <= end; i++) {
@@ -284,7 +297,7 @@ const getTokenInfos = async (tm, ids, tokenPairs) => {
         tokenPairs[id].mapAddr = ret.results.transformed[`addr-${i}`]
         tokenPairs[id].mapName = ret.results.transformed[`name-${i}`]
         tokenPairs[id].mapSymbol = ret.results.transformed[`symbol-${i}`]
-        tokenPairs[id].mapDecimals = ret.results.transformed[`decimals-${i}`].toString(10)
+        tokenPairs[id].mapDecimals = ret.results.transformed[`decimals-${i}`] ? ret.results.transformed[`decimals-${i}`] : 0
       }
     }
   )

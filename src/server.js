@@ -143,7 +143,13 @@ async function getTokenPairs(tm, _total) {
       const tm2 = getMapTm(parseInt(toIds[index]))
       const validIds = Object.keys(toChainPairIds[toIds[index]])
       log.info(`${tm2.chain.chainType}, getTokenInfos`)
-      await getTokenInfos(tm2, validIds, tokenPairs)
+      if (tm2.chain.multiCall) {
+        try {
+          await getTokenInfos(tm2, validIds, tokenPairs)
+        } catch (error) {
+          log.error(`multiCall getTokenInfos ${tm2.chain.chainType} failed`, JSON.stringify(validIds, null, 2), JSON.stringify(tokenPairs, null, 2))
+        }
+      }
     }
   } else {
     for(let i=0; i<total; i++) {

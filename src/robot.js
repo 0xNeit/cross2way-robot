@@ -32,7 +32,7 @@ let oracleWan = null
 const sgaWan = chainWan.loadContract('StoremanGroupDelegate')
 
 const web3Oracles = []
-const web3Quotas = []
+// const web3Quotas = []
 const web3Tms = []
 web3Chains.forEach(web3Chain => {
   if (!!web3Chain.deployedFile) {
@@ -45,11 +45,11 @@ web3Chains.forEach(web3Chain => {
     }
     web3Oracles.push(oracle)
 
-    const quota = web3Chain.loadContract('QuotaDelegate')
-    if (!quota) {
-      log.error(`${web3Chain.chainType} has not deployed Quota`)
-    }
-    web3Quotas.push(quota)
+    // const quota = web3Chain.loadContract('QuotaDelegate')
+    // if (!quota) {
+    //   log.error(`${web3Chain.chainType} has not deployed Quota`)
+    // }
+    // web3Quotas.push(quota)
 
     const tm = web3Chain.loadContract('TokenManagerDelegate')
     if (!tm) {
@@ -213,6 +213,7 @@ setTimeout(async () => {
   // setTimeout(updateDebtCleanToWan, 0)
   // setTimeout(updateDebt, 0)
   // setTimeout(scanAllChains, 10000)
+  // setTimeout(checkDebt, 0)
   
 }, 0)
 
