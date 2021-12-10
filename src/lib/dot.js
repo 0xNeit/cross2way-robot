@@ -193,7 +193,7 @@ class DotChain extends NccChain {
     // Retrieve the last timestamp
     const now = await api.query.timestamp.now()
   
-    log.error(`polka getBalance ${address}`, error)
+    log.info(`polka getBalance ${address}`)
 
     // Retrieve the account balance & nonce via the system module
     try {
