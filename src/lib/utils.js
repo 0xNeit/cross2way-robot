@@ -2,6 +2,7 @@ const Web3 = require('web3');
 const web3 = new Web3();
 const wanUtil = require('wanchainjs-util');
 const { aggregate } = require('@makerdao/multicall');
+const BigNumber = require('bignumber.js')
 
 // TODO: delete chainIds
 const chainIds = {
@@ -63,9 +64,9 @@ function promiseEvent(func, paras=[], obj=null, event){
 
 function fractionRatioToDecimalString(priceRaw, price_decimal, ratio) {
     const ratioPrice = fractionToDecimalString(priceRaw, price_decimal)
-    const ratio_price = web3.utils.toBN(ratioPrice)
-    const ratio_p = web3.utils.toBN(ratio)
-    const price = web3.utils.toBN(ratioPrice).mul(web3.utils.toBN(ratio)).div(web3.utils.toBN(Math.pow(10, price_decimal)))
+    const ratio_price = BigNumber(ratioPrice)
+    const ratio_p = BigNumber(ratio)
+    const price = BigNumber(ratioPrice).mul(BigNumber(ratio)).div(BigNumber(Math.pow(10, price_decimal)))
     return '0x' + price.toString('hex')
 }
 
@@ -85,9 +86,9 @@ function fractionToDecimalString(priceRaw, _price_decimal) {
             priceStr += priceRawSplit[1];
         }
     }
-    const price = web3.utils.toBN(priceStr);
+    const price = BigNumber(priceStr);
 
-    return '0x' + price.mul(web3.utils.toBN(Math.pow(10, price_decimal - decimal))).toString('hex');
+    return '0x' + price.mul(BigNumber(Math.pow(10, price_decimal - decimal))).toString('hex');
 }
 
 function formatToFraction(oldDecimalString) {

@@ -274,7 +274,7 @@ module.exports = {
     'testnet': {
       chainType: 'FTM',
       rpc: 'https://rpc.testnet.fantom.network',
-      gasPrice: 0x6553f100,
+      gasPrice: 0x174876e800,
       gasLimit: 0x7a1200,
       chainId: 4002,
       curveType: '1',
