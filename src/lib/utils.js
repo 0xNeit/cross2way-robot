@@ -66,7 +66,7 @@ function fractionRatioToDecimalString(priceRaw, price_decimal, ratio) {
     const ratioPrice = fractionToDecimalString(priceRaw, price_decimal)
     const ratio_price = BigNumber(ratioPrice)
     const ratio_p = BigNumber(ratio)
-    const price = BigNumber(ratioPrice).mul(BigNumber(ratio)).div(BigNumber(Math.pow(10, price_decimal)))
+    const price = BigNumber(ratioPrice).multipliedBy(BigNumber(ratio)).div(BigNumber(Math.pow(10, price_decimal)))
     return '0x' + price.toString('hex')
 }
 
