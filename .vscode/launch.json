@@ -85,6 +85,17 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "test abi mainnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/test/abi.js",
+      "envFile": "${workspaceFolder}/.env"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "test btc testnet",
       "skipFiles": [
         "<node_internals>/**"
