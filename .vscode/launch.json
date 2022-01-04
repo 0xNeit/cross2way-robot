@@ -184,12 +184,12 @@
     {
       "type": "node",
       "request": "launch",
-      "name": "deploy eth testnet",
+      "name": "crypto",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "cwd": "${workspaceRoot}",
-      "program": "${workspaceFolder}/src/deploy.js",
+      "program": "${workspaceFolder}/src/lib/crypto_compare.js",
       "envFile": "${workspaceFolder}/.env.dev"
     },
     {
@@ -201,6 +201,17 @@
       ],
       "cwd": "${workspaceRoot}",
       "program": "${workspaceFolder}/src/lib/cmc.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
+      "name": "deploy eth testnet",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/deploy.js",
       "envFile": "${workspaceFolder}/.env.dev"
     },
     {

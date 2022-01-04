@@ -30,6 +30,14 @@ async function getPrices(symbolsStr) {
   return priceMap;
 }
 
+// setTimeout(async () => {
+//   try {
+//     getPrices(process.env.SYMBOLS_3RD.replace(/\s+/g,""))
+//   } catch (error) {
+//     log.info(error)
+//   }
+// }, 0)
+
 module.exports = getPrices;
 
 // {

@@ -148,8 +148,9 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
             // 如果coingecko价格变化 > 30%, 则当crypto价格变化 > 25%, 才算通过
             if (deltaTimes.cmp(maxThreshold) > 0) {
               if (!cryptoPriceMap) {
-                cryptoPriceMap = await getCryptPrices(process.env.SYMBOLS_3RD.replace(/\s+/g,""))
-                mergePrice(cryptoPriceMap, null, process.env.SYMBOLS_MAP)
+                const newCryptoPriceMap = await getCryptPrices(process.env.SYMBOLS_3RD.replace(/\s+/g,""))
+                const obj = getMapPrice(newCryptoPriceMap, process.env.SYMBOLS_MAP)
+                cryptoPriceMap = obj.ourPriceMap
               }
               
               if (cryptoPriceMap[it]) {
@@ -176,22 +177,33 @@ async function updatePrice(oracle, pricesMap, symbolsStringArray) {
   log.info(`updatePrice ${oracle.core.chainType} end`);
 }
 
-function mergePrice(pricesMap, symbolsOld, symbolsMapStr) {
+function getMapPrice(pricesMap, symbolsMapStr) {
+  const ourPriceMap = {}
+  const ourSymbols = []
+
   symbolsMapStr.replace(/\s+/g,"").split(',').forEach(i => { 
     const kv = i.split(':')
     if (kv.length === 2) {
-      pricesMap[kv[0]] = pricesMap[kv[1]]
-      if (symbolsOld) {
-        symbolsOld.push(kv[0])
-      }
+      ourPriceMap[kv[0]] = pricesMap[kv[1]]
+      ourSymbols.push(kv[0])
     }
   })
+
+
+  return {
+    ourPriceMap,
+    ourSymbols
+  }
 }
 
 async function updatePrice_WAN(oracle, pricesMap) {
-  const symbols = (process.env.SYMBOLS_3RD + ',' + process.env.SYMBOLS_SWAP).replace(/\s+/g,"").split(',')
-  mergePrice(pricesMap, symbols, process.env.SYMBOLS_MAP)
-  await updatePrice(oracle, pricesMap, symbols)
+  // const symbols = (process.env.SYMBOLS_3RD + ',' + process.env.SYMBOLS_SWAP).replace(/\s+/g,"").split(',')
+  const obj = getMapPrice(pricesMap, process.env.SYMBOLS_MAP)
+  process.env.SYMBOLS_SWAP.replace(/\s+/g,"").split(',').forEach(i => {
+    obj.ourPriceMap[i] = pricesMap[i]
+    obj.ourSymbols.push(i)
+  })
+  await updatePrice(oracle, obj.ourPriceMap, obj.ourSymbols)
 }
 
 // async function updateDeposit(oracle, smgID, amount) {
