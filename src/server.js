@@ -240,7 +240,7 @@ function mapStr2str(symbolsMapStr) {
 
 async function refreshOracles() {
   const mapStr = mapStr2str(process.env.SYMBOLS_MAP);
-  const WAN_SYMBOLS = process.env.SYMBOLS_SWAP + (mapStr.length > 0 ? ',' : "") + mapStr;
+  const WAN_SYMBOLS = process.env.SYMBOLS_3RD + ',' + process.env.SYMBOLS_SWAP + (mapStr.length > 0 ? ',' : "") + mapStr;
 
   const prePricesArray = await oracleWan.getValues(WAN_SYMBOLS);
   const symbolsStringArray = WAN_SYMBOLS.replace(/\s+/g,"").split(',');
