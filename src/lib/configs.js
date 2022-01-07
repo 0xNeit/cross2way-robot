@@ -174,7 +174,7 @@ module.exports = {
     'mainnet': {
       chainType: 'MOVR',
       rpc: 'https://rpc.moonriver.moonbeam.network',
-      gasPrice: 0x3b9aca00,
+      gasPrice: 0x2540be400,
       gasLimit: 0x7a1200,
       chainId: 1285,
       curveType: '1',
@@ -212,7 +212,7 @@ module.exports = {
     'mainnet': {
       chainType: 'MATIC',
       rpc: 'https://polygon-rpc.com',
-      gasPrice: 0xdf8475800,
+      gasPrice: 0x45d964b800,
       gasLimit: 0x4c4b40,
       chainId: 137,
       curveType: '1',
@@ -252,7 +252,7 @@ module.exports = {
     'mainnet': {
       chainType: 'ARB',
       rpc: 'https://arb1.arbitrum.io/rpc',
-      gasPrice: 0xb2d05e00,
+      gasPrice: 0x37e11d600,
       gasLimit: 0x4c4b40,
       chainId: 42161,
       curveType: '1',
