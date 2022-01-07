@@ -155,7 +155,7 @@ module.exports = {
   'moonbeam': {
     'testnet': {
       chainType: 'DEV',
-      rpc: 'https://rpc.testnet.moonbeam.network',
+      rpc: 'https://rpc.api.moonbase.moonbeam.network',
       gasPrice: 0xba43b74000,
       gasLimit: 0x7a1200,
       chainId: 1287,
