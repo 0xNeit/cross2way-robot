@@ -360,8 +360,8 @@ async function refreshChains() {
       tokenManagerProxy: web3TmProxies[i].address,
       tokenManagerDelegator: await web3TmProxies[i].implementation(),
 
-      oracleProxyOwner: await web3OracleProxies[i].getOwner(),
-      oracleDelegatorOwner: await web3Oracles[i].getOwner(),
+      oracleOwner: await web3Oracles[i].getOwner(),
+      oracleAdmin: await web3Oracles[i].admin(),
       tokenManagerProxyOwner: await web3TmProxies[i].getOwner(),
       tokenManagerDelegatorOwner: await web3Tms[i].getOwner(),
 
