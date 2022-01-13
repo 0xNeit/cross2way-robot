@@ -169,7 +169,7 @@ const robotSchedules = function() {
   schedule.scheduleJob('0 */5 * * * *', scanNewStoreMan);
 
   // sync sga config from wan to other chain, sga database, 1 / 1day
-  schedule.scheduleJob('15 2 1 * * *', updateStoreManToChains);
+  // schedule.scheduleJob('15 2 1 * * *', updateStoreManToChains);
 
   schedule.scheduleJob('30 */3 * * * *', updateStoreManToChainsPart);
 

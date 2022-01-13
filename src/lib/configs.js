@@ -152,7 +152,7 @@ module.exports = {
       multiCall: '0xA4726706935901fe7dd0F23Cf5D4fb19867dfc88'.toLowerCase(),
     }
   },
-  'moonbeam': {
+  'moonriver': {
     'testnet': {
       chainType: 'DEV',
       rpc: 'https://moonbeam-alpha.api.onfinality.io/public',
@@ -167,7 +167,7 @@ module.exports = {
 
       symbol: 'DEV',
       decimals: 18,
-      chainName: 'moonbeam',
+      chainName: 'moonbase',
 
       multiCall: '0x136333217C18Cd6E018B85Aaf8Bd563EB72E97Fd'.toLowerCase(),
     },
@@ -178,16 +178,36 @@ module.exports = {
       gasLimit: 0x7a1200,
       chainId: 1285,
       curveType: '1',
-      deployedFile: 'moonbeamMainnet.json',
+      deployedFile: 'moonriverMainnet.json',
       bip44: 0x40000001,
       ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
       chainKind: 'eth',
 
       symbol: 'MOVR',
       decimals: 18,
-      chainName: 'moonbeam',
+      chainName: 'moonriver',
 
       multiCall: '0x1Fe0C23940FcE7f440248e00Ce2a175977EE4B16'.toLowerCase(),
+    },
+  },
+  'moonbeam': {
+    'mainnet': {
+      chainType: 'GLMR',
+      rpc: 'https://rpc.api.moonbeam.network',
+      gasPrice: 0x45d964b800,
+      gasLimit: 0x7a1200,
+      chainId: 1284,
+      curveType: '1',
+      deployedFile: 'moonbeamMainnet.json',
+      bip44: 0x40000004,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
+
+      symbol: 'GLMR',
+      decimals: 18,
+      chainName: 'moonbeam',
+
+      multiCall: '0xBAcAaa4509EE9c9b2cF7133B970BC6db47713477'.toLowerCase(),
     },
   },
   'polygon': {
@@ -293,7 +313,7 @@ module.exports = {
     },
     'mainnet': {
       chainType: 'FTM',
-      rpc: 'https://rpc.fantom.network',
+      rpc: 'https://nodes.wandevs.org/fantom',
       gasPrice: 0xd18c2e2800,
       gasLimit: 0x7a1200,
       chainId: 250,

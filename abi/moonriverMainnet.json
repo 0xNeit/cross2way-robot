@@ -1,10 +1,10 @@
 {
      "TokenManagerProxy": {
-          "address": "0xC814fF82E04c556fba1639F1fddc158709184169",
+          "address": "0x32e1504a67826960245506706E0B129dC2A53b7f",
           "abi": "abi.TokenManagerDelegate.json"
      },
      "TokenManagerDelegate": {
-          "address": "0x75b12FFC4A4740c246d7D553C897e52236433A52",
+          "address": "0xDd5f00B70762925BEde6819B53ae5427e3EfE423",
           "abi": "abi.TokenManagerDelegate.json"
      },
      "QuotaProxy": {
@@ -16,11 +16,11 @@
           "abi": "abi.QuotaDelegate.json"
      },
      "OracleProxy": {
-          "address": "0xCAa36De573F8203F880A1C0bbdCeA996Bf3b1748",
+          "address": "0xfFD3E7DaBCdEC920Eed13B19A81b205aA0Dd6e05",
           "abi": "abi.OracleDelegate.json"
      },
      "OracleDelegate": {
-          "address": "0x079497f92f4522b3b17112AA8D28C4cE138935ba",
+          "address": "0x1d920B2a602e1339a18855eaCa5EF6A51527627c",
           "abi": "abi.OracleDelegate.json"
      },
      "HTLCTxLib": {
@@ -33,18 +33,18 @@
           "address": "0xCE82011c9CeF9D7E6495D5514416D046CDDeAA1B"
      },
      "CrossProxy": {
-          "address": "0x6372aEc6263AA93EAceDC994D38aa9117B6b95B5",
+          "address": "0xdE1Ae3c465354f01189150f3836C7C15A1d6671D",
           "abi": "abi.CrossDelegate.json"
      },
      "CrossDelegate": {
-          "address": "0x0De50554333AA03e5383Df38023fC89d8E342275",
+          "address": "0xe91893AC5E91C33cb65962b4B7771ecBa8B647f9",
           "abi": "abi.CrossDelegate.json"
      },
      "SignatureVerifier": {
-          "address": "0xE727e81ea730ea216cA3720C2597Fd14Bf2B825A",
+          "address": "0xc565Ed1e12CE78f3a1DF9F8C3e0A1B7E8577702c",
           "abi": "abi.SignatureVerifier.json"
      },
      "Bn128SchnorrVerifier": {
-          "address": "0x6E228A699Be7a3e9797009bBFB7F4a1A6516354D"
+          "address": "0x0E3F52157dF2D2974949570B1871AEcbAeC8414D"
      }
 }
