@@ -331,48 +331,48 @@ module.exports = {
 
       explorer: 'https://www.ftmscan.com/',
     },
-    optimism : {
-      'testnet': {
-        chainType: 'OPT',
-        rpc: 'https://kovan.optimism.io',
-        gasPrice: 0x45d964b800,
-        gasLimit: 0x7a1200,
-        chainId: 69,
-        curveType: '1',
-        deployedFile: 'optTestnet.json',
-        bip44: 0x80000266,
-        ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
-        chainKind: 'eth',
-  
-        symbol: 'KETH',
-        decimals: 18,
-        chainName: 'optimism',
-  
-        multiCall: '0xc0xc0xcB5E16FC59108511B86342D654c89E5e0c460c85B5E16FC59108511B86342D654c89E5e0c460c85B5E16FC59108511B86342D654c89E5e0c460c85'.toLowerCase(),
-  
-        explorer: 'https://kovan-optimistic.etherscan.com/',
+  },
+  'optimism' : {
+    'testnet': {
+      chainType: 'OPT',
+      rpc: 'https://kovan.optimism.io',
+      gasPrice: 0x45d964b800,
+      gasLimit: 0x7a1200,
+      chainId: 69,
+      curveType: '1',
+      deployedFile: 'optTestnet.json',
+      bip44: 0x80000266,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
 
-      },
-      'mainnet': {
-        chainType: 'OPT',
-        rpc: 'https://mainnet.optimism.io/',
-        gasPrice: 0x45d964b800,
-        gasLimit: 0x7a1200,
-        chainId: 10,
-        curveType: '1',
-        deployedFile: 'optMainnet.json',
-        bip44: 0x80000266,
-        ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
-        chainKind: 'eth',
-  
-        symbol: 'OETH',
-        decimals: 18,
-        chainName: 'optimism',
-  
-        multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
-  
-        explorer: 'https://optimistic.etherscan.com/',
-      }
+      symbol: 'KETH',
+      decimals: 18,
+      chainName: 'optimism',
+
+      multiCall: '0xc0xc0xcB5E16FC59108511B86342D654c89E5e0c460c85B5E16FC59108511B86342D654c89E5e0c460c85B5E16FC59108511B86342D654c89E5e0c460c85'.toLowerCase(),
+
+      explorer: 'https://kovan-optimistic.etherscan.com/',
+
+    },
+    'mainnet': {
+      chainType: 'OPT',
+      rpc: 'https://mainnet.optimism.io/',
+      gasPrice: 0x45d964b800,
+      gasLimit: 0x7a1200,
+      chainId: 10,
+      curveType: '1',
+      deployedFile: 'optMainnet.json',
+      bip44: 0x80000266,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
+
+      symbol: 'OETH',
+      decimals: 18,
+      chainName: 'optimism',
+
+      multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
+
+      explorer: 'https://optimistic.etherscan.com/',
     }
   }
 }
