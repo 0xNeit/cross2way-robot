@@ -349,7 +349,7 @@ module.exports = {
       decimals: 18,
       chainName: 'optimism',
 
-      multiCall: '0xc0xc0xcB5E16FC59108511B86342D654c89E5e0c460c85B5E16FC59108511B86342D654c89E5e0c460c85B5E16FC59108511B86342D654c89E5e0c460c85'.toLowerCase(),
+      multiCall: '0xcB5E16FC59108511B86342D654c89E5e0c460c85'.toLowerCase(),
 
       explorer: 'https://kovan-optimistic.etherscan.com/',
 
