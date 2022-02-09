@@ -150,19 +150,19 @@ class DotChain extends NccChain {
 
     // TODO log
     api.on('connected', () => {
-        console.log(' Polka API has been connected to the endpoint');
+        log.info(' Polka API has been connected to the endpoint');
     });
 
     api.on('ready', () => {
-        console.log(' Polka API ready...');
+        log.info(' Polka API ready...');
     });
 
     api.on('disconnected', () => {
-        console.log(' Polka API has been disconnected from the endpoint');
+        log.info(' Polka API has been disconnected from the endpoint');
     });
 
     api.on('error', (error) => {
-        console.log(' Polka API got an error: ', error);
+        log.warn(' Polka API got an error: ', error);
     });
 
     this.api = await api.isReady;
