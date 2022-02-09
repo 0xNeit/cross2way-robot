@@ -137,7 +137,7 @@ class XrpChain extends NccChain {
       return this.toWei(balance.value)
     } catch(e) {
       if (e.name === 'RippledError') {
-        if (e.message === 'Account not found') {
+        if (e.message.includes('Account not found')) {
           return '0'
         }
       }
