@@ -245,7 +245,7 @@ function isConfigEqual(config, config2, bStatus = false) {
     return true
 }
 
-async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
+async function syncConfigToOtherChain_old(sgaContract, oracles, isPart = false) {
   log.info(`syncConfigToOtherChain begin`);
 
   // set current storeMan group 
@@ -373,6 +373,149 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       log.error(`can't get store man group ${groupId} config on wan chain`)
     }
   }
+  log.info(`syncConfigToOtherChain end`);
+}
+
+async function syncConfigToOneChain(oracle, sgsValid, smgConfigs, chainSmgConfigs, syncing) {
+  try {
+    // 获取sgsValid在oracle链上的状态
+    await batchGetSmgConfigs(oracle, oracle, sgsValid, chainSmgConfigs[oracle.chain.chainType])
+
+    for (let i = 0; i < sgsValid.length; i++) {
+      const sg = sgsValid[i];
+      const groupId = sg.groupId;
+      const config = smgConfigs[groupId];
+      
+      if (config) {
+        const status = parseInt(config.status)
+
+        // 如果当前组不一致, 则设置当前组
+        const groupName = web3.utils.hexToString(groupId)
+        const groupIdUint = new BigNumber(sg.groupId).toString(10)
+        if (process.env.NETWORK_TYPE !== 'testnet' || groupName.startsWith('dev_')) {
+          if (status === 5) {
+            const currentGroupIds = await oracle.getCurrentGroupIds()
+            if (currentGroupIds[0] !== groupIdUint && currentGroupIds[1] !== groupIdUint) {
+              syncing[oracle.chain.chainType][groupId] = 0x2
+              await oracle.setCurrentGroupIds([groupIdUint, currentGroupIds[0]])
+            }
+          }
+        }
+
+        // 如果配置不一样, 则更新配置
+        const config_eth = chainSmgConfigs[oracle.chain.chainType][groupId];
+        // curve1 -> chain curve type
+        const curve1 = !!oracle.chain.curveType ? oracle.chain.curveType : process.env[oracle.chain.core.chainType + '_CURVETYPE']
+        // curve2 -> another curve type
+        const curve2 = curve1 === config.curve1 ? config.curve2 : config.curve1
+        const gpk1   = curve1 === config.curve1 ? config.gpk1 : config.gpk2
+        const gpk2   = curve1 === config.curve1 ? config.gpk2 : config.gpk1
+        const newConfig = {
+          ...config,
+          curve1,
+          curve2,
+          gpk1,
+          gpk2
+        }
+        
+        if (!config_eth || !isConfigEqual(newConfig, config_eth)) {
+          // chain1 -> chain2
+          syncing[oracle.chain.chainType][groupId] = 0x4
+          await oracle.setStoremanGroupConfig(
+            groupId,
+            config.status,
+            config.deposit,
+            [config.chain2, config.chain1],
+            [curve1, curve2],
+            gpk1,
+            gpk2,
+            config.startTime,
+            config.endTime,
+          );
+        } else if (config.status !== config_eth.status) {
+          syncing[oracle.chain.chainType][groupId] = 0x8
+          await setStoremanGroupStatus(oracle, groupId, config.status);
+        }
+        syncing[oracle.chain.chainType][groupId] |= 1
+      } else {
+        log.error(`can't get store man group ${groupId} config on wan chain`)
+      }
+    }
+
+  } catch(e) {
+    log.error(`syncConfigToOneChain chain ${oracle.chain.core.chainType} failed`, e)
+  }
+}
+
+async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
+  log.info(`syncConfigToOtherChain begin`);
+
+  /// 核心方法 先获取sgs在wan上的状态, 再获取sgs在别的链的状态, 做对比
+  // 1. 获取sgs在wan上的状态
+  const sgs = db.getActiveSga()
+  const smgConfigs = {}
+  await batchGetSmgConfigs(null, sgaContract, sgs, smgConfigs)
+
+  // 2. 只向其它链同步 status >= 5 的sgs, 如果不需要向其他链同步, 则与本地数据库的状态对比, 更新本地数据库
+  const sgsValid = sgs.filter(sg => {
+    const config = smgConfigs[sg.groupId]
+    const status = parseInt(config.status)
+
+    if (status < 5) {
+      // 2.1 如果不需要向其他链同步, 与本地数据库对比, 且跟本地数据库状态不一致, 则只更新本地数据库
+      if (sg.status !== status) {
+        writeToDB(config)
+      }
+      return false
+    }
+    
+    return true
+  })
+
+  // 3. 在其它链上获取status > 5的sgs的状态, 对比, 有差别时发起同步
+  const promises = []
+  const chainSmgConfigs = {}
+  const syncing = {}
+  for(let j = 0; j<oracles.length; j++) {
+    const index = j
+    const oracle = oracles[index]
+    const chainType = oracle.chain.chainType
+
+    chainSmgConfigs[chainType] = {}
+    syncing[chainType] = {}
+
+    sgsValid.forEach(sg => {
+      syncing[chainType][sg.groupId] = 0
+    })
+    promises.push(syncConfigToOneChain(oracle, sgsValid, smgConfigs, chainSmgConfigs, syncing))
+  }
+  await Promise.all(promises)
+
+  // 4. 如果所有链状态都一样, 保存到db
+  for (let i = 0; i < sgsValid.length; i++) {
+    const config = smgConfigs[sgsValid[i].groupId]
+    let syncFailed = false
+    let bWriteDb = false
+    for(let j = 0; j<oracles.length; j++) {
+      const index = j
+      const oracle = oracles[index]
+      const syncingStatus = syncing[oracle.chain.chainType]
+      const syncingSuccess = syncingStatus[config.groupId] & 1
+      if (syncingStatus > 1 && !syncingSuccess) {
+        syncFailed = true
+        log.error(`syncConfigToOneChain failed ${oracle.chain.chainType} ${config.groupId}`)
+      }
+
+      if (syncingStatus >= 4) {
+        bWriteDb = true
+      }
+    }
+
+    if (!syncFailed && bWriteDb) {
+      writeToDB(config)
+    }
+  }
+
   log.info(`syncConfigToOtherChain end`);
 }
 
