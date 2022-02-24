@@ -266,7 +266,7 @@ async function checkChainRpc(chain) {
     if (isBadConnect) {
       let web3 = await chain.createApi(chain.rpc)
       await chain.setApi(web3)
-      log.warn(`ncc chain ${chain.chainType} reconnect ${chain.rpc}`)
+      log.warn(`chain ${chain.chainType} reconnect ${chain.rpc}`)
     }
   }
 }
