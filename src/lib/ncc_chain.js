@@ -13,9 +13,27 @@ class NccChain {
     this.address2smgId = {}
 
     this.preSmgId2Address = {}
+
+    this.lastBlockNumber = 0
+    this.lastBlockTime = 0
   }
 
-  getBlockNumber() {
+  // static members
+  async createApi(rpc_url) {
+    throw new Error(`createApi not implemented`)
+  }
+
+  async setApi(api) {
+    throw new Error(`setApi not implemented`)
+  }
+
+  async sGetBlockNumber(apiRaw) {
+    throw new Error(`sGetBlockNumber not implemented`)
+  }
+
+  // 
+
+  async getBlockNumber() {
     throw new Error(`getBlockNumber not implemented`)
   }
 

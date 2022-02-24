@@ -17,6 +17,9 @@ module.exports = {
       decimals: 18,
       chainName: 'wan',
 
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
       multiCall: '0x14095a721Dddb892D6350a777c75396D634A7d97'.toLowerCase(),
     },
     'mainnet': {
@@ -34,6 +37,9 @@ module.exports = {
       symbol: 'WAN',
       decimals: 18,
       chainName: 'wan',
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
 
       multiCall: '0xBa5934Ab3056fcA1Fa458D30FBB3810c3eb5145f'.toLowerCase(),
     },
@@ -55,6 +61,10 @@ module.exports = {
       decimals: 18,
       chainName: 'ethereum',
 
+      // 3 hour
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
       multiCall: '0x42ad527de7d4e9d9d011ac45b31d8551f8fe9821'.toLowerCase(),
     },
     'mainnet': {
@@ -72,6 +82,10 @@ module.exports = {
       symbol: 'ETH',
       decimals: 18,
       chainName: 'ethereum',
+      
+      // 2 hour
+      maxNoBlockTime: 1800000,
+      rpcS: [],
 
       multiCall: '0xeefba1e63905ef1d7acba5a8513c70307c1ce441'.toLowerCase(),
     },
@@ -79,7 +93,7 @@ module.exports = {
   'bsc': {
     'testnet': {
       chainType: 'BSC',
-      rpc: 'https://data-seed-prebsc-1-s2.binance.org:8545/',
+      rpc: 'https://data-seed-prebsc-1-s1.binance.org:8545/',
       gasPrice: 0xe8d4a51000,
       gasLimit: 0x7a1200,
       chainId: 97,
@@ -93,11 +107,14 @@ module.exports = {
       decimals: 18,
       chainName: 'bsc',
 
+      maxNoBlockTime: 1800000,
+      rpcS: ['https://data-seed-prebsc-1-s1.binance.org:8545/', 'http://data-seed-pre-0-s1.binance.org:80', 'https://data-seed-prebsc-2-s1.binance.org:8545/', 'http://data-seed-pre-1-s1.binance.org:80'],
+
       multiCall: '0x54b738619DE4770A17fF3D6bA4c2b591a886A062'.toLowerCase(),
     },
     'mainnet': {
       chainType: 'BSC',
-      rpc: 'https://bsc-dataseed1.binance.org/',
+      rpc: 'https://bsc-dataseed1.binance.org',
       gasPrice: 0xe8d4a51000,
       gasLimit: 0x7a1200,
       chainId: 56,
@@ -110,6 +127,9 @@ module.exports = {
       symbol: 'BSC',
       decimals: 18,
       chainName: 'bsc',
+
+      maxNoBlockTime: 1800000,
+      rpcS: ['https://bsc-dataseed1.binance.org', 'https://bsc-dataseed.binance.org', 'https://bsc-dataseed1.defibit.io/', 'https://bsc-dataseed1.ninicoin.io/'],
 
       multiCall: '0x023a33445F11C978f8a99E232E1c526ae3C0Ad70'.toLowerCase(),
     },
@@ -131,6 +151,9 @@ module.exports = {
       decimals: 18,
       chainName: 'avax',
 
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
       multiCall: '0x0EA414bAAf9643be59667E92E26a87c4Bae3F33a'.toLowerCase(),
     },
     'mainnet': {
@@ -148,6 +171,9 @@ module.exports = {
       symbol: 'AVAX',
       decimals: 18,
       chainName: 'avax',
+
+      maxNoBlockTime: 1800000,
+      rpcS: ['https://api.avax.network/ext/bc/C/rpc', 'https://rpc.ankr.com/avalanche'],
 
       multiCall: '0xA4726706935901fe7dd0F23Cf5D4fb19867dfc88'.toLowerCase(),
     }
@@ -169,6 +195,9 @@ module.exports = {
       decimals: 18,
       chainName: 'moonbase',
 
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
       multiCall: '0x136333217C18Cd6E018B85Aaf8Bd563EB72E97Fd'.toLowerCase(),
     },
     'mainnet': {
@@ -186,6 +215,9 @@ module.exports = {
       symbol: 'MOVR',
       decimals: 18,
       chainName: 'moonriver',
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
 
       multiCall: '0x1Fe0C23940FcE7f440248e00Ce2a175977EE4B16'.toLowerCase(),
     },
@@ -207,6 +239,9 @@ module.exports = {
       decimals: 18,
       chainName: 'moonbeam',
 
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
       multiCall: '0xBAcAaa4509EE9c9b2cF7133B970BC6db47713477'.toLowerCase(),
     },
   },
@@ -227,6 +262,9 @@ module.exports = {
       decimals: 8,
       chainName: 'polygon',
 
+      maxNoBlockTime: 1800000,
+      rpcS: ['https://matic-mumbai.chainstacklabs.com', 'https://rpc-mumbai.maticvigil.com'],
+
       multiCall: '0x905B3237B2367B2DdEBdF54D4F5320429710850a'.toLowerCase(),
     },
     'mainnet': {
@@ -244,6 +282,9 @@ module.exports = {
       symbol: 'MATIC',
       decimals: 8,
       chainName: 'polygon',
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
 
       multiCall: '0x1bbc16260d5d052f1493b8f2aeee7888fed1e9ab'.toLowerCase(),
     },
@@ -265,6 +306,9 @@ module.exports = {
       decimals: 18,
       chainName: 'arbitrum',
 
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
       multiCall: '0x06c6b65A8d5F52FA1E6d90bDB3Bdd4CB85F4587f'.toLowerCase(),
 
       explorer: 'https://rinkeby-explorer.arbitrum.io/#/',
@@ -284,6 +328,9 @@ module.exports = {
       symbol: 'ETH',
       decimals: 18,
       chainName: 'arbitrum',
+
+      maxNoBlockTime: 1800000,
+      rpcS:['https://arb1.arbitrum.io/rpc', 'https://rpc.ankr.com/arbitrum'],
 
       multiCall: '0xb66f96e30d6a0ae64d24e392bb2dbd25155cb3a6'.toLowerCase(),
 
@@ -307,6 +354,9 @@ module.exports = {
       decimals: 18,
       chainName: 'fantom',
 
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
       multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
 
       explorer: 'https://testnet.ftmscan.com/',
@@ -326,6 +376,9 @@ module.exports = {
       symbol: 'FTM',
       decimals: 18,
       chainName: 'fantom',
+
+      maxNoBlockTime: 1800000,
+      rpcS: ['https://nodes.wandevs.org/fantom', 'https://rpc.ftm.tools'],
 
       multiCall: '0x5f4870D51d2629D7493970B9d4526377Da98e95e'.toLowerCase(),
 
@@ -349,6 +402,9 @@ module.exports = {
       decimals: 18,
       chainName: 'optimism',
 
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
       multiCall: '0xcB5E16FC59108511B86342D654c89E5e0c460c85'.toLowerCase(),
 
       explorer: 'https://kovan-optimistic.etherscan.com/',
@@ -369,6 +425,9 @@ module.exports = {
       symbol: 'OETH',
       decimals: 18,
       chainName: 'optimism',
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
 
       multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
 

@@ -8,6 +8,7 @@ const getPrices_coingecko = require("./lib/coingecko");
 const readlineSync = require('readline-sync');
 const keythereum = require("keythereum");
 const { getChain, getChains } = require("./lib/web3_chains")
+const Web3 = require("web3");
 
 const { 
   createScanEvent,
@@ -20,6 +21,7 @@ const {
   // scanAllChains,
   checkDebtClean
 } = require('./robot_core');
+const { gNccChains } = require('./lib/ncc_chains');
 
 const chainWan = getChain('wanchain', process.env.NETWORK_TYPE);
 const web3Chains = getChains(process.env.NETWORK_TYPE)
@@ -182,6 +184,117 @@ const robotSchedules = function() {
   schedule.scheduleJob('5 */10 * * * *', checkDebt);
 };
 
+/// check rpc if invalid, choose another one, this is only for testnet
+// check rpc begin
+async function checkChainRpc(chain) {
+  // 记录上一次的blocknumber,如果多久没变, 如果超过设定,则查看其余rpc,看是否更新, 更新则切换
+  let blockNumber = 0
+  let isBadConnect = false
+  try {
+    blockNumber = await chain.getBlockNumber()
+  } catch(error) {
+    // chain is disconnect?
+    isBadConnect = true
+    // 1. 优先切换到别的可用web3上,
+    // 2. 没有可用的, 则尝试reconnect?
+    log.warn(`chain exception ${chain.chainType} getBlockNumber : ${chain.rpc}`, error)
+  }
+
+  log.info(`chain ${chain.chainType} blockNumber : ${blockNumber}`)
+  
+  if (!isBadConnect && (chain.lastBlockNumber < blockNumber)) {
+    chain.lastBlockNumber = blockNumber
+    chain.lastBlockTime = new Date().getTime()
+  } else {
+    const currentTime = new Date().getTime()
+    // 如果 链接失败 或 超过设定时间, 优先切换到可用的web3上
+    // if (currentTime - chain.lastBlockTime > chain.maxNoBlockTime) {
+    if (isBadConnect || (currentTime > chain.lastBlockTime + chain.maxNoBlockTime)) {
+      let latestBlockNumber = chain.lastBlockNumber
+      let latestRpc = chain.rpc
+      let latestWeb3 = chain.web3
+      // 则查看其余rpc,看是否更新, 
+      if (chain.rpcS && chain.rpcS.length > 1) {
+        for (let i = 0; i < chain.rpcS.length; i ++) {
+          const rpc_url = chain.rpcS[i]
+
+          if (rpc_url !== chain.rpc) {
+            log.info(`chain ${chain.chainType} create rpc : ${rpc_url}`)
+            try {
+              let web3 = await chain.createApi(rpc_url)
+              const rpcBlockNumber = await web3.eth.getBlockNumber()
+              if (rpcBlockNumber > latestBlockNumber) {
+                latestBlockNumber = rpcBlockNumber
+                latestRpc = rpc_url
+                latestWeb3 = web3
+              }
+            } catch (error) {
+              log.warn(`chain exception ${chain.chainType} createApi or sGetBlockNumber : ${rpc_url}`, error)
+            }
+          }
+        }
+
+        // 真的有最新的?
+        if (latestRpc !== chain.rpc) {
+          // 再获取一次最新的块看看
+          try {
+            blockNumber = await chain.getBlockNumber()
+            chain.lastBlockNumber = blockNumber
+          } catch (error) {
+            log.warn(`chain exception ${chain.chainType} getBlockNumber : ${rpc_url}`, error)
+          }
+  
+          // 真的有更新, 则替换
+          if (latestBlockNumber > chain.lastBlockNumber) {
+            log.warn(`chain ${chain.chainType} change rpc from ${chain.rpc} to ${latestRpc}`)
+  
+            try {
+              await chain.setApi(latestWeb3)
+              chain.rpc = latestRpc
+              chain.lastBlockNumber = latestBlockNumber
+              chain.lastBlockTime = new Date().getTime()
+            } catch (error) {
+              log.warn(`chain exception ${chain.chainType} setApi rpc from ${chain.rpc} to ${latestRpc}`)
+            }
+  
+            return
+          }
+        }
+      }
+    }
+
+    if (isBadConnect) {
+      let web3 = await chain.createApi(chain.rpc)
+      await chain.setApi(web3)
+      log.warn(`ncc chain ${chain.chainType} reconnect ${chain.rpc}`)
+    }
+  }
+}
+
+const tickRpcInterval = 30 * 60 * 1000
+async function tickRPC() {
+  try {
+    // contract chains check
+    const promises = []
+    for(let i = 0; i < web3Chains.length; i++) {
+      promises.push(checkChainRpc(web3Chains[i]))
+    }
+
+    // non-contract chains check
+    const keys = Object.keys(gNccChains)
+    for(let j = 0; j < keys.length; j++) {
+      promises.push(checkChainRpc(gNccChains[keys[j]].chain))
+    }
+    await Promise.all(promises)
+  } catch(e) {
+    log.warn(e)
+  }
+
+  // try every 30 minutes
+  setTimeout(tickRPC, tickRpcInterval)
+}
+// end
+
 // helper functions
 setTimeout(async () => {
   if (process.env.USE_KEYSTORE === 'true') {
@@ -205,6 +318,7 @@ setTimeout(async () => {
   setTimeout(scanNewStoreMan, 0);
   // setTimeout(scanAllChains, 10000)
   setTimeout(updateDebt, 0)
+  setTimeout(tickRPC, tickRpcInterval)
 
   robotSchedules();
 
@@ -213,8 +327,11 @@ setTimeout(async () => {
   // setTimeout(updateDebtCleanToWan, 0)
   // setTimeout(updateDebt, 0)
   // setTimeout(scanAllChains, 10000)
-  // setTimeout(checkDebt, 0)
+  // setTimeout(updateStoreManToChainsPart, 0)
+
+  // setTimeout(checkDebt, 1000)
   
+  // setTimeout(tickRPC, tickRpcInterval)
 }, 0)
 
 

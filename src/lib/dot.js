@@ -139,42 +139,66 @@ class DotChain extends NccChain {
     const config = configs[network]
     super(config, network)
 
-    setTimeout(() => {
-      this.createApi()
+    setTimeout(async () => {
+      const api = await this.createApi(config.rpc)
+      await this.setApi(api)
     }, 0)
   }
 
-  async createApi() {
-    const provider = new WsProvider(this.rpc)
+  async createApi(rpc_url) {
+    const provider = new WsProvider(rpc_url)
     const api = await ApiPromise.create({ provider })
 
     // TODO log
-    api.on('connected', () => {
-        log.info(' Polka API has been connected to the endpoint');
-    });
+    // api.on('connected', () => {
+    //     log.info(' Polka API has been connected to the endpoint');
+    // });
 
-    api.on('ready', () => {
-        log.info(' Polka API ready...');
-    });
+    // api.on('ready', () => {
+    //     log.info(' Polka API ready...');
+    // });
 
-    api.on('disconnected', () => {
-        log.info(' Polka API has been disconnected from the endpoint');
-    });
+    // api.on('disconnected', () => {
+    //     log.info(' Polka API has been disconnected from the endpoint');
+    // });
 
-    api.on('error', (error) => {
-        log.warn(' Polka API got an error: ', error);
-    });
+    // api.on('error', (error) => {
+    //     log.warn(' Polka API got an error: ', error);
+    // });
+    return api
+  }
+
+  async sGetBlockNumber(apiRaw) {
+    // wait api ready
+    await sleep(1000)
+
+    const api = await apiRaw.isReady
+
+    const lastHeader = await api.rpc.chain.getHeader()
+    const blockNumber = lastHeader.number.toNumber()
+    return blockNumber
+  }
+
+  async setApi(api) {
+    if (this.api) {
+      this.api.disconnect()
+    }
 
     this.api = await api.isReady;
 
-
-    this.api.isTestNet = () => RPC_URL === TEST_NET
+    this.api.isTestNet = () => this.network === "testnet"
   }
 
   async waitApiReady() {
-    while (!this.api ) {
+    while(!this.api) {
       await sleep(100)
     }
+
+    if(!this.api.isConnected) {
+      let newApi = await this.api.clone()
+      await setApi(newApi)
+    }
+  
     await this.api.isReady
   }
 
@@ -200,8 +224,6 @@ class DotChain extends NccChain {
       const { nonce, data: balance } = await api.query.system.account(address);
       console.log(`Now: ${now}: balance of ${balance.free} and a nonce of ${nonce}`);
   
-      // TODO:　有没有判断账户存在的接口
-      // TODO: 删除账户
       return balance.free.toString(10)
     } catch (error) {
       throw error

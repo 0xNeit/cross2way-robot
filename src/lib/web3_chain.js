@@ -3,14 +3,69 @@ const { promisify } = require("./utils");
 
 class Web3Chain {
   constructor(rpc_url, chainType) {
-    if (rpc_url.indexOf('http') == 0) {
-      this.web3 = new Web3(new Web3.providers.HttpProvider(rpc_url));
-    } else if (rpc_url.indexOf('wss') == 0) {
-      this.web3 = new Web3(new Web3.providers.WebsocketProvider(rpc_url));
-    }
     this.chainType = chainType;
     // this.chainId = chainIds[chainType];
     this.rpcType = process.env.RPC_WEB3;
+    
+    this.lastBlockNumber = 0
+    this.lastBlockTime = 0
+
+    this.web3 = this.createApi(rpc_url)
+  }
+
+  createApi(rpc_url) {
+    const options = {
+      timeout: 30000, // ms
+  
+      clientConfig: {
+          // Useful if requests are large
+          maxReceivedFrameSize: 100000000,   // bytes - default: 1MiB
+          maxReceivedMessageSize: 100000000, // bytes - default: 8MiB
+  
+          // Useful to keep a connection alive
+          keepalive: true,
+          keepaliveInterval: -1 // ms
+      },
+  
+      // Enable auto reconnection
+      reconnect: {
+          auto: true,
+          delay: 1000, // ms
+          maxAttempts: 10,
+          onTimeout: false
+      }
+    };
+
+    let provider = null
+    if (rpc_url.indexOf('http') == 0) {
+      provider = new Web3.providers.HttpProvider(rpc_url, options);
+    } else if (rpc_url.indexOf('ws') == 0) {
+      provider = new Web3.providers.WebsocketProvider(rpc_url, options);
+      provider.on('connect', () => log.info(`provider connect ${rpc_url}`));
+      provider.on('error', () => {
+        log.info(`provider connect error ${rpc_url}`);
+        provider.disconnect();
+      });
+      provider.on('close', () => {
+        log.info(`provider connect close ${rpc_url}`);
+      });
+    }
+
+    const web3 = new Web3(provider)
+    
+    return web3
+  }
+
+  async sGetBlockNumber(web3) {
+    return await web3.eth.getBlockNumber();
+  }
+
+  async setApi(newWeb3) {
+    if(this.web3 && this.web3.currentProvider) {
+      this.web3.currentProvider.disconnect()
+    }
+
+    this.web3 = newWeb3
   }
 
   sendRawTxByWeb3(singedData) {

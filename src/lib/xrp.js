@@ -46,6 +46,50 @@ class XrpChain extends NccChain {
     this.doConnect()
   }
 
+  async createApi(rpc_url) {
+    api = new RippleAPI({
+      server: rpc_url,
+      timeout: 15 * 1000,
+      maxFeeXRP: '' + 5 * dropsPerXrp,  // Must be of String type.
+    });
+
+    await api.connect()
+
+    return api
+  }
+
+  async setApi(api) {
+    if (this.api) {
+      this.api.disconnect()
+    }
+
+    this.api = api
+
+    that.isApiReady = true
+    that.reconnecting = false
+
+    this.doListen()
+    await waitForApiReady()
+  }
+
+  sGetBlockNumber = async (api) => {
+    const checkInterval = 100;  // ms
+
+    let times = XRP_CONN_READY_CHECK_TIMEOUT / checkInterval;
+
+    while(!api.isConnected()  && times > 0) {
+      await sleep(checkInterval);
+      times--;
+    }
+
+    if(!api.isConnected()) {
+      throw new Error(`XRP connection not ready within ${XRP_CONN_READY_CHECK_TIMEOUT} seconds!`);
+    }
+
+    const blockNumber = await api.getLedgerVersion()
+    return blockNumber
+  }
+
   tryConnect(time) {
     setTimeout(()=> {
       this.reconnecting = true;

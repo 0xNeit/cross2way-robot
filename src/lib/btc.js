@@ -63,7 +63,29 @@ class BtcBase extends NccChain {
       password: rpcPassword,
       timeout: 600000,
     })
+  }
 
+  async createApi(rpc_url) {
+    const [host, port] = rpc_url.split(':')
+
+    const api = new BtcClient({
+      network: this.network,
+      host,
+      port,
+      username: this.rpcUser,
+      password: this.rpcPassword,
+      timeout: 600000,
+    })
+
+    return api
+  }
+
+  async setApi(api) {
+    this.api = api
+  }
+
+  sGetBlockNumber = async (api) => {
+    return await api.getBlockCount();
   }
 
   getBlockNumber = async () => {

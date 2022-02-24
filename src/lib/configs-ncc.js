@@ -25,6 +25,9 @@ module.exports = {
       "rpcPassword": "Wanchain888",
 
       "minBalance": "0",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26893",
@@ -47,6 +50,9 @@ module.exports = {
       "rpcPassword": "Wanchain888",
 
       "minBalance": "0",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     }
   },
 
@@ -75,6 +81,8 @@ module.exports = {
 
       "minBalance": "0",
 
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26894",
@@ -97,6 +105,9 @@ module.exports = {
       "rpcPassword": "Wanchain888",
 
       "minBalance": "0",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     }
   },
 
@@ -120,6 +131,9 @@ module.exports = {
       "curveType": 0,
 
       "minBalance": "21000000",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     },
     'mainnet': {
       // "rpc": "wss://nodes.wandevs.org/xrp",
@@ -139,6 +153,9 @@ module.exports = {
       "curveType": 0,
 
       "minBalance": "21000000",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     }
   },
 
@@ -161,6 +178,9 @@ module.exports = {
       "curveType": 0,
 
       "minBalance": "150000000000",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     },
     'mainnet': {
       "rpc": "wss://rpc.polkadot.io",
@@ -179,6 +199,9 @@ module.exports = {
       "curveType": 0,
       
       "minBalance": "15000000000",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     }
   },
   // doge 
@@ -203,6 +226,9 @@ module.exports = {
       "rpcPassword": "Wanchain888",
 
       "minBalance": "0",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     },
     'mainnet': {
       "rpc": "nodes.wandevs.org:26895",
@@ -224,6 +250,9 @@ module.exports = {
       "rpcPassword": "Wanchain888",
 
       "minBalance": "0",
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
     }
   },
 }
