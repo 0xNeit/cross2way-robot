@@ -298,16 +298,22 @@ async function tickRPC() {
 // helper functions
 setTimeout(async () => {
   if (process.env.USE_KEYSTORE === 'true') {
+    let mainSK = getSk(address, `请输入密码, 退出请输入"quit"：`)
+    if (mainSK === null) {
+      process.exit(0);
+    }
     for (let i = 0; i < web3Oracles.length; i++) {
       const oracle = web3Oracles[i]
-      const adminAddress = await oracle.admin()
+      // const adminAddress = await oracle.admin()
       
-      let address = adminAddress.toLowerCase() 
-      let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
-      if (sk === null) {
-        process.exit(0);
-      }
-      oracle.setAdminSk(sk)
+      // let address = adminAddress.toLowerCase() 
+      // let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
+      // if (sk === null) {
+      //   process.exit(0);
+      // }
+      // oracle.setAdminSk(sk)
+
+      oracle.setAdminSk(mainSK)
     }
   }
   if (process.env.ORACLE_ADMIN_WANCHAIN){

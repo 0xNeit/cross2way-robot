@@ -355,7 +355,7 @@ module.exports = {
       chainName: 'fantom',
 
       maxNoBlockTime: 1800000,
-      rpcS: ['https://xapi.testnet.fantom.network/lachesis']
+      rpcS: ['https://xapi.testnet.fantom.network/lachesis'],
       // rpcS: ['https://xapi.testnet.fantom.network/lachesis', 'https://rpc.testnet.fantom.network'],
 
       multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
