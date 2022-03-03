@@ -9,6 +9,7 @@ const readlineSync = require('readline-sync');
 const keythereum = require("keythereum");
 const { getChain, getChains } = require("./lib/web3_chains")
 const Web3 = require("web3");
+const fs = require('fs')
 
 const { 
   createScanEvent,
@@ -299,10 +300,13 @@ async function tickRPC() {
 setTimeout(async () => {
   if (process.env.USE_KEYSTORE === 'true') {
     
-    const password = readlineSync.question(`请输入keystore的通用密码,退出请输入"quit" `, {hideEchoBack: true, mask: '*'})
-    if (password === 'quit') {
-      process.exit(0)
-    }
+    // const password = readlineSync.question(`请输入keystore的通用密码,退出请输入"quit" `, {hideEchoBack: true, mask: '*'})
+    // if (password === 'quit') {
+    //   process.exit(0)
+    // }
+
+    let password = ""
+    password = fs.readFileSync('pw.txt', 'utf-8')
 
     let adminSkMap = {}
     for (let i = 0; i < web3Oracles.length; i++) {
