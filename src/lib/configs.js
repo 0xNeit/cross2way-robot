@@ -158,7 +158,7 @@ module.exports = {
     },
     'mainnet': {
       chainType: 'AVAX',
-      rpc: 'https://api.avax.network/ext/bc/C/rpc',
+      rpc: 'https://rpc.ankr.com/avalanche',
       gasPrice: 0x6d6e2edc00,
       gasLimit: 0x2dc6c0,
       chainId: 43114,
@@ -202,7 +202,7 @@ module.exports = {
     },
     'mainnet': {
       chainType: 'MOVR',
-      rpc: 'https://rpc.moonriver.moonbeam.network',
+      rpc: 'https://moonriver.api.onfinality.io/public',
       gasPrice: 0x2540be400,
       gasLimit: 0x7a1200,
       chainId: 1285,
@@ -217,7 +217,7 @@ module.exports = {
       chainName: 'moonriver',
 
       maxNoBlockTime: 1800000,
-      rpcS: [],
+      rpcS: ['https://moonriver.api.onfinality.io/public', 'https://rpc.moonriver.moonbeam.network'],
 
       multiCall: '0x1Fe0C23940FcE7f440248e00Ce2a175977EE4B16'.toLowerCase(),
     },
