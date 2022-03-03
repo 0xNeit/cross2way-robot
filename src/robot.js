@@ -9,7 +9,7 @@ const readlineSync = require('readline-sync');
 const keythereum = require("keythereum");
 const { getChain, getChains } = require("./lib/web3_chains")
 const Web3 = require("web3");
-const fs = require('fs')
+const pws = require('../config/pw')
 
 const { 
   createScanEvent,
@@ -305,9 +305,6 @@ setTimeout(async () => {
     //   process.exit(0)
     // }
 
-    let password = ""
-    password = fs.readFileSync('./pw.txt', 'utf-8')
-
     let adminSkMap = {}
     for (let i = 0; i < web3Oracles.length; i++) {
       const oracle = web3Oracles[i]
@@ -321,6 +318,7 @@ setTimeout(async () => {
       let sk = adminSkMap[adminAddress]
       if (!sk) {
         try {
+          const password = pws[adminAddress] ? pws[adminAddress] : pws['default']
           const keyObject = keythereum.importFromFile(adminAddress.slice(2), process.env.KEYSTORE_PARENT_FOLD);
           sk = keythereum.recover(password, keyObject).toString('hex');
           adminSkMap[adminAddress] = sk

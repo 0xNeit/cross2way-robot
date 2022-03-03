@@ -105,4 +105,4 @@ dist
 
 /db
 /log
-pw.txt
+/config/pw.js
