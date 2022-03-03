@@ -298,27 +298,41 @@ async function tickRPC() {
 // helper functions
 setTimeout(async () => {
   if (process.env.USE_KEYSTORE === 'true') {
-    let mainSK = getSk(address, `请输入密码, 退出请输入"quit"：`)
-    if (mainSK === null) {
-      process.exit(0);
+    
+    const password = readlineSync.question(`请输入keystore的通用密码,退出请输入"quit" `, {hideEchoBack: true, mask: '*'})
+    if (password === 'quit') {
+      process.exit(0)
     }
+
+    let adminSkMap = {}
     for (let i = 0; i < web3Oracles.length; i++) {
       const oracle = web3Oracles[i]
-      // const adminAddress = await oracle.admin()
-      
-      // let address = adminAddress.toLowerCase() 
-      // let sk = getSk(address, `请输入${oracle.chain.chainName} 上 oracle 合约的 admin (${address})的  密码, 退出请输入"quit"：`)
-      // if (sk === null) {
-      //   process.exit(0);
-      // }
-      // oracle.setAdminSk(sk)
+      let adminAddress = "0x0000000000000000000000000000000000000000"
+      if (process.env.NETWORK_TYPE === 'testnet') {
+        adminAddress = (await oracle.getOwner()).toLowerCase()
+      } else {
+        adminAddress = (await oracle.admin()).toLowerCase()
+      }
 
-      oracle.setAdminSk(mainSK)
+      let sk = adminSkMap[adminAddress]
+      if (!sk) {
+        try {
+          const keyObject = keythereum.importFromFile(adminAddress.slice(2), process.env.KEYSTORE_PARENT_FOLD);
+          sk = keythereum.recover(password, keyObject).toString('hex');
+          adminSkMap[adminAddress] = sk
+          log.info(`chain = ${oracle.chain.chainType}, admin = ${adminAddress}, sk is good`)
+        } catch(e) {
+          log.error(`chain = ${oracle.chain.chainType}, admin = ${adminAddress} get private key exception: `, e)
+        }
+      }
+      if (sk) {
+        oracle.setAdminSk(sk)
+      }
     }
   }
-  if (process.env.ORACLE_ADMIN_WANCHAIN){
-    oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
-  }
+  // if (process.env.ORACLE_ADMIN_WANCHAIN){
+  //   oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
+  // }
 
   setTimeout(updatePriceToWAN, 0);
   setTimeout(scanNewStoreMan, 0);

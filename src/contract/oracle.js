@@ -49,6 +49,10 @@ class Oracle extends Contract {
     this.adminSK = sk
     this.adminAddress = privateToAddress(sk)
   }
+  setOwnerSk(sk) {
+    this.ownerSK = sk
+    this.ownerAddress = privateToAddress(sk)
+  }
 
   async setAdmin(addr) {
     const data = this.contract.methods.setAdmin(addr).encodeABI();
