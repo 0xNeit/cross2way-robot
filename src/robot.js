@@ -306,7 +306,7 @@ setTimeout(async () => {
     // }
 
     let password = ""
-    password = fs.readFileSync('pw.txt', 'utf-8')
+    password = fs.readFileSync('./pw.txt', 'utf-8')
 
     let adminSkMap = {}
     for (let i = 0; i < web3Oracles.length; i++) {
