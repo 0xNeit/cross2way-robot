@@ -310,7 +310,7 @@ setTimeout(async () => {
       const oracle = web3Oracles[i]
       let adminAddress = "0x0000000000000000000000000000000000000000"
       if (process.env.NETWORK_TYPE === 'testnet') {
-        adminAddress = (await oracle.getOwner()).toLowerCase()
+        adminAddress = "0xF6eB3CB4b187d3201AfBF96A38e62367325b29F9".toLowerCase() //(await oracle.getOwner()).toLowerCase()
       } else {
         adminAddress = (await oracle.admin()).toLowerCase()
       }
@@ -322,19 +322,16 @@ setTimeout(async () => {
           const keyObject = keythereum.importFromFile(adminAddress.slice(2), process.env.KEYSTORE_PARENT_FOLD);
           sk = keythereum.recover(password, keyObject).toString('hex');
           adminSkMap[adminAddress] = sk
-          log.info(`chain = ${oracle.chain.chainType}, admin = ${adminAddress}, sk is good`)
         } catch(e) {
           log.error(`chain = ${oracle.chain.chainType}, admin = ${adminAddress} get private key exception: `, e)
         }
       }
       if (sk) {
+        log.info(`chain = ${oracle.chain.chainType}, admin = ${adminAddress}, sk is good`)
         oracle.setAdminSk(sk)
       }
     }
   }
-  // if (process.env.ORACLE_ADMIN_WANCHAIN){
-  //   oracleWan.setAdminSk(process.env.ORACLE_ADMIN_WANCHAIN)
-  // }
 
   setTimeout(updatePriceToWAN, 0);
   setTimeout(scanNewStoreMan, 0);
@@ -344,16 +341,8 @@ setTimeout(async () => {
 
   robotSchedules();
 
-  // setTimeout(scanNewStoreMan, 0);
-  // setTimeout(updateStoreManToChainsPart, 0)
-  // setTimeout(updateDebtCleanToWan, 0)
-  // setTimeout(updateDebt, 0)
-  // setTimeout(scanAllChains, 10000)
-  // setTimeout(updateStoreManToChainsPart, 0)
+  // setTimeout(updateStoreManToChainsPart, 1000)
 
-  // setTimeout(checkDebt, 1000)
-  
-  // setTimeout(tickRPC, tickRpcInterval)
 }, 0)
 
 

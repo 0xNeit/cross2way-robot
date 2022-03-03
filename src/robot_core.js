@@ -382,8 +382,10 @@ async function syncConfigToOneChain(oracle, sgsValid, smgConfigs, chainSmgConfig
     await batchGetSmgConfigs(oracle, oracle, sgsValid, chainSmgConfigs[oracle.chain.chainType])
 
     for (let i = 0; i < sgsValid.length; i++) {
+      // 数据库状态
       const sg = sgsValid[i];
       const groupId = sg.groupId;
+      // wan链上状态
       const config = smgConfigs[groupId];
       
       if (config) {
@@ -402,7 +404,7 @@ async function syncConfigToOneChain(oracle, sgsValid, smgConfigs, chainSmgConfig
           }
         }
 
-        // 如果配置不一样, 则更新配置
+        // 如果配置不一样, 则更新配置, chainSmgConfigs对方链的状体
         const config_eth = chainSmgConfigs[oracle.chain.chainType][groupId];
         // curve1 -> chain curve type
         const curve1 = !!oracle.chain.curveType ? oracle.chain.curveType : process.env[oracle.chain.core.chainType + '_CURVETYPE']
@@ -410,6 +412,8 @@ async function syncConfigToOneChain(oracle, sgsValid, smgConfigs, chainSmgConfig
         const curve2 = curve1 === config.curve1 ? config.curve2 : config.curve1
         const gpk1   = curve1 === config.curve1 ? config.gpk1 : config.gpk2
         const gpk2   = curve1 === config.curve1 ? config.gpk2 : config.gpk1
+
+        // 同步到对方的链状太
         const newConfig = {
           ...config,
           curve1,
@@ -493,26 +497,43 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
 
   // 4. 如果所有链状态都一样, 保存到db
   for (let i = 0; i < sgsValid.length; i++) {
+    // wan链上状态
     const config = smgConfigs[sgsValid[i].groupId]
+    // 数据库状态
+    const dbConfig = sgsValid[i]
+    // 有链同步失败?
     let syncFailed = false
+    // 有链被修改?
     let bWriteDb = false
     for(let j = 0; j<oracles.length; j++) {
       const index = j
       const oracle = oracles[index]
+      // 2 4 8 表示正在同步,但被异常中断, &1 = 1 表示已经同步完成
       const syncingStatus = syncing[oracle.chain.chainType]
       const syncingSuccess = syncingStatus[config.groupId] & 1
+      // 有链同步失败?
       if (syncingStatus > 1 && !syncingSuccess) {
         syncFailed = true
         log.error(`syncConfigToOneChain failed ${oracle.chain.chainType} ${config.groupId}`)
       }
 
+      // 有链被修改?
       if (syncingStatus >= 4) {
         bWriteDb = true
       }
     }
 
-    if (!syncFailed && bWriteDb) {
-      writeToDB(config)
+    // 没链同步失败
+    if (!syncFailed) {
+      // 有链被修改, 
+      if (bWriteDb) {
+        writeToDB(config)
+      } else {
+        // 所有链状态都一样, 但数据库和wan上状态不一样
+        if (parseInt(config.status) != dbConfig.status) {
+          writeToDB(config)
+        }
+      }
     }
   }
 

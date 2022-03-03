@@ -407,7 +407,7 @@ const doRefresh = async () => {
 }
 
 setTimeout(doRefresh, 0);
-setInterval(doRefresh, 360000);
+setInterval(doRefresh, 120000);
 
 app.get('/tms', (req, res) => {
   res.send(tmsResult);
