@@ -13,6 +13,7 @@ app.all('*', (req, res, next) => {
   next();
 });
 
+process.env.LOG_ENGINE = process.env.LOG_ENGINE_4js
 const log = require('./lib/log');
 const { web3, sleep } = require('./lib/utils');
 const db = require('./lib/sqlite_db');
@@ -139,6 +140,7 @@ async function getTokenPairs(tm, _total) {
 
     // 每种tm上需要查的token
     const toIds = Object.keys(toChainPairIds)
+    log.info(`**tokens length ${toIds.length}`)
     for (let index in toIds) {
       const tm2 = getMapTm(parseInt(toIds[index]))
       const validIds = Object.keys(toChainPairIds[toIds[index]])
@@ -149,6 +151,8 @@ async function getTokenPairs(tm, _total) {
         } catch (error) {
           log.error(`multiCall getTokenInfos ${tm2.chain.chainType} failed`, JSON.stringify(validIds, null, 2), JSON.stringify(tokenPairs, null, 2))
         }
+      } else {
+        log.error(`multiCall getTokenInfos ${tm2.chain.chainType} not exist`)
       }
     }
   } else {
@@ -177,8 +181,19 @@ async function refreshTMS() {
 
   for (let i = 0; i < web3Tms.length; i++) {
     const tm = web3Tms[i]
-    const total = await tm.totalTokenPairs()
-    const tokenPairsWeb3 = await getTokenPairs(tm, total)
+    log.info(`****refreshTMS ${tm.chain.chainType}`)
+    let total = 0
+    let tokenPairsWeb3 = null
+    try {
+      total = await tm.totalTokenPairs()
+    } catch (error) {
+      log.error(`** totalTokenPairs ${tm.chain.chainType}`, error)
+    }
+    try {
+      tokenPairsWeb3 = await getTokenPairs(tm, total)
+    } catch (error) {
+      log.error(`** tokenPairsWeb3 ${tm.chain.chainType}`, error)
+    }
 
     itemFieldToHex(tokenPairsWeb3)
 

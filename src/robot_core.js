@@ -511,16 +511,21 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       const index = j
       const oracle = oracles[index]
       // 2 4 8 表示正在同步,但被异常中断, &1 = 1 表示已经同步完成
-      const syncingStatus = syncing[oracle.chain.chainType]
-      const syncingSuccess = syncing[oracle.chain.chainType]["success"] && (syncingStatus[config.groupId] & 1 === 1)
+      const syncChainSuccess = syncing[oracle.chain.chainType]["success"]
+      let syncGroupSuccess = false
+      let syncGroupStatus = 0
+      if (syncing[oracle.chain.chainType][config.groupId]) {
+        syncGroupStatus = syncing[oracle.chain.chainType][config.groupId]
+        syncGroupSuccess = syncGroupStatus & 1 === 1
+      }
       // 有链同步失败?
-      if (syncingStatus > 1 && !syncingSuccess) {
+      if (!syncChainSuccess || (syncGroupStatus > 1 && !syncGroupSuccess)) {
         syncFailed = true
-        log.error(`syncConfigToOneChain failed ${oracle.chain.chainType} ${config.groupId}, sync state ${syncingStatus}`)
+        log.error(`syncConfigToOneChain failed ${oracle.chain.chainType} ${config.groupId}, sync state ${syncGroupStatus}`)
       }
 
       // 有链被修改?
-      if (syncingStatus >= 4) {
+      if (syncGroupStatus >= 4) {
         bWriteDb = true
       }
     }
