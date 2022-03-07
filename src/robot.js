@@ -9,7 +9,13 @@ const readlineSync = require('readline-sync');
 const keythereum = require("keythereum");
 const { getChain, getChains } = require("./lib/web3_chains")
 const Web3 = require("web3");
-const pws = require('../config/pw')
+let pws = {}
+
+try {
+  pws = require('../config/pwdd')
+} catch(e) {
+
+}
 
 const { 
   createScanEvent,
@@ -316,9 +322,18 @@ setTimeout(async () => {
       }
 
       let sk = adminSkMap[adminAddress]
-      if (!sk) {
+      while (!sk) {
         try {
-          const password = pws[adminAddress] ? pws[adminAddress] : pws['default']
+          let password = pws[adminAddress]
+          if (!password) {
+            password = pws['default']
+          }
+          if (!password) {
+            password = readlineSync.question(`请输入${adminAddress}的密码,退出请输入"quit" `, {hideEchoBack: true, mask: '*'})
+            if (password === 'quit') {
+              process.exit(0)
+            }
+          }
           const keyObject = keythereum.importFromFile(adminAddress.slice(2), process.env.KEYSTORE_PARENT_FOLD);
           sk = keythereum.recover(password, keyObject).toString('hex');
           adminSkMap[adminAddress] = sk
