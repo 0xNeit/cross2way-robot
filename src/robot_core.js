@@ -377,6 +377,7 @@ async function syncConfigToOtherChain_old(sgaContract, oracles, isPart = false) 
 }
 
 async function syncConfigToOneChain(oracle, sgsValid, smgConfigs, chainSmgConfigs, syncing) {
+  syncing[oracle.chain.chainType]["success"] = false
   try {
     // 获取sgsValid在oracle链上的状态
     await batchGetSmgConfigs(oracle, oracle, sgsValid, chainSmgConfigs[oracle.chain.chainType])
@@ -441,6 +442,7 @@ async function syncConfigToOneChain(oracle, sgsValid, smgConfigs, chainSmgConfig
           await setStoremanGroupStatus(oracle, groupId, config.status);
         }
         syncing[oracle.chain.chainType][groupId] |= 1
+        syncing[oracle.chain.chainType]["success"] = true
       } else {
         log.error(`can't get store man group ${groupId} config on wan chain`)
       }
@@ -510,11 +512,11 @@ async function syncConfigToOtherChain(sgaContract, oracles, isPart = false) {
       const oracle = oracles[index]
       // 2 4 8 表示正在同步,但被异常中断, &1 = 1 表示已经同步完成
       const syncingStatus = syncing[oracle.chain.chainType]
-      const syncingSuccess = syncingStatus[config.groupId] & 1
+      const syncingSuccess = syncing[oracle.chain.chainType]["success"] && (syncingStatus[config.groupId] & 1 === 1)
       // 有链同步失败?
       if (syncingStatus > 1 && !syncingSuccess) {
         syncFailed = true
-        log.error(`syncConfigToOneChain failed ${oracle.chain.chainType} ${config.groupId}`)
+        log.error(`syncConfigToOneChain failed ${oracle.chain.chainType} ${config.groupId}, sync state ${syncingStatus}`)
       }
 
       // 有链被修改?

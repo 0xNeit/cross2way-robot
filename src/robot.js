@@ -333,15 +333,17 @@ setTimeout(async () => {
     }
   }
 
-  setTimeout(updatePriceToWAN, 0);
-  setTimeout(scanNewStoreMan, 0);
-  // setTimeout(scanAllChains, 10000)
-  setTimeout(updateDebt, 0)
-  setTimeout(tickRPC, tickRpcInterval)
+  // setTimeout(updatePriceToWAN, 0);
+  // setTimeout(scanNewStoreMan, 0);
+  // // setTimeout(scanAllChains, 10000)
+  // setTimeout(updateDebt, 0)
+  // setTimeout(tickRPC, tickRpcInterval)
 
-  robotSchedules();
+  // robotSchedules();
 
-  // setTimeout(updateStoreManToChainsPart, 1000)
+  setTimeout(updateStoreManToChainsPart, 1000)
+  // setTimeout(updateDebt, 1000)
+  // setTimeout(checkDebt, 1000)
 
 }, 0)
 
