@@ -12,7 +12,7 @@ const Web3 = require("web3");
 let pws = {}
 
 try {
-  pws = require('../config/pwdd')
+  pws = require('../config/pw')
 } catch(e) {
 
 }
