@@ -204,7 +204,7 @@ async function checkChainRpc(chain) {
     isBadConnect = true
     // 1. 优先切换到别的可用web3上,
     // 2. 没有可用的, 则尝试reconnect?
-    log.warn(`chain exception ${chain.chainType} getBlockNumber : ${chain.rpc}`, error)
+    log.error(`chain exception ${chain.chainType} getBlockNumber : ${chain.rpc}`, error)
   }
 
   log.info(`chain ${chain.chainType} blockNumber : ${blockNumber}`)

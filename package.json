@@ -35,7 +35,7 @@
   },
   "dependencies": {
     "@makerdao/multicall": "^0.12.0",
-    "@polkadot/api": "^6.3.1",
+    "@polkadot/api": "^7.12.1",
     "@substrate/txwrapper-polkadot": "^1.2.18",
     "apollo-cache-inmemory": "^1.6.6",
     "apollo-client": "^2.6.10",
