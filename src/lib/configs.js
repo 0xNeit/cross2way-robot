@@ -434,5 +434,55 @@ module.exports = {
 
       explorer: 'https://optimistic.etherscan.com/',
     }
+  },
+  'xdc': {
+    'testnet': {
+      chainType: 'XDC',
+      rpc: 'https://rpc.apothem.network',
+      wss: 'wss://ws.apothem.network',
+      gasPrice: 0x3b9aca00,
+      gasLimit: 0x7a1200,
+      chainId: 51,
+      curveType: '1',
+      deployedFile: 'xdcTestnet.json',
+      bip44: 0x80000033,
+      ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+      chainKind: 'eth',
+
+      symbol: 'XDC',
+      decimals: 18,
+      chainName: 'xinfin',
+
+      maxNoBlockTime: 1800000,
+      rpcS: [],
+
+      // multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
+
+      explorer: 'https://explorer.apothem.network/',
+    },
+    // 'mainnet': {
+    //   chainType: 'XDC',
+    //   rpc: 'https://rpc.xinfin.network',
+    //   wss: 'wss://ws.xinfin.network',
+    //   gasPrice: 0x3b9aca00,
+    //   gasLimit: 0x7a1200,
+    //   chainId: 50,
+    //   curveType: '1',
+    //   deployedFile: 'xdcMainnet.json',
+    //   bip44: 0x80000032,
+    //   ownerSk: '18f81910df8ddfd5cc4d93e554805b5268a494bc1ff0d28f09be2025fb87984c',
+    //   chainKind: 'eth',
+
+    //   symbol: 'XDC',
+    //   decimals: 18,
+    //   chainName: 'xinfin',
+
+    //   maxNoBlockTime: 1800000,
+    //   rpcS: [],
+
+    //   multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
+
+    //   explorer: 'https://explorer.apothem.network/',
+    // }
   }
 }

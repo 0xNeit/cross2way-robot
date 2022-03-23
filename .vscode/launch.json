@@ -19,6 +19,17 @@
     {
       "type": "node",
       "request": "launch",
+      "name": "abi test",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "cwd": "${workspaceRoot}",
+      "program": "${workspaceFolder}/src/abi.js",
+      "envFile": "${workspaceFolder}/.env.dev"
+    },
+    {
+      "type": "node",
+      "request": "launch",
       "name": "dot test",
       "skipFiles": [
         "<node_internals>/**"
