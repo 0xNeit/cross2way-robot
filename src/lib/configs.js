@@ -456,7 +456,7 @@ module.exports = {
       maxNoBlockTime: 1800000,
       rpcS: [],
 
-      // multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
+      multiCall: '0x4a9F99ceb037E8C4FBEC272D17D40282aA67d9c6'.toLowerCase(),
 
       explorer: 'https://explorer.apothem.network/',
     },
@@ -480,7 +480,7 @@ module.exports = {
     //   maxNoBlockTime: 1800000,
     //   rpcS: [],
 
-    //   multiCall: '0x5379271958a603ba1cd782588643d9566799670c'.toLowerCase(),
+    //   multiCall: ''.toLowerCase(),
 
     //   explorer: 'https://explorer.apothem.network/',
     // }

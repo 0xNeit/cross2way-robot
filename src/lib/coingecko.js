@@ -113,6 +113,7 @@ const getMaps = (symbolsStr3rd) => {
     MOVR: 'moonriver',
     BNB: 'binancecoin',
     FTM: 'fantom',
+    XDC: 'xdce-crowd-sale',
   }
 
   const symbols = symbolsStr3rd.replace(/\s+/g,"").split(',')
